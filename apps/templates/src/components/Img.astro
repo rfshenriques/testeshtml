@@ -1,0 +1,18 @@
+---
+/**
+ * Every image on a preview: either a licensed/AI image from input.images or an
+ * inline grey SVG placeholder. Always has alt text, explicit dimensions and
+ * data-placeholder="true" (spec §0.7, §9.4).
+ */
+import type { ImageInput } from '../lib/input';
+import { placeholderSvg } from '../lib/placeholder';
+interface Props { image?: ImageInput | undefined; label: string; width: number; height: number; eager?: boolean; class?: string; ratio?: string; showCredit?: boolean }
+const { image, label, width, height, eager = false, class: cls, ratio, showCredit = true } = Astro.props;
+const src = image ? image.url : placeholderSvg(width, height, label);
+const alt = image?.alt?.trim() || label;
+const style = ratio ? `--ratio:${ratio}` : undefined;
+---
+<div class:list={['img-frame', cls]} style={style}>
+  <img src={src} alt={alt} width={width} height={height} data-placeholder="true" loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : undefined} />
+</div>
+{showCredit && image?.credit && <p class="credit">Photo: {image.credit}</p>}

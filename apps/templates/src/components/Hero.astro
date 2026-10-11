@@ -1,0 +1,37 @@
+---
+import type { BuildInput } from '../lib/input';
+import { telHref } from '../lib/input';
+import Copy from './Copy.astro';
+import Img from './Img.astro';
+interface Props { input: BuildInput; ctaHref: string; eyebrow?: string | undefined; layout?: 'split' | 'stacked'; showPhone?: boolean; imageLabel?: string; secondaryHref?: string; secondaryLabel?: string }
+const { input, ctaHref, eyebrow, layout = 'split', showPhone = false, imageLabel = 'Indicative hero image', secondaryHref, secondaryLabel } = Astro.props;
+const { copy, brief } = input;
+const hero = input.images[0];
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phoneLabel = brief.phone ?? brief.internationalPhone;
+---
+<section class:list={['hero', layout === 'stacked' && 'hero--stacked']} aria-labelledby="hero-heading">
+  <div class="container hero__grid">
+    <div>
+      {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+      <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+      <p class="lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+      <div class="hero__actions">
+        {showPhone && tel ? (
+          <>
+            <a class="btn btn-on-hero btn-lg" href={tel}>Call {phoneLabel}</a>
+            <a class="btn btn-ghost-hero btn-lg" href={ctaHref}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+          </>
+        ) : (
+          <>
+            <a class="btn btn-on-hero btn-lg" href={ctaHref}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            {secondaryHref && secondaryLabel && <a class="btn btn-ghost-hero btn-lg" href={secondaryHref}>{secondaryLabel}</a>}
+            {!secondaryHref && tel && <a class="btn btn-ghost-hero btn-lg" href={tel}>Call {phoneLabel}</a>}
+          </>
+        )}
+      </div>
+      <slot name="meta" />
+    </div>
+    <Img image={hero} label={imageLabel} width={1200} height={900} eager showCredit={false} />
+  </div>
+</section>

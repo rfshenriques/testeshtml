@@ -47,6 +47,7 @@ enum LeadStage {
   replied
   won
   lost
+  excluded
   manual_review
   suppressed
 }

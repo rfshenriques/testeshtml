@@ -1,0 +1,12 @@
+{
+  "name": "Valletta + Sliema dentists and plumbers",
+  "countryCode": "MT",
+  "geometry": { "kind": "cities", "cities": [
+    { "name": "Valletta", "lat": 35.8989, "lng": 14.5146, "radiusM": 1500 },
+    { "name": "Sliema", "lat": 35.9122, "lng": 14.5042, "radiusM": 1500 }
+  ] },
+  "includedTypes": ["dentist", "plumber", "physiotherapist"],
+  "excludedTypes": [],
+  "budgetUsdCap": 15,
+  "maxLeads": 300
+}

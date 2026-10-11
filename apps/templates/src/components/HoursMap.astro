@@ -1,0 +1,52 @@
+---
+/**
+ * Opening hours from brief.openingHours and an embedded map from
+ * mockup.mapEmbedUrl. When no embed URL is supplied a static placeholder block
+ * is rendered — never a scrape of Google Maps (spec §0.3).
+ */
+import type { BuildInput } from '../lib/input';
+import { telHref } from '../lib/input';
+interface Props { input: BuildInput; serviceArea?: boolean }
+const { input, serviceArea = false } = Astro.props;
+const { brief, mockup } = input;
+const tel = telHref(brief.phone, brief.internationalPhone);
+const hasCoords = brief.lat !== null && brief.lng !== null;
+---
+<div class="grid grid--2 hours-map">
+  <div>
+    <h3>{serviceArea ? 'Service area' : 'Find us'}</h3>
+    {serviceArea && brief.city && <p>Serving {brief.city} and the surrounding area.</p>}
+    {brief.address ? <p class="hours-map__addr">{brief.address}</p> : <p class="ph">Address to be confirmed by the business</p>}
+    {tel && <p><a class="btn btn-outline" href={tel}>Call {brief.phone ?? brief.internationalPhone}</a></p>}
+    <h3>Opening hours</h3>
+    {brief.openingHours.length ? (
+      <table class="hours-table">
+        <caption class="visually-hidden">Opening hours for {brief.businessName}</caption>
+        <tbody>
+          {brief.openingHours.map((h) => (
+            <tr><th scope="row">{h.day}</th><td>{h.hours}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p class="ph">Opening hours to be confirmed by the business</p>
+    )}
+  </div>
+  <div class="map" class:list={[!mockup.mapEmbedUrl && 'map--placeholder']}>
+    {mockup.mapEmbedUrl ? (
+      <iframe src={mockup.mapEmbedUrl} title={`Map showing the location of ${brief.businessName}`} loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen width="600" height="400"></iframe>
+    ) : (
+      <div>
+        <p><strong>Map placeholder</strong></p>
+        {brief.address && <p>{brief.address}</p>}
+        {hasCoords && <p class="muted">{brief.lat!.toFixed(5)}, {brief.lng!.toFixed(5)}</p>}
+        <p class="muted">An interactive map will be embedded on the live site.</p>
+      </div>
+    )}
+  </div>
+</div>
+<style>
+  .hours-map h3 + p, .hours-map p + h3 { margin-top: 0.25rem; }
+  .hours-map h3:not(:first-child) { margin-top: 1.5rem; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>

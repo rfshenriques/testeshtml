@@ -1,0 +1,30 @@
+---
+import type { SiteCopy } from '@sitewright/shared-types';
+import Copy from './Copy.astro';
+interface Props { copy: SiteCopy; variant?: 'cards' | 'list' }
+const { copy, variant = 'cards' } = Astro.props;
+---
+{variant === 'cards' ? (
+  <ul class="grid">
+    {copy.whyUs.map((w, i) => (
+      <li class="card">
+        <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+        <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+      </li>
+    ))}
+  </ul>
+) : (
+  <ul class="why-list">
+    {copy.whyUs.map((w, i) => (
+      <li>
+        <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+        <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+      </li>
+    ))}
+  </ul>
+)}
+<style>
+  .why-list { display: grid; gap: 1.5rem; max-width: 40rem; }
+  .why-list li { border-left: 4px solid var(--accent); padding-left: 1.25rem; }
+  .why-list p { margin: 0; }
+</style>

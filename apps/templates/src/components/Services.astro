@@ -1,0 +1,57 @@
+---
+/** copy.services rendered as a grid, a numbered list or a menu-style list. Pricing is never invented. */
+import type { SiteCopy } from '@sitewright/shared-types';
+import Copy from './Copy.astro';
+interface Props { copy: SiteCopy; layout?: 'grid' | 'menu' | 'numbered'; priceLabel?: string | null; priceNote?: string }
+const { copy, layout = 'grid', priceLabel = null, priceNote } = Astro.props;
+---
+{layout === 'grid' && (
+  <ul class="grid">
+    {copy.services.map((s, i) => (
+      <li class="card">
+        <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+        <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+        {priceNote && <p class="muted service-price">{priceLabel ? <span class="badge">{priceLabel}</span> : null} {priceNote}</p>}
+      </li>
+    ))}
+  </ul>
+)}
+{layout === 'menu' && (
+  <ul class="menu">
+    {copy.services.map((s, i) => (
+      <li class="menu__item">
+        <div>
+          <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+          <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+        </div>
+        {priceNote && <span class="menu__price">{priceLabel ?? priceNote}</span>}
+      </li>
+    ))}
+  </ul>
+)}
+{layout === 'numbered' && (
+  <ol class="numbered">
+    {copy.services.map((s, i) => (
+      <li>
+        <span class="numbered__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+        <div>
+          <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+          <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+        </div>
+      </li>
+    ))}
+  </ol>
+)}
+
+<style>
+  .service-price { margin-top: 0.75rem; font-size: 0.9rem; }
+  .menu { display: grid; gap: 0; max-width: 52rem; }
+  .menu__item { display: flex; justify-content: space-between; gap: 1.5rem; align-items: baseline; padding: 1.25rem 0; border-bottom: 1px dashed var(--border); }
+  .menu__item h3 { margin-bottom: 0.25rem; }
+  .menu__item p { margin: 0; color: var(--muted); }
+  .menu__price { white-space: nowrap; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.06em; font-size: 0.8rem; font-weight: 600; color: var(--accent); }
+  .numbered { margin: 0; padding: 0; list-style: none; display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+  .numbered li { display: flex; gap: 1rem; }
+  .numbered__n { font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.75rem; line-height: 1; color: var(--accent); min-width: 2.5rem; }
+  .numbered p { margin: 0; color: var(--muted); }
+</style>

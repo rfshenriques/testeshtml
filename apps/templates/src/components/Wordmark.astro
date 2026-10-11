@@ -1,0 +1,6 @@
+---
+/** Generated text wordmark in the template's display typeface (spec §9.4). Never an emblem. */
+interface Props { name: string; href?: string; size?: 'sm' | 'lg' }
+const { name, href = '#top', size = 'sm' } = Astro.props;
+---
+<a class:list={['wordmark', `wordmark--${size}`]} href={href} aria-label={`${name} — home`}>{name}</a>

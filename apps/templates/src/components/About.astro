@@ -1,0 +1,28 @@
+---
+/** copy.about plus brief.verifiedFacts (the only facts allowed verbatim) and an optional image. */
+import type { BuildInput } from '../lib/input';
+import Copy from './Copy.astro';
+import Img from './Img.astro';
+interface Props { input: BuildInput; image?: BuildInput['images'][number] | undefined; imageLabel?: string; factsHeading?: string; showFacts?: boolean; reverse?: boolean }
+const { input, image, imageLabel = 'Indicative image', factsHeading = 'At a glance', showFacts = true, reverse = false } = Astro.props;
+const { copy, brief } = input;
+const facts = showFacts ? brief.verifiedFacts : [];
+---
+<div class:list={['split', reverse && 'split--reverse']}>
+  <div>
+    <h3 class="about__heading"><Copy copy={copy} path="about.heading" value={copy.about.heading} /></h3>
+    <p><Copy copy={copy} path="about.body" value={copy.about.body} /></p>
+    {facts.length > 0 && (
+      <>
+        <h4>{factsHeading}</h4>
+        <ul class="facts">{facts.map((f) => <li>{f}</li>)}</ul>
+      </>
+    )}
+  </div>
+  <Img image={image} label={imageLabel} width={900} height={700} />
+</div>
+<style>
+  .about__heading { font-size: clamp(1.5rem, 3vw, 2rem); }
+  .split--reverse > :first-child { order: 2; }
+  h4 { margin-top: 1.5rem; font-size: 1rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; }
+</style>

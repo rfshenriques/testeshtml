@@ -10,6 +10,11 @@ import { QueuesModule } from './shared/queues/queues.module';
 import { OpsModule } from './modules/ops/ops.module';
 import { CrmModule } from './modules/crm/crm.module';
 import { ComplianceModule } from './modules/compliance/compliance.module';
+import { PipelineModule } from './modules/pipeline/pipeline.module';
+import { TerritoryModule } from './modules/territory/territory.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
+import { QualificationModule } from './modules/qualification/qualification.module';
+import { WorkersModule } from './workers/workers.module';
 
 @Module({
   imports: [
@@ -22,6 +27,11 @@ import { ComplianceModule } from './modules/compliance/compliance.module';
     OpsModule,
     CrmModule,
     ComplianceModule,
+    PipelineModule,
+    TerritoryModule,
+    DiscoveryModule,
+    QualificationModule,
+    ...(process.env.WORKERS === 'off' ? [] : [WorkersModule]),
   ],
   providers: [{ provide: APP_FILTER, useClass: DomainErrorFilter }],
 })

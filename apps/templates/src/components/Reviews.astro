@@ -1,0 +1,29 @@
+---
+/** Rating summary from brief.rating / reviewCount and excerpts from brief.reviewExcerpts only. */
+import type { BuildInput } from '../lib/input';
+import { starString } from '../lib/input';
+interface Props { input: BuildInput; source?: string }
+const { input, source = 'Google' } = Astro.props;
+const { brief } = input;
+const hasRating = brief.rating !== null;
+const excerpts = brief.reviewExcerpts;
+---
+{hasRating ? (
+  <div class="rating" role="group" aria-label="Rating summary">
+    <span class="rating__value">{brief.rating!.toFixed(1)}</span>
+    <span class="rating__stars" aria-hidden="true">{starString(brief.rating!)}</span>
+    <span>out of 5{brief.reviewCount !== null ? ` from ${brief.reviewCount} ${brief.reviewCount === 1 ? 'review' : 'reviews'}` : ''} on {source}</span>
+  </div>
+) : (
+  <p class="ph">Customer rating to be added by the business</p>
+)}
+{excerpts.length > 0 && (
+  <ul class="grid reviews">
+    {excerpts.map((text) => (
+      <li><blockquote class="review"><p>{text}</p><footer>{source} review</footer></blockquote></li>
+    ))}
+  </ul>
+)}
+<style>
+  .reviews { margin-top: 2rem; }
+</style>

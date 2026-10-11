@@ -32,3 +32,4 @@ process.env.AGENCY_NAME = 'Test Studio';
 process.env.AGENCY_URL = 'https://example.test';
 process.env.KILL_SWITCH = 'false';
 process.env.LOG_LEVEL = 'silent';
+process.env.WORKERS = process.env.WORKERS ?? 'off';

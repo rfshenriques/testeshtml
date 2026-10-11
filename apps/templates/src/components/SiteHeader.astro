@@ -1,0 +1,22 @@
+---
+import type { BuildInput } from '../lib/input';
+import { telHref } from '../lib/input';
+import Wordmark from './Wordmark.astro';
+interface Props { input: BuildInput; nav: { href: string; label: string }[]; ctaHref: string; ctaLabel: string }
+const { input, nav, ctaHref, ctaLabel } = Astro.props;
+const tel = telHref(input.brief.phone, input.brief.internationalPhone);
+---
+<header class="site-header" id="top">
+  <div class="container site-header__row">
+    <Wordmark name={input.brief.businessName} />
+    <nav class="site-nav" aria-label="Sections">
+      <ul>
+        {nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}
+      </ul>
+    </nav>
+    <div class="site-header__cta">
+      {tel && <a class="btn btn-outline" href={tel}>Call {input.brief.phone ?? input.brief.internationalPhone}</a>}
+      <a class="btn btn-primary" href={ctaHref}>{ctaLabel}</a>
+    </div>
+  </div>
+</header>

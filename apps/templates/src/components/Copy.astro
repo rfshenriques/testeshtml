@@ -1,0 +1,9 @@
+---
+/** Renders a copy field, or a visibly neutral placeholder when copy.placeholdersUsed names it. */
+import type { SiteCopy } from '@sitewright/shared-types';
+import { copyText } from '../lib/input';
+interface Props { copy: SiteCopy; path: string; value: string }
+const { copy, path, value } = Astro.props;
+const r = copyText(copy, path, value);
+---
+{r.placeholder ? <span class="ph" title="Placeholder — the business will supply this">{r.text}</span> : r.text}

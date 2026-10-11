@@ -1,0 +1,17 @@
+---
+interface Props { id: string; eyebrow?: string; heading?: string; lead?: string; tone?: 'bg' | 'surface' | 'dark'; center?: boolean; class?: string; labelledBy?: boolean }
+const { id, eyebrow, heading, lead, tone = 'bg', center = false, class: cls } = Astro.props;
+const headingId = `${id}-heading`;
+---
+<section id={id} class:list={['section', tone === 'surface' && 'section--surface', tone === 'dark' && 'section--dark', cls]} aria-labelledby={heading ? headingId : undefined}>
+  <div class="container">
+    {heading && (
+      <div class:list={['section__head', center && 'section__head--center']}>
+        {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+        <h2 id={headingId}>{heading}</h2>
+        {lead && <p class="lead">{lead}</p>}
+      </div>
+    )}
+    <slot />
+  </div>
+</section>

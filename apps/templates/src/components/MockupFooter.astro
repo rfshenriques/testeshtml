@@ -1,0 +1,26 @@
+---
+import type { BuildInput } from '../lib/input';
+import { formatDate, telHref } from '../lib/input';
+import Wordmark from './Wordmark.astro';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief, mockup, copy } = input;
+const expires = formatDate(mockup.expiresAt);
+const tel = telHref(brief.phone, brief.internationalPhone);
+const hasPlaceholders = copy.placeholdersUsed.length > 0;
+---
+<footer class="site-footer">
+  <div class="container site-footer__grid">
+    <div>
+      <Wordmark name={brief.businessName} />
+      {brief.address && <p class="site-footer__addr">{brief.address}{brief.city && !brief.address.includes(brief.city) ? `, ${brief.city}` : ''}</p>}
+      {tel && <p><a href={tel}>{brief.phone ?? brief.internationalPhone}</a></p>}
+    </div>
+    <div class="site-footer__mockup">
+      <p><strong>About this mockup.</strong> Unofficial concept prepared by <a href={mockup.agencyUrl} rel="noopener">{mockup.agencyName}</a>; not affiliated with or endorsed by {mockup.businessName}.</p>
+      <p>Images are indicative placeholders and will be replaced with the client's own photography.</p>
+      {hasPlaceholders && <p>Text marked “{'To be supplied by the business'}” is a neutral placeholder pending details from {brief.businessName}.</p>}
+      <p>This mockup expires on <time datetime={expires.iso}>{expires.human}</time>. <a href={mockup.takedownUrl} rel="nofollow">Remove this mockup</a></p>
+    </div>
+  </div>
+</footer>

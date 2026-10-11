@@ -1,0 +1,20 @@
+---
+import type { BuildInput } from '../lib/input';
+import { telHref } from '../lib/input';
+import Copy from './Copy.astro';
+interface Props { input: BuildInput; id: string; href: string; eyebrow?: string; tone?: 'dark' | 'surface' }
+const { input, id, href, eyebrow, tone = 'dark' } = Astro.props;
+const { copy, brief } = input;
+const tel = telHref(brief.phone, brief.internationalPhone);
+---
+<section id={id} class:list={['section', 'cta-band', tone === 'dark' ? 'section--dark' : 'section--surface']} aria-labelledby={`${id}-heading`}>
+  <div class="container">
+    {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+    <h2 id={`${id}-heading`}><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+    <p class="lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+    <div class="hero__actions">
+      <a class:list={['btn', 'btn-lg', tone === 'dark' ? 'btn-on-hero' : 'btn-primary']} href={href}><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+      {tel && <a class:list={['btn', 'btn-lg', tone === 'dark' ? 'btn-ghost-hero' : 'btn-outline']} href={tel}>Call {brief.phone ?? brief.internationalPhone}</a>}
+    </div>
+  </div>
+</section>

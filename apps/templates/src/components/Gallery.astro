@@ -1,0 +1,19 @@
+---
+/** Image grid from input.images (after the hero); fills remaining slots with grey placeholders. */
+import type { ImageInput } from '../lib/input';
+import Img from './Img.astro';
+interface Props { images: ImageInput[]; slots?: number; label?: string; width?: number; height?: number; captions?: boolean }
+const { images, slots = 6, label = 'Indicative image', width = 800, height = 600, captions = false } = Astro.props;
+const items: (ImageInput | undefined)[] = Array.from({ length: Math.max(slots, Math.min(images.length, 12)) }, (_, i) => images[i]);
+---
+<ul class="gallery">
+  {items.map((img, i) => (
+    <li>
+      <figure>
+        <Img image={img} label={`${label} ${i + 1}`} width={width} height={height} showCredit={false} />
+        {captions && <figcaption>{img ? img.alt : `${label} — to be replaced with the client's own photography`}</figcaption>}
+        {!captions && img?.credit && <figcaption>Photo: {img.credit}</figcaption>}
+      </figure>
+    </li>
+  ))}
+</ul>

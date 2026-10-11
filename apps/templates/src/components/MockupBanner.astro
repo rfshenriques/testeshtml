@@ -1,0 +1,8 @@
+---
+/** Persistent, non-dismissible mockup disclosure (spec §0.6, §20.7). No close control by design. */
+interface Props { agencyName: string; agencyUrl: string; businessName: string }
+const { agencyName, agencyUrl, businessName } = Astro.props;
+---
+<div class="mockup-banner" role="note" aria-label="Mockup notice">
+  <p>Unofficial concept mockup prepared by <a href={agencyUrl} rel="noopener">{agencyName}</a>. Not affiliated with or endorsed by {businessName}.</p>
+</div>

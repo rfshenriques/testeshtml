@@ -4,6 +4,8 @@ import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/shared/prisma/prisma.service';
 import { QueueRegistry } from '../src/shared/queues/queue-registry.service';
 import { resetDb } from './db';
+import Redis from 'ioredis';
+import { REDIS } from '../src/shared/redis/redis.module';
 import { JURISDICTIONS } from '@sitewright/db';
 import { DEFAULT_PRICING, DEFAULT_SEQUENCE } from '@sitewright/db';
 
@@ -17,8 +19,21 @@ export async function createTestApp(overrides?: (b: ReturnType<typeof Test.creat
   await app.init();
   const prisma = app.get(PrismaService);
   await resetDb(prisma);
+  await resetRedis(app.get<Redis>(REDIS));
   await seedBasics(prisma);
   return app;
+}
+
+/** Delete application keys (probe budgets, quotas, places cache, kill switch) so runs do not pollute each other. */
+export async function resetRedis(redis: Redis) {
+  for (const pattern of ['probe:*', 'quota:*', 'places:*', 'ops:*', 'send:*', 'mailbox:*', 'view:*']) {
+    let cursor = '0';
+    do {
+      const [next, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 500);
+      cursor = next;
+      if (keys.length) await redis.del(...keys);
+    } while (cursor !== '0');
+  }
 }
 
 export async function seedBasics(prisma: PrismaService) {
