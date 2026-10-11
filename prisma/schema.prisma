@@ -1,0 +1,604 @@
+// Sitewright data model. See docs/SPEC.md §3.
+// Google content is split: PlaceRef (permanent) vs PlaceSnapshot (expiring). Never merge them.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CampaignStatus {
+  draft
+  running
+  paused
+  complete
+  halted
+}
+
+enum TileStatus {
+  pending
+  searching
+  saturated
+  done
+  failed
+}
+
+enum WebsiteStatus {
+  none
+  social_only
+  parked
+  broken
+  http_only
+  live
+  unknown
+}
+
+enum LeadStage {
+  discovered
+  qualified
+  enriched
+  profiled
+  generated
+  quoted
+  contacted
+  replied
+  won
+  lost
+  manual_review
+  suppressed
+}
+
+enum LegalGate {
+  pending
+  clear
+  blocked
+}
+
+enum FallbackChannel {
+  email
+  phone_outreach
+  postal_outreach
+}
+
+enum EmailType {
+  named
+  role_generic
+  catchall_guess
+}
+
+enum VerifyState {
+  unverified
+  valid
+  risky
+  invalid
+  catchall
+}
+
+enum MsgStatus {
+  queued
+  sent
+  delivered
+  opened
+  clicked
+  bounced
+  complained
+  replied
+  failed
+  cancelled
+}
+
+enum ReplyIntent {
+  interested
+  question
+  not_interested
+  unsubscribe
+  out_of_office
+  hostile
+  other
+}
+
+enum MailboxStatus {
+  warming
+  active
+  paused
+  burned
+}
+
+enum DomainStatus {
+  warming
+  active
+  paused
+  burned
+}
+
+enum ReviewItemType {
+  low_confidence_classification
+  legal_gate_block
+  copy_violation
+  reply_draft
+}
+
+enum ReviewItemStatus {
+  open
+  approved
+  rejected
+  edited
+}
+
+model Campaign {
+  id            String         @id @default(cuid())
+  name          String
+  status        CampaignStatus @default(draft)
+  countryCode   String
+  geometry      Json // GeoJSON polygon | {center:{lat,lng}, radiusM} | {bbox:[minLng,minLat,maxLng,maxLat]} | {cities:[...]}
+  includedTypes String[]
+  excludedTypes String[]
+  budgetUsdCap  Decimal        @db.Decimal(12, 4)
+  spendUsd      Decimal        @default(0) @db.Decimal(12, 4)
+  maxLeads      Int?
+  languageCode  String? // operator override of the country default
+  includeHttpOnly Boolean      @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  tiles         Tile[]
+  leads         Lead[]
+  costEvents    CostEvent[]
+}
+
+model Tile {
+  id          String     @id @default(cuid())
+  campaignId  String
+  parentId    String?
+  bbox        Json // [minLng,minLat,maxLng,maxLat]
+  depth       Int
+  status      TileStatus @default(pending)
+  resultCount Int        @default(0)
+  liveSiteCount Int      @default(0) // same-type businesses in this tile WITH a live website, for competitivePressure
+  error       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  campaign    Campaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  leads       Lead[]
+
+  @@index([campaignId, status])
+}
+
+// PERMANENT. place_id may be stored indefinitely.
+model PlaceRef {
+  placeId     String   @id
+  countryCode String
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  leads       Lead[]
+  snapshots   PlaceSnapshot[]
+}
+
+// EXPIRING. Raw Google content, purged after retention window (30d).
+model PlaceSnapshot {
+  id        String   @id @default(cuid())
+  placeId   String
+  kind      String // search | details
+  raw       Json
+  fetchedAt DateTime @default(now())
+  expiresAt DateTime
+  place     PlaceRef @relation(fields: [placeId], references: [placeId], onDelete: Cascade)
+
+  @@index([placeId])
+  @@index([expiresAt])
+}
+
+model Lead {
+  id              String          @id @default(cuid())
+  campaignId      String
+  placeId         String
+  tileId          String?
+  correlationId   String          @default(cuid())
+  // Denormalised operational fields (our derived data, not raw Google cache)
+  businessName    String
+  primaryType     String?
+  vertical        String?
+  countryCode     String
+  city            String?
+  phone           String?
+  websiteStatus   WebsiteStatus   @default(unknown)
+  websiteUrl      String?
+  websiteProbe    Json?
+  rating          Float?
+  reviewCount     Int?
+  priceLevel      Int?
+  businessStatus  String?
+  lat             Float?
+  lng             Float?
+  score           Float?
+  scoreBreakdown  Json?
+  stage           LeadStage       @default(discovered)
+  previousStage   LeadStage?
+  legalGate       LegalGate       @default(pending)
+  legalGateReason String?
+  gateOverride    Json? // {by, justification, at}
+  fallbackChannel FallbackChannel @default(email)
+  classification  Json?
+  priority        Int             @default(0)
+  lastTouchAt     DateTime?
+  contactDataPurgedAt DateTime?
+  notes           String?
+  contacts        Contact[]
+  site            GeneratedSite?
+  quote           Quote?
+  messages        OutreachMessage[]
+  replies         Reply[]
+  events          LeadEvent[]
+  reviewItems     ReviewItem[]
+  provisioning    Provisioning?
+  tasks           CrmTask[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  campaign        Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  place           PlaceRef        @relation(fields: [placeId], references: [placeId])
+  tile            Tile?           @relation(fields: [tileId], references: [id], onDelete: SetNull)
+
+  @@unique([campaignId, placeId])
+  @@index([stage, score])
+  @@index([campaignId, stage])
+  @@index([countryCode])
+  @@index([lastTouchAt])
+}
+
+model Contact {
+  id           String      @id @default(cuid())
+  leadId       String
+  email        String
+  emailType    EmailType
+  source       String // provider/adapter name
+  sourceUrl    String?
+  sourceLicence String?
+  confidence   Float
+  verification VerifyState @default(unverified)
+  verifiedAt   DateTime?
+  verifier     String?
+  isPrimary    Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  lead         Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  messages     OutreachMessage[]
+
+  @@unique([leadId, email])
+}
+
+model GeneratedSite {
+  id           String    @id @default(cuid())
+  leadId       String    @unique
+  templateId   String
+  colourScheme String    @default("a")
+  typography   String    @default("a")
+  contentBrief Json
+  copy         Json
+  copyViolations Json?
+  buildHash    String
+  previewUrl   String?
+  previewSlug  String    @unique
+  objectPrefix String?
+  expiresAt    DateTime
+  takenDownAt  DateTime?
+  publishedAt  DateTime?
+  views        Int       @default(0)
+  lastViewedAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  previewViews PreviewView[]
+  formSubmissions FormSubmission[]
+}
+
+model PreviewView {
+  id        String        @id @default(cuid())
+  siteId    String
+  visitorHash String
+  viewedAt  DateTime      @default(now())
+  site      GeneratedSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, viewedAt])
+}
+
+model FormSubmission {
+  id        String        @id @default(cuid())
+  siteId    String
+  payload   Json
+  forwarded Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  site      GeneratedSite @relation(fields: [siteId], references: [id], onDelete: Cascade)
+}
+
+model Quote {
+  id              String    @id @default(cuid())
+  leadId          String    @unique
+  slug            String    @unique
+  currency        String
+  buildFee        Decimal   @db.Decimal(12, 2)
+  monthlyFee      Decimal   @db.Decimal(12, 2)
+  tier            String // starter|business|premium
+  lineItems       Json
+  allTiers        Json
+  validUntil      DateTime
+  acceptedAt      DateTime?
+  stripeSessionId String?
+  stripeCustomerId String?
+  stripeSubscriptionId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model OutreachMessage {
+  id           String    @id @default(cuid())
+  leadId       String
+  contactId    String
+  sequenceStep Int
+  mailboxId    String
+  subject      String
+  bodyHtml     String
+  bodyText     String
+  status       MsgStatus @default(queued)
+  providerId   String?
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  error        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  contact      Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  mailbox      Mailbox   @relation(fields: [mailboxId], references: [id])
+  replies      Reply[]
+
+  @@index([leadId, sequenceStep])
+  @@index([status, scheduledFor])
+  @@index([mailboxId, sentAt])
+}
+
+model Reply {
+  id         String      @id @default(cuid())
+  leadId     String
+  messageId  String?
+  fromEmail  String
+  receivedAt DateTime
+  subject    String?
+  raw        String
+  intent     ReplyIntent @default(other)
+  confidence Float       @default(0)
+  classifiedBy String? // rules|llm
+  suggestedDraft String?
+  handled    Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  lead       Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  message    OutreachMessage? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([leadId])
+  @@index([handled])
+}
+
+// Append-only. Removal requires a migration with an audit note.
+model Suppression {
+  id        String   @id @default(cuid())
+  emailHash String?  @unique
+  placeId   String?  @unique
+  domain    String?
+  reason    String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([domain])
+}
+
+model SendingDomain {
+  id           String       @id @default(cuid())
+  domain       String       @unique
+  status       DomainStatus @default(warming)
+  dmarcPolicy  String       @default("none")
+  createdAt    DateTime     @default(now())
+  mailboxes    Mailbox[]
+}
+
+model Mailbox {
+  id              String        @id @default(cuid())
+  address         String        @unique
+  sendingDomainId String
+  sendingDomain   String
+  dailyCap        Int           @default(5)
+  sentToday       Int           @default(0)
+  sentTodayDate   DateTime?
+  warmupStage     Int           @default(0)
+  warmupStartedAt DateTime      @default(now())
+  reputation      Json          @default("{}")
+  status          MailboxStatus @default(warming)
+  lastSentAt      DateTime?
+  pauseReason     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  domainRef       SendingDomain @relation(fields: [sendingDomainId], references: [id])
+  messages        OutreachMessage[]
+}
+
+model CostEvent {
+  id         String    @id @default(cuid())
+  campaignId String?
+  leadId     String?
+  category   String // places_search|places_details|llm|email_verify|enrichment|email_send|storage
+  provider   String?
+  units      Int
+  usd        Decimal   @db.Decimal(12, 6)
+  meta       Json?
+  createdAt  DateTime  @default(now())
+  campaign   Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId, category])
+  @@index([createdAt])
+}
+
+model LeadEvent {
+  id        String   @id @default(cuid())
+  leadId    String
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
+}
+
+model JurisdictionPolicy {
+  countryCode                      String  @id
+  b2bColdEmailAllowed              Boolean
+  soleTraderTreatedAsIndividual    Boolean
+  priorConsentRequired             Boolean
+  requiresPhysicalAddressInFooter  Boolean
+  requiresDataSourceDisclosure     Boolean
+  maxFollowUps                     Int
+  optOutHonourWindowHours          Int
+  defaultLanguageCode              String  @default("en")
+  defaultCurrency                  String  @default("EUR")
+  notes                            String
+  confirmedByCounsel               Boolean @default(false)
+  updatedAt                        DateTime @updatedAt
+}
+
+// Full audit log: every send, consent-relevant decision, suppression event. Retained 24 months.
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  actor     String   @default("system")
+  leadId    String?
+  subjectId String?
+  detail    Json
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
+
+model ReviewItem {
+  id         String           @id @default(cuid())
+  leadId     String
+  type       ReviewItemType
+  status     ReviewItemStatus @default(open)
+  payload    Json
+  resolution Json?
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt  DateTime         @default(now())
+  lead       Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([status, type])
+}
+
+model PricingConfig {
+  id        String   @id @default("default")
+  config    Json
+  updatedAt DateTime @updatedAt
+}
+
+model SequenceConfig {
+  id        String   @id @default("default")
+  steps     Json
+  updatedAt DateTime @updatedAt
+}
+
+model Alert {
+  id             String    @id @default(cuid())
+  severity       String // info|warning|critical
+  kind           String
+  message        String
+  meta           Json?
+  acknowledgedAt DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([acknowledgedAt, createdAt])
+}
+
+model ApiQuota {
+  id       String   @id // `${api}:${YYYY-MM-DD}`
+  api      String
+  day      String
+  used     Int      @default(0)
+  cap      Int
+  updatedAt DateTime @updatedAt
+
+  @@index([api, day])
+}
+
+model Provisioning {
+  id          String   @id @default(cuid())
+  leadId      String   @unique
+  checklist   Json // [{key,label,done,doneAt,by,note}]
+  onboardingForm Json?
+  cmsKind     String? // decap|payload
+  productionUrl String?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  subscription ServiceSubscription?
+}
+
+model ServiceSubscription {
+  id              String   @id @default(cuid())
+  provisioningId  String   @unique
+  tier            String
+  monthlyFee      Decimal  @db.Decimal(12, 2)
+  currency        String
+  updatesIncluded Int
+  sla             Json
+  stripeSubscriptionId String?
+  status          String   @default("active") // active|past_due|cancelled
+  startedAt       DateTime @default(now())
+  cancelledAt     DateTime?
+  provisioning    Provisioning @relation(fields: [provisioningId], references: [id], onDelete: Cascade)
+  updateRequests  UpdateRequest[]
+  invoices        Invoice[]
+}
+
+model UpdateRequest {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  month          String // YYYY-MM
+  description    String
+  requestedAt    DateTime @default(now())
+  dueAt          DateTime
+  completedAt    DateTime?
+  billable       Boolean  @default(false) // true when over the tier allowance
+  subscription   ServiceSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, month])
+}
+
+model Invoice {
+  id             String   @id @default(cuid())
+  subscriptionId String
+  period         String
+  amount         Decimal  @db.Decimal(12, 2)
+  currency       String
+  status         String   @default("draft")
+  stripeInvoiceId String?
+  createdAt      DateTime @default(now())
+  subscription   ServiceSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+}
+
+model CrmTask {
+  id        String    @id @default(cuid())
+  leadId    String
+  title     String
+  dueAt     DateTime?
+  doneAt    DateTime?
+  createdAt DateTime  @default(now())
+  lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, doneAt])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

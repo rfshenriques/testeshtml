@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.turbo/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+prisma/generated/
+apps/templates/.astro/
+apps/templates/dist/
+.work/
+tmp/
+.DS_Store

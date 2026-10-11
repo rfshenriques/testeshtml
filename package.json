@@ -1,0 +1,42 @@
+{
+  "name": "sitewright",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Find businesses with a Google Business Profile but no website, generate a concept mockup, and send a compliant outreach email with a quote.",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "db:generate": "pnpm --filter @sitewright/db generate",
+    "db:migrate": "pnpm --filter @sitewright/db migrate:dev",
+    "db:deploy": "pnpm --filter @sitewright/db migrate:deploy",
+    "db:seed": "pnpm --filter @sitewright/db seed",
+    "db:reset": "pnpm --filter @sitewright/db reset",
+    "api": "pnpm --filter @sitewright/api start:dev",
+    "admin": "pnpm --filter @sitewright/admin dev",
+    "cli": "pnpm --filter @sitewright/api cli",
+    "format": "prettier --write \"**/*.{ts,tsx,astro,json,md,yml}\""
+  },
+  "devDependencies": {
+    "prettier": "3.9.10",
+    "prettier-plugin-astro": "0.14.1",
+    "turbo": "2.11.7",
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@prisma/engines",
+      "prisma",
+      "esbuild",
+      "sharp",
+      "msgpackr-extract"
+    ]
+  }
+}
