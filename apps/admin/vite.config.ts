@@ -11,5 +11,5 @@ export default defineConfig({
     proxy: { '/admin': 'http://localhost:3000', '/health': 'http://localhost:3000' },
   },
   // @ts-expect-error vitest config
-  test: { environment: 'jsdom', include: ['src/**/*.test.{ts,tsx}'] },
+  test: { environment: 'jsdom', include: ['src/**/*.test.{ts,tsx}'], passWithNoTests: true },
 });
