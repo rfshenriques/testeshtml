@@ -224,6 +224,9 @@ model Lead {
   classification  Json?
   priority        Int             @default(0)
   lastTouchAt     DateTime?
+  sequenceStartedAt DateTime?
+  sequenceStoppedAt DateTime?
+  sequenceStopReason String?
   contactDataPurgedAt DateTime?
   notes           String?
   contacts        Contact[]
@@ -343,6 +346,12 @@ model OutreachMessage {
   bodyHtml     String
   bodyText     String
   status       MsgStatus @default(queued)
+  kind         String    @default("sequence") // sequence|bridge|reply|confirmation
+  requiresApproval Boolean @default(false)
+  approvedAt   DateTime?
+  approvedBy   String?
+  messageIdHeader String? @unique
+  clicks       Int       @default(0)
   providerId   String?
   scheduledFor DateTime?
   sentAt       DateTime?

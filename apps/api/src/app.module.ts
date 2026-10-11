@@ -21,6 +21,8 @@ import { ProfilingModule } from './modules/profiling/profiling.module';
 import { ReviewModule } from './modules/review/review.module';
 import { GeneratorModule } from './modules/generator/generator.module';
 import { PreviewModule } from './modules/preview/preview.module';
+import { QuotingModule } from './modules/quoting/quoting.module';
+import { OutreachModule } from './modules/outreach/outreach.module';
 
 @Module({
   imports: [
@@ -43,6 +45,8 @@ import { PreviewModule } from './modules/preview/preview.module';
     ReviewModule,
     GeneratorModule,
     PreviewModule,
+    QuotingModule,
+    OutreachModule,
     ...(process.env.WORKERS === 'off' ? [] : [WorkersModule]),
   ],
   providers: [{ provide: APP_FILTER, useClass: DomainErrorFilter }],

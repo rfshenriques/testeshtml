@@ -3,10 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "exports": {
+    "./build-site": "./scripts/build-site.ts",
+    "./expired-page": "./scripts/expired-page.ts",
+    "./fixtures": "./src/fixtures/sample-input.ts",
+    "./catalogue": "./src/templates/index.ts",
+    "./tokens": "./src/theme/tokens.ts"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
     "build:site": "tsx scripts/build-site.ts",
+    "sample-input": "tsx scripts/sample-input.ts",
+    "check:contrast": "tsx scripts/check-contrast.ts",
     "typecheck": "astro check",
     "test": "vitest run"
   },

@@ -100,7 +100,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
 interface ConfirmProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void | Promise<unknown>;
+  onConfirm: () => unknown;
   title: React.ReactNode;
   /** Blast radius: what, and how many, will be affected. Always shown. */
   blastRadius: React.ReactNode;

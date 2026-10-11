@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable, type SortingState, type RowSelectionState } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDown, ArrowUp, ArrowUpDown, Search, X } from 'lucide-react';
@@ -31,6 +31,7 @@ export function LeadsPage() {
   const nav = useNavigate();
   const { id: openLeadId } = useParams();
   const [sp, setSp] = useSearchParams();
+  const location = useLocation();
   const qc = useQueryClient();
 
   const filters: LeadsQuery = {
@@ -80,7 +81,7 @@ export function LeadsPage() {
         id: 'select',
         size: 36,
         header: ({ table }) => (
-          <Checkbox aria-label="Select all loaded rows" checked={table.getIsAllRowsSelected()} ref={(el) => el && (el.indeterminate = table.getIsSomeRowsSelected())} onChange={table.getToggleAllRowsSelectedHandler()} />
+          <Checkbox aria-label="Select all loaded rows" checked={table.getIsAllRowsSelected()} ref={(el) => { if (el) el.indeterminate = table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected(); }} onChange={table.getToggleAllRowsSelectedHandler()} />
         ),
         cell: ({ row }) => <Checkbox aria-label={`Select ${row.original.businessName}`} checked={row.getIsSelected()} onChange={row.getToggleSelectedHandler()} onClick={(e) => e.stopPropagation()} />,
       }),

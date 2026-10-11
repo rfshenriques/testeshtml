@@ -49,7 +49,7 @@ export function Field({ label, htmlFor, hint, children, className }: { label: Re
   );
 }
 
-export function Checkbox({ className, label, id, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label?: React.ReactNode }) {
+export function Checkbox({ className, label, id, ...props }: React.ComponentProps<'input'> & { label?: React.ReactNode }) {
   const inner = <input id={id} type="checkbox" className={cn('size-4 accent-[var(--primary)] focus-visible:outline-2 focus-visible:outline-ring', className)} {...props} />;
   if (!label) return inner;
   return (

@@ -4,50 +4,49 @@
  *   tsx scripts/build-site.ts <input.json> <outDir>
  *
  * Prints `{ "buildHash": "...", "files": n, "outDir": "..." }` on stdout and
- * nothing else (Astro logging is silenced). Exit code 1 on any failure, with
- * the reason on stderr.
+ * nothing else. Exit code 1 on any failure, with the reason on stderr.
  *
- * Isolation: every build runs Astro against a private temporary project root
- * (a copy of src/ plus the config, with node_modules symlinked), so concurrent
- * builds never write into apps/templates and `.astro/` caches are per build.
- * The input reaches the page through SITEWRIGHT_INPUT (a JSON file path).
+ * Isolation. Each build gets a private temporary directory under the OS tmpdir
+ * holding a copy of src/ plus the Astro config (node_modules symlinked), and
+ * `astro build` is spawned with that directory as cwd, project root and output
+ * location. Nothing under apps/templates is written to, so builds can run in
+ * parallel (the API runs two at a time). Astro relocates its build through
+ * `<cwd>/.astro/` whenever outDir is outside cwd, which is why cwd, root and
+ * outDir must all live in the temp directory; the finished site is then moved
+ * to the requested outDir. The input reaches the page through SITEWRIGHT_INPUT
+ * (a JSON file path) read in src/pages/index.astro.
  *
- * Determinism: no timestamps, no random ids, CSS inlined, no hashed assets and
- * no JS; two builds of the same input yield byte-identical files. The hash is
+ * Determinism. No timestamps, no random ids, CSS inlined, no hashed assets and
+ * no JS; two builds of the same input yield byte-identical files. buildHash is
  * sha256 over the sorted (relativePath, content) pairs of the output.
  */
-import { build } from 'astro';
 import { SiteBuildInputSchema, type SiteBuildInput } from '@sitewright/shared-types';
+import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const ASTRO_CLI = path.join(PROJECT_ROOT, 'node_modules', 'astro', 'astro.js');
 
 export interface BuildSiteResult { buildHash: string; files: string[] }
 
-/** In-process builds share process.env, so they are serialised; use the CLI (child processes) for parallelism. */
-let queue: Promise<unknown> = Promise.resolve();
-
+/**
+ * Validates `input`, renders the matching template family and writes the static
+ * site to `outDir` (created if missing, emptied first). Safe to call concurrently.
+ */
 export async function buildSite(input: SiteBuildInput, outDir: string): Promise<BuildSiteResult> {
   const parsed = SiteBuildInputSchema.parse(input);
-  const run = queue.then(() => buildSiteNow(parsed, outDir));
-  queue = run.catch(() => undefined);
-  return run;
-}
-
-async function buildSiteNow(input: SiteBuildInput, outDir: string): Promise<BuildSiteResult> {
   const absOut = path.resolve(outDir);
-  if (absOut === PROJECT_ROOT || PROJECT_ROOT.startsWith(absOut + path.sep)) {
+  if (absOut === PROJECT_ROOT || PROJECT_ROOT.startsWith(absOut + path.sep) || absOut === path.parse(absOut).root) {
     throw new Error(`Refusing to build into ${absOut}: it contains the template project`);
   }
   const work = await mkdtemp(path.join(tmpdir(), 'sitewright-build-'));
   const root = path.join(work, 'root');
+  const tmpOut = path.join(work, 'out');
   const inputPath = path.join(work, 'input.json');
-  const prevInput = process.env.SITEWRIGHT_INPUT;
-  const prevOut = process.env.SITEWRIGHT_OUT_DIR;
   try {
     await mkdir(root, { recursive: true });
     await Promise.all([
@@ -56,29 +55,53 @@ async function buildSiteNow(input: SiteBuildInput, outDir: string): Promise<Buil
       cp(path.join(PROJECT_ROOT, 'package.json'), path.join(root, 'package.json')),
       cp(path.join(PROJECT_ROOT, 'tsconfig.json'), path.join(root, 'tsconfig.json')),
       symlink(path.join(PROJECT_ROOT, 'node_modules'), path.join(root, 'node_modules'), 'dir'),
-      writeFile(inputPath, JSON.stringify(input)),
-      mkdir(absOut, { recursive: true }),
+      // The rendered SSR bundle under work/out imports the externalised workspace package at build time.
+      symlink(path.join(PROJECT_ROOT, 'node_modules'), path.join(work, 'node_modules'), 'dir'),
+      writeFile(inputPath, JSON.stringify(parsed)),
     ]);
-    process.env.SITEWRIGHT_INPUT = inputPath;
-    process.env.SITEWRIGHT_OUT_DIR = absOut;
-    await build(
-      {
-        root,
-        outDir: absOut,
-        cacheDir: path.join(work, 'cache'),
-        logLevel: 'silent',
-        vite: { logLevel: 'silent', clearScreen: false },
-      },
-      { teardownCompiler: false },
-    );
+    await runAstroBuild({ cwd: work, root, outDir: tmpOut, inputPath });
+    await rm(absOut, { recursive: true, force: true });
+    await mkdir(path.dirname(absOut), { recursive: true });
+    try {
+      await rename(tmpOut, absOut);
+    } catch {
+      await cp(tmpOut, absOut, { recursive: true }); // tmpdir on another filesystem
+    }
   } finally {
-    if (prevInput === undefined) delete process.env.SITEWRIGHT_INPUT; else process.env.SITEWRIGHT_INPUT = prevInput;
-    if (prevOut === undefined) delete process.env.SITEWRIGHT_OUT_DIR; else process.env.SITEWRIGHT_OUT_DIR = prevOut;
     await rm(work, { recursive: true, force: true });
   }
   const files = await listFiles(absOut);
   const buildHash = await hashFiles(absOut, files);
   return { buildHash, files };
+}
+
+function runAstroBuild(opts: { cwd: string; root: string; outDir: string; inputPath: string }): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      process.execPath,
+      [ASTRO_CLI, 'build', '--root', opts.root, '--silent'],
+      {
+        cwd: opts.cwd,
+        env: {
+          ...process.env,
+          SITEWRIGHT_INPUT: opts.inputPath,
+          SITEWRIGHT_OUT_DIR: opts.outDir,
+          ASTRO_TELEMETRY_DISABLED: '1',
+          FORCE_COLOR: '0',
+          NODE_ENV: 'production',
+        },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
+    let output = '';
+    child.stdout.on('data', (d) => { output += d; });
+    child.stderr.on('data', (d) => { output += d; });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`astro build exited with code ${code}\n${output.trim()}`));
+    });
+  });
 }
 
 /** Relative POSIX paths of every file under dir, sorted. */
@@ -131,7 +154,7 @@ async function main(argv: string[]): Promise<number> {
     process.stdout.write(JSON.stringify({ buildHash: result.buildHash, files: result.files.length, outDir: path.resolve(outDir) }) + '\n');
     return 0;
   } catch (err) {
-    process.stderr.write(`build-site: build failed: ${(err as Error).stack ?? String(err)}\n`);
+    process.stderr.write(`build-site: build failed: ${(err as Error).message}\n`);
     return 1;
   }
 }

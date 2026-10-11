@@ -7,7 +7,7 @@
  * names. Fixtures ship with `images: []` so sample pages render fully offline
  * with grey placeholders; pass your own images to see the photo path.
  */
-import type { ContentBrief, SiteBuildInput, SiteCopy, TemplateFamily } from '@sitewright/shared-types';
+import type { ContentBrief, SiteBuildInput, TemplateFamily } from '@sitewright/shared-types';
 import { TEMPLATE_FAMILIES } from '@sitewright/shared-types';
 
 export type ColourScheme = SiteBuildInput['colourScheme'];

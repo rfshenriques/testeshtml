@@ -32,6 +32,6 @@ const phoneLabel = brief.phone ?? brief.internationalPhone;
       </div>
       <slot name="meta" />
     </div>
-    <Img image={hero} label={imageLabel} width={1200} height={900} eager showCredit={false} />
+    <div class="hero__media"><Img image={hero} label={imageLabel} width={1200} height={900} eager /></div>
   </div>
 </section>

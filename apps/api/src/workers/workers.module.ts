@@ -14,10 +14,13 @@ import { PreviewModule } from '../modules/preview/preview.module';
 import { GeneratorBuildWorker } from './generator.build.worker';
 import { PreviewPublishWorker } from './preview.publish.worker';
 import { MaintenancePurgeWorker } from './maintenance.purge.worker';
+import { OutreachModule } from '../modules/outreach/outreach.module';
+import { OutreachSendWorker } from './outreach.send.worker';
+import { OutreachIngestWorker } from './outreach.ingest.worker';
 
 /** One processor per queue (spec §2.2 workers/). Imported by AppModule unless WORKERS=off. */
 @Module({
-  imports: [DiscoveryModule, QualificationModule, EnrichmentModule, ProfilingModule, GeneratorModule, PreviewModule],
-  providers: [DiscoveryTileWorker, DiscoveryDetailsWorker, QualificationProbeWorker, EnrichmentEmailWorker, EnrichmentVerifyWorker, ProfilingClassifyWorker, GeneratorBuildWorker, PreviewPublishWorker, MaintenancePurgeWorker],
+  imports: [DiscoveryModule, QualificationModule, EnrichmentModule, ProfilingModule, GeneratorModule, PreviewModule, OutreachModule],
+  providers: [DiscoveryTileWorker, DiscoveryDetailsWorker, QualificationProbeWorker, EnrichmentEmailWorker, EnrichmentVerifyWorker, ProfilingClassifyWorker, GeneratorBuildWorker, PreviewPublishWorker, MaintenancePurgeWorker, OutreachSendWorker, OutreachIngestWorker],
 })
 export class WorkersModule {}
