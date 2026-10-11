@@ -164,3 +164,16 @@ interface Paginated<T> { items: T[]; total: number; nextCursor: string|null }
 - `GET /q/:slug` → proposal page (HTML) ; `POST /q/:slug/accept` `{ tier }` → `303` to Stripe Checkout ; `GET /q/:slug/decline` → suppression + takedown + confirmation
 - `GET /t/:token` → click tracking redirect (302)
 - `POST /webhooks/stripe` (raw body, signature verified) ; `POST /webhooks/email` (provider bounce/complaint notifications)
+
+## Additions made during the build
+
+- `GET /admin/enrichment/report?campaignId=` → `{ adapters:[{name,tried,candidates,valid,hitRate}], adapterStatus:[{name,available,unavailableReason,costPerLookupUsd}], coverage:{leads,withValidContact,rate}, channels:[{channel,count}] }`
+- `GET /admin/review/counts` → `{ type, count }[]`
+- `PATCH /admin/outreach/mailboxes/:id` `{ dailyCap }` → Mailbox (server clamps to 50)
+- `POST /admin/outreach/domains/:id/pause` / `resume` (a burned domain cannot be resumed)
+- `POST /admin/outreach/leads/:id/stop`, `POST /admin/outreach/ingest/poll`
+- `POST /admin/preview/leads/:id/publish`, `POST /admin/preview/leads/:id/takedown`
+- `GET /admin/leads/:id/site/files/*path` — local build output before publishing
+- `POST /admin/conversion/quotes/:quoteId/accept` `{ tier? }` — manual acceptance (offline payment)
+- `GET /q/:slug/thanks` — Stripe success page
+- `GET /admin/ops/alerts` without `all=1` returns unacknowledged alerts only; `PUT /admin/compliance/jurisdictions/:cc` upserts.

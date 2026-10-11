@@ -23,6 +23,8 @@ import { GeneratorModule } from './modules/generator/generator.module';
 import { PreviewModule } from './modules/preview/preview.module';
 import { QuotingModule } from './modules/quoting/quoting.module';
 import { OutreachModule } from './modules/outreach/outreach.module';
+import { CrmAdminModule } from './modules/crm/crm-admin.module';
+import { ConversionModule } from './modules/conversion/conversion.module';
 
 @Module({
   imports: [
@@ -47,6 +49,8 @@ import { OutreachModule } from './modules/outreach/outreach.module';
     PreviewModule,
     QuotingModule,
     OutreachModule,
+    CrmAdminModule,
+    ConversionModule,
     ...(process.env.WORKERS === 'off' ? [] : [WorkersModule]),
   ],
   providers: [{ provide: APP_FILTER, useClass: DomainErrorFilter }],
