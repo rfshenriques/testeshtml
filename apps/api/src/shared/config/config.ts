@@ -21,6 +21,9 @@ export const EnvSchema = z.object({
   ANTHROPIC_API_KEY: str(''),
   LLM_MODEL: str('claude-sonnet-5-5'),
   LLM_DAILY_USD_CAP: num(25),
+  LLM_INPUT_USD_PER_MTOK: num(3),
+  LLM_OUTPUT_USD_PER_MTOK: num(15),
+  LLM_PROVIDER: z.enum(['anthropic', 'fake']).default('anthropic'),
 
   S3_ENDPOINT: str(''),
   S3_REGION: str('us-east-1'),
@@ -45,6 +48,10 @@ export const EnvSchema = z.object({
   EMAIL_VERIFY_PROVIDER: z.enum(['local', 'zerobounce', 'neverbounce', 'fake']).default('local'),
   EMAIL_VERIFY_API_KEY: str(''),
   SOCIAL_PROFILE_ADAPTER_ENABLED: bool.default(false),
+  DATA_PROVIDER: z.enum(['none', 'hunter', 'apollo']).default('none'),
+  DATA_PROVIDER_API_KEY: str(''),
+  ENRICHMENT_DAILY_LOOKUP_CAP: num(2000),
+  EMAIL_VERIFY_DAILY_CAP: num(2000),
 
   STRIPE_SECRET_KEY: str(''),
   STRIPE_WEBHOOK_SECRET: str(''),

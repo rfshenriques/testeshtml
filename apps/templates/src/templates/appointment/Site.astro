@@ -1,0 +1,71 @@
+---
+/** appointment: Hero, services + indicative pricing, team, booking CTA, hours+map, reviews (+ booking form). */
+import type { BuildInput } from '../../lib/input';
+import { pickImages, priceLevelLabel } from '../../lib/input';
+import MockupLayout from '../../layouts/MockupLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import Hero from '../../components/Hero.astro';
+import Section from '../../components/Section.astro';
+import Services from '../../components/Services.astro';
+import About from '../../components/About.astro';
+import WhyUs from '../../components/WhyUs.astro';
+import Img from '../../components/Img.astro';
+import HoursMap from '../../components/HoursMap.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import Reviews from '../../components/Reviews.astro';
+import ContactForm from '../../components/ContactForm.astro';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief } = input;
+const { gallery } = pickImages(input);
+const price = priceLevelLabel(brief.priceLevel);
+const nav = [
+  { href: '#services', label: 'Services' }, { href: '#team', label: 'Team' }, { href: '#visit', label: 'Hours & map' },
+  { href: '#reviews', label: 'Reviews' }, { href: '#book', label: 'Book' },
+];
+---
+<MockupLayout input={input}>
+  <SiteHeader input={input} nav={nav} ctaHref="#book" ctaLabel="Book an appointment" />
+  <main id="main">
+    <Hero input={input} ctaHref="#book" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative treatment room photo" />
+
+    <Section id="services" eyebrow="Services" heading="Treatments and services" lead={price ? `Indicative price level: ${price}. Exact pricing is confirmed when you book.` : 'Pricing is confirmed when you book.'}>
+      <Services copy={input.copy} layout="grid" priceLabel={price} priceNote="Pricing on request" />
+    </Section>
+
+    <Section id="team" tone="surface" eyebrow="Team" heading="Meet the team">
+      <About input={input} image={gallery[0]} imageLabel="Indicative team photo" factsHeading="Good to know" reverse />
+      <p class="muted team-note">Team photos, names and bios will be supplied by {brief.businessName}; none are shown in this mockup.</p>
+    </Section>
+
+    <Section id="why" eyebrow="Why choose us" heading="What to expect">
+      <WhyUs copy={input.copy} />
+    </Section>
+
+    <CtaBand input={input} id="cta" href="#book" eyebrow="Booking" />
+
+    <Section id="visit" tone="surface" eyebrow="Visit" heading="Hours and location">
+      <HoursMap input={input} />
+    </Section>
+
+    <Section id="reviews" eyebrow="Reviews" heading="What clients say">
+      <Reviews input={input} />
+    </Section>
+
+    <Section id="gallery" tone="surface" eyebrow="Gallery" heading="Inside the practice">
+      <ul class="grid">
+        {[0, 1, 2].map((i) => <li><Img image={gallery[i + 1]} label={`Indicative interior photo ${i + 1}`} width={800} height={600} /></li>)}
+      </ul>
+    </Section>
+
+    <Section id="book" eyebrow="Booking" heading="Request an appointment" lead={brief.phone ? `Call ${brief.phone} or send a booking request below.` : 'Send a booking request below.'}>
+      <ContactForm input={input} variant="booking" />
+    </Section>
+  </main>
+</MockupLayout>
+
+<style is:global>
+  [data-template="appointment"] .hero { background: linear-gradient(135deg, var(--hero-bg), color-mix(in srgb, var(--hero-bg) 75%, var(--accent))); }
+  [data-template="appointment"] .team-note { margin: 1.5rem 0 0; font-size: 0.95rem; }
+  [data-template="appointment"] .card { border-top: 4px solid var(--primary); }
+</style>

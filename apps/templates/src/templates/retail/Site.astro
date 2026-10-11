@@ -1,0 +1,80 @@
+---
+/** retail: Hero, categories, featured products, store info, hours+map (+ reviews, contact form). */
+import type { BuildInput } from '../../lib/input';
+import { pickImages, priceLevelLabel } from '../../lib/input';
+import MockupLayout from '../../layouts/MockupLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import Hero from '../../components/Hero.astro';
+import Section from '../../components/Section.astro';
+import Copy from '../../components/Copy.astro';
+import About from '../../components/About.astro';
+import Gallery from '../../components/Gallery.astro';
+import WhyUs from '../../components/WhyUs.astro';
+import HoursMap from '../../components/HoursMap.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import Reviews from '../../components/Reviews.astro';
+import ContactForm from '../../components/ContactForm.astro';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief, copy } = input;
+const { gallery } = pickImages(input);
+const price = priceLevelLabel(brief.priceLevel);
+const nav = [
+  { href: '#categories', label: 'Shop' }, { href: '#featured', label: 'Featured' }, { href: '#store', label: 'Store info' },
+  { href: '#visit', label: 'Hours & map' }, { href: '#contact', label: 'Contact' },
+];
+---
+<MockupLayout input={input}>
+  <SiteHeader input={input} nav={nav} ctaHref="#visit" ctaLabel="Visit the store" />
+  <main id="main">
+    <Hero input={input} ctaHref="#categories" layout="stacked" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative storefront photo" secondaryHref="#visit" secondaryLabel="Opening hours" />
+
+    <Section id="categories" eyebrow="Categories" heading="What you'll find in store">
+      <ul class="grid categories">
+        {copy.services.map((s, i) => (
+          <li class="card category">
+            <span class="category__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+            <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+          </li>
+        ))}
+      </ul>
+    </Section>
+
+    <Section id="featured" tone="surface" eyebrow="Featured" heading="Featured products" lead="Product photography and descriptions will be supplied by the store; these tiles are indicative.">
+      <Gallery images={gallery} slots={6} label="Indicative product photo" width={700} height={700} captions />
+    </Section>
+
+    <Section id="store" eyebrow="Store info" heading="About the store">
+      <About input={input} image={gallery[gallery.length - 1]} imageLabel="Indicative shop interior photo" factsHeading="Store details" />
+      {price && <p class="muted price-note">Indicative price level: <span class="badge">{price}</span></p>}
+    </Section>
+
+    <Section id="why" tone="surface" eyebrow="Why shop here" heading="Why customers come back">
+      <WhyUs copy={input.copy} />
+    </Section>
+
+    <Section id="visit" eyebrow="Visit" heading="Hours and location">
+      <HoursMap input={input} />
+    </Section>
+
+    <Section id="reviews" tone="surface" eyebrow="Reviews" heading="What shoppers say">
+      <Reviews input={input} />
+    </Section>
+
+    <CtaBand input={input} id="cta" href="#contact" eyebrow="Get in touch" />
+
+    <Section id="contact" eyebrow="Contact" heading="Ask about stock or orders">
+      <ContactForm input={input} variant="contact" />
+    </Section>
+  </main>
+</MockupLayout>
+
+<style is:global>
+  [data-template="retail"] .hero { background: linear-gradient(180deg, var(--hero-bg), color-mix(in srgb, var(--hero-bg) 85%, var(--primary))); }
+  [data-template="retail"] .category { position: relative; padding-top: 2.5rem; }
+  [data-template="retail"] .category__n { position: absolute; top: 1rem; right: 1.25rem; font-family: var(--font-label); font-size: 0.8rem; color: var(--accent); letter-spacing: 0.1em; }
+  [data-template="retail"] .price-note { margin: 1.5rem 0 0; }
+  [data-template="retail"] .card { border-radius: 16px; }
+  [data-template="retail"] .btn { border-radius: 999px; }
+</style>

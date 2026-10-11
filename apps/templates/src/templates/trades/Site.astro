@@ -1,0 +1,68 @@
+---
+/** trades: Hero with phone CTA, services grid, service area map, "why us", quote form, reviews. */
+import type { BuildInput } from '../../lib/input';
+import { pickImages } from '../../lib/input';
+import MockupLayout from '../../layouts/MockupLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import Hero from '../../components/Hero.astro';
+import Section from '../../components/Section.astro';
+import Services from '../../components/Services.astro';
+import About from '../../components/About.astro';
+import WhyUs from '../../components/WhyUs.astro';
+import HoursMap from '../../components/HoursMap.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import Reviews from '../../components/Reviews.astro';
+import ContactForm from '../../components/ContactForm.astro';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief } = input;
+const { gallery } = pickImages(input);
+const nav = [
+  { href: '#services', label: 'Services' }, { href: '#area', label: 'Service area' }, { href: '#why', label: 'Why us' },
+  { href: '#reviews', label: 'Reviews' }, { href: '#quote', label: 'Get a quote' },
+];
+---
+<MockupLayout input={input}>
+  <SiteHeader input={input} nav={nav} ctaHref="#quote" ctaLabel="Get a quote" />
+  <main id="main">
+    <Hero input={input} ctaHref="#quote" showPhone eyebrow={[brief.classification.subVertical, brief.city ? `Serving ${brief.city}` : null].filter(Boolean).join(' · ')} imageLabel="Indicative work-in-progress photo">
+      <div class="hero__meta" slot="meta">
+        {brief.rating !== null && <span>★ {brief.rating.toFixed(1)}{brief.reviewCount !== null ? ` · ${brief.reviewCount} reviews` : ''}</span>}
+        {brief.openingHours[0] && <span>{brief.openingHours[0].day}: {brief.openingHours[0].hours}</span>}
+      </div>
+    </Hero>
+
+    <Section id="services" eyebrow="Services" heading="What we do">
+      <Services copy={input.copy} layout="grid" />
+    </Section>
+
+    <Section id="area" tone="surface" eyebrow="Service area" heading={brief.city ? `Covering ${brief.city}` : 'Where we work'}>
+      <HoursMap input={input} serviceArea />
+    </Section>
+
+    <Section id="why" eyebrow="Why us" heading="Why choose us">
+      <div class="split">
+        <WhyUs copy={input.copy} variant="list" />
+        <About input={input} image={gallery[0]} imageLabel="Indicative van or team photo" factsHeading="The facts" />
+      </div>
+    </Section>
+
+    <CtaBand input={input} id="cta" href="#quote" eyebrow="Quotes" />
+
+    <Section id="quote" tone="surface" eyebrow="Quote" heading="Request a quote" lead={brief.phone ? `Call ${brief.phone} for urgent jobs, or describe the work below.` : 'Describe the work below and we will come back to you.'}>
+      <ContactForm input={input} variant="quote" />
+    </Section>
+
+    <Section id="reviews" eyebrow="Reviews" heading="What customers say">
+      <Reviews input={input} />
+    </Section>
+  </main>
+</MockupLayout>
+
+<style is:global>
+  [data-template="trades"] h1, [data-template="trades"] h2 { text-transform: uppercase; letter-spacing: -0.01em; }
+  [data-template="trades"] .hero { border-bottom: 8px solid var(--accent); }
+  [data-template="trades"] .card { border-left: 5px solid var(--accent); border-radius: 4px; }
+  [data-template="trades"] .btn { border-radius: 3px; }
+  [data-template="trades"] #why .split > :last-child .split { grid-template-columns: 1fr; }
+</style>

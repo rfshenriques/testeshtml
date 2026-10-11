@@ -1,0 +1,68 @@
+---
+/** hospitality: Hero, menu highlights, gallery, hours+map, reservations CTA, reviews (+ about, contact form). */
+import type { BuildInput } from '../../lib/input';
+import { pickImages, priceLevelLabel } from '../../lib/input';
+import MockupLayout from '../../layouts/MockupLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import Hero from '../../components/Hero.astro';
+import Section from '../../components/Section.astro';
+import Services from '../../components/Services.astro';
+import About from '../../components/About.astro';
+import Gallery from '../../components/Gallery.astro';
+import HoursMap from '../../components/HoursMap.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import Reviews from '../../components/Reviews.astro';
+import ContactForm from '../../components/ContactForm.astro';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief } = input;
+const { gallery } = pickImages(input);
+const price = priceLevelLabel(brief.priceLevel);
+const nav = [
+  { href: '#menu', label: 'Menu' }, { href: '#gallery', label: 'Gallery' }, { href: '#visit', label: 'Hours & map' },
+  { href: '#reviews', label: 'Reviews' }, { href: '#reserve', label: 'Reserve' },
+];
+---
+<MockupLayout input={input}>
+  <SiteHeader input={input} nav={nav} ctaHref="#reserve" ctaLabel="Reserve a table" />
+  <main id="main">
+    <Hero input={input} ctaHref="#reserve" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative dining room photo">
+      <div class="hero__meta" slot="meta">
+        {brief.rating !== null && <span>★ {brief.rating.toFixed(1)}{brief.reviewCount !== null ? ` (${brief.reviewCount} reviews)` : ''}</span>}
+        {price && <span>{price}</span>}
+        {brief.openingHours[0] && <span>{brief.openingHours[0].day}: {brief.openingHours[0].hours}</span>}
+      </div>
+    </Hero>
+
+    <Section id="menu" eyebrow="Menu highlights" heading="What we serve" lead={brief.editorialSummary ?? undefined}>
+      <Services copy={input.copy} layout="menu" priceLabel={price} priceNote="Prices on request" />
+    </Section>
+
+    <Section id="about" tone="surface">
+      <About input={input} image={gallery[0]} imageLabel="Indicative kitchen photo" />
+    </Section>
+
+    <Section id="gallery" eyebrow="Gallery" heading="A look inside">
+      <Gallery images={gallery.slice(1)} slots={6} label="Indicative food photo" />
+    </Section>
+
+    <Section id="visit" tone="surface" eyebrow="Visit" heading="Hours and location">
+      <HoursMap input={input} />
+    </Section>
+
+    <CtaBand input={input} id="cta" href="#reserve" eyebrow="Reservations" />
+
+    <Section id="reviews" eyebrow="Reviews" heading="What guests say">
+      <Reviews input={input} />
+    </Section>
+
+    <Section id="reserve" tone="surface" eyebrow="Reservations" heading="Reserve a table" lead={brief.phone ? `Call ${brief.phone} or send a reservation enquiry below.` : 'Send a reservation enquiry below.'}>
+      <ContactForm input={input} variant="booking" submitLabel="Send reservation enquiry" />
+    </Section>
+  </main>
+</MockupLayout>
+
+<style is:global>
+  [data-template="hospitality"] .hero { background: linear-gradient(160deg, var(--hero-bg), color-mix(in srgb, var(--hero-bg) 80%, var(--primary))); }
+  [data-template="hospitality"] .wordmark--sm { font-size: 1.6rem; }
+</style>

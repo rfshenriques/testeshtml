@@ -1,0 +1,82 @@
+---
+/** fitness: Hero, classes/timetable, membership tiers, trial CTA, gallery (+ hours+map, reviews, trial form). */
+import type { BuildInput } from '../../lib/input';
+import { pickImages } from '../../lib/input';
+import MockupLayout from '../../layouts/MockupLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import Hero from '../../components/Hero.astro';
+import Section from '../../components/Section.astro';
+import Services from '../../components/Services.astro';
+import About from '../../components/About.astro';
+import WhyUs from '../../components/WhyUs.astro';
+import Copy from '../../components/Copy.astro';
+import Gallery from '../../components/Gallery.astro';
+import HoursMap from '../../components/HoursMap.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import Reviews from '../../components/Reviews.astro';
+import ContactForm from '../../components/ContactForm.astro';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief, copy } = input;
+const { gallery } = pickImages(input);
+const nav = [
+  { href: '#classes', label: 'Classes' }, { href: '#timetable', label: 'Timetable' }, { href: '#membership', label: 'Membership' },
+  { href: '#gallery', label: 'Gallery' }, { href: '#trial', label: 'Free trial' },
+];
+---
+<MockupLayout input={input}>
+  <SiteHeader input={input} nav={nav} ctaHref="#trial" ctaLabel="Book a trial" />
+  <main id="main">
+    <Hero input={input} ctaHref="#trial" layout="stacked" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative training floor photo" secondaryHref="#classes" secondaryLabel="See classes" />
+
+    <Section id="classes" eyebrow="Classes" heading="Classes and training">
+      <Services copy={input.copy} layout="grid" />
+    </Section>
+
+    <Section id="timetable" tone="surface" eyebrow="Timetable" heading="Opening times" lead={`Class times will be published by ${brief.businessName}; opening hours below are from the business listing.`}>
+      <HoursMap input={input} />
+    </Section>
+
+    <Section id="membership" eyebrow="Membership" heading="Membership">
+      <div class="split">
+        <div class="card membership">
+          <span class="eyebrow">Plans</span>
+          <h3><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h3>
+          <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+          <p class="ph">Membership options and pricing to be supplied by {brief.businessName}</p>
+          <a class="btn btn-primary" href="#trial"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+        </div>
+        <WhyUs copy={input.copy} variant="list" />
+      </div>
+    </Section>
+
+    <CtaBand input={input} id="cta" href="#trial" eyebrow="Trial" />
+
+    <Section id="gallery" eyebrow="Gallery" heading="Inside the gym">
+      <Gallery images={gallery} slots={6} label="Indicative gym photo" />
+    </Section>
+
+    <Section id="about" tone="surface">
+      <About input={input} image={gallery[0]} imageLabel="Indicative coaching photo" factsHeading="The facts" reverse />
+    </Section>
+
+    <Section id="reviews" eyebrow="Reviews" heading="What members say">
+      <Reviews input={input} />
+    </Section>
+
+    <Section id="trial" tone="dark" eyebrow="Free trial" heading="Request a trial session">
+      <ContactForm input={input} variant="trial" />
+    </Section>
+  </main>
+</MockupLayout>
+
+<style is:global>
+  [data-template="fitness"] h1, [data-template="fitness"] h2, [data-template="fitness"] .wordmark { text-transform: uppercase; letter-spacing: -0.02em; }
+  [data-template="fitness"] .hero { background: linear-gradient(120deg, var(--hero-bg) 60%, color-mix(in srgb, var(--hero-bg) 70%, var(--primary))); }
+  [data-template="fitness"] .btn { border-radius: 0; text-transform: uppercase; letter-spacing: 0.06em; }
+  [data-template="fitness"] .card { border-radius: 0; border-top: 6px solid var(--accent); }
+  [data-template="fitness"] .membership .ph { display: block; margin: 1rem 0 1.25rem; }
+  [data-template="fitness"] #trial .form input, [data-template="fitness"] #trial .form textarea { border-color: var(--border); }
+  [data-template="fitness"] #trial .form__note { color: var(--on-hero); background: rgba(255,255,255,0.08); border-color: var(--on-hero); }
+  [data-template="fitness"] #trial .btn-primary { background: var(--on-hero); color: var(--hero-bg); border-color: var(--on-hero); }
+</style>

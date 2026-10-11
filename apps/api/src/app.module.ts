@@ -15,6 +15,10 @@ import { TerritoryModule } from './modules/territory/territory.module';
 import { DiscoveryModule } from './modules/discovery/discovery.module';
 import { QualificationModule } from './modules/qualification/qualification.module';
 import { WorkersModule } from './workers/workers.module';
+import { LlmModule } from './shared/llm/llm.module';
+import { EnrichmentModule } from './modules/enrichment/enrichment.module';
+import { ProfilingModule } from './modules/profiling/profiling.module';
+import { ReviewModule } from './modules/review/review.module';
 
 @Module({
   imports: [
@@ -31,6 +35,10 @@ import { WorkersModule } from './workers/workers.module';
     TerritoryModule,
     DiscoveryModule,
     QualificationModule,
+    LlmModule,
+    EnrichmentModule,
+    ProfilingModule,
+    ReviewModule,
     ...(process.env.WORKERS === 'off' ? [] : [WorkersModule]),
   ],
   providers: [{ provide: APP_FILTER, useClass: DomainErrorFilter }],
