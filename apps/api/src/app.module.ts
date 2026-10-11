@@ -19,6 +19,8 @@ import { LlmModule } from './shared/llm/llm.module';
 import { EnrichmentModule } from './modules/enrichment/enrichment.module';
 import { ProfilingModule } from './modules/profiling/profiling.module';
 import { ReviewModule } from './modules/review/review.module';
+import { GeneratorModule } from './modules/generator/generator.module';
+import { PreviewModule } from './modules/preview/preview.module';
 
 @Module({
   imports: [
@@ -39,6 +41,8 @@ import { ReviewModule } from './modules/review/review.module';
     EnrichmentModule,
     ProfilingModule,
     ReviewModule,
+    GeneratorModule,
+    PreviewModule,
     ...(process.env.WORKERS === 'off' ? [] : [WorkersModule]),
   ],
   providers: [{ provide: APP_FILTER, useClass: DomainErrorFilter }],

@@ -281,6 +281,7 @@ model GeneratedSite {
   previewUrl   String?
   previewSlug  String    @unique
   objectPrefix String?
+  buildPath    String?
   expiresAt    DateTime
   takenDownAt  DateTime?
   publishedAt  DateTime?

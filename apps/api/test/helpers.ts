@@ -63,7 +63,7 @@ export async function makeLead(prisma: PrismaService, overrides: Partial<{ count
       city: 'Valletta', reviewCount: overrides.reviewCount ?? 60, rating: 4.6, websiteStatus: overrides.websiteStatus ?? 'none', stage: 'enriched', primaryType: 'dentist', score: 0.8,
       contacts: {
         create: {
-          email: overrides.email ?? `info-${placeId}@example-dental.com`, emailType: 'role_generic', source: overrides.source === undefined ? 'registry:mbr' : (overrides.source as string),
+          email: overrides.email ?? `info@${placeId.replace(/[^a-z0-9]/gi, '')}-dental.com`, emailType: 'role_generic', source: overrides.source === undefined ? 'registry:mbr' : (overrides.source as string),
           sourceUrl: 'https://registry.mbr.mt/x', confidence: 0.9, verification: overrides.verification ?? 'valid', verifiedAt: new Date(), isPrimary: true,
         },
       },

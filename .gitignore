@@ -13,3 +13,4 @@ apps/templates/dist/
 .work/
 tmp/
 .DS_Store
+dump.rdb

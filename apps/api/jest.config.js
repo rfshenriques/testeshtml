@@ -16,4 +16,5 @@ module.exports = {
   globalSetup: '<rootDir>/test/global-setup.ts',
   testTimeout: 30000,
   forceExit: true,
+  maxWorkers: 1,
 };

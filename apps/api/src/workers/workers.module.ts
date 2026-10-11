@@ -9,10 +9,15 @@ import { ProfilingModule } from '../modules/profiling/profiling.module';
 import { EnrichmentEmailWorker } from './enrichment.email.worker';
 import { EnrichmentVerifyWorker } from './enrichment.verify.worker';
 import { ProfilingClassifyWorker } from './profiling.classify.worker';
+import { GeneratorModule } from '../modules/generator/generator.module';
+import { PreviewModule } from '../modules/preview/preview.module';
+import { GeneratorBuildWorker } from './generator.build.worker';
+import { PreviewPublishWorker } from './preview.publish.worker';
+import { MaintenancePurgeWorker } from './maintenance.purge.worker';
 
 /** One processor per queue (spec §2.2 workers/). Imported by AppModule unless WORKERS=off. */
 @Module({
-  imports: [DiscoveryModule, QualificationModule, EnrichmentModule, ProfilingModule],
-  providers: [DiscoveryTileWorker, DiscoveryDetailsWorker, QualificationProbeWorker, EnrichmentEmailWorker, EnrichmentVerifyWorker, ProfilingClassifyWorker],
+  imports: [DiscoveryModule, QualificationModule, EnrichmentModule, ProfilingModule, GeneratorModule, PreviewModule],
+  providers: [DiscoveryTileWorker, DiscoveryDetailsWorker, QualificationProbeWorker, EnrichmentEmailWorker, EnrichmentVerifyWorker, ProfilingClassifyWorker, GeneratorBuildWorker, PreviewPublishWorker, MaintenancePurgeWorker],
 })
 export class WorkersModule {}

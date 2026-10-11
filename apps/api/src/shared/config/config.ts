@@ -25,6 +25,10 @@ export const EnvSchema = z.object({
   LLM_OUTPUT_USD_PER_MTOK: num(15),
   LLM_PROVIDER: z.enum(['anthropic', 'fake']).default('anthropic'),
 
+  STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+  LOCAL_STORAGE_DIR: str('.work/storage'),
+  TEMPLATES_DIR: str(''),
+  BUILD_WORK_DIR: str('.work/builds'),
   S3_ENDPOINT: str(''),
   S3_REGION: str('us-east-1'),
   S3_BUCKET_PREVIEWS: str('sitewright-previews'),

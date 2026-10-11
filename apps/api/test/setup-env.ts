@@ -35,3 +35,7 @@ process.env.AGENCY_URL = 'https://example.test';
 process.env.KILL_SWITCH = 'false';
 process.env.LOG_LEVEL = 'silent';
 process.env.WORKERS = process.env.WORKERS ?? 'off';
+process.env.STORAGE_DRIVER = 'local';
+process.env.LOCAL_STORAGE_DIR = process.env.LOCAL_STORAGE_DIR ?? `/tmp/sitewright-test-${process.pid}/storage`;
+process.env.BUILD_WORK_DIR = process.env.BUILD_WORK_DIR ?? `/tmp/sitewright-test-${process.pid}/builds`;
+process.env.PREVIEW_TTL_DAYS = '30';
