@@ -20,7 +20,7 @@ export const storageProvider = {
   inject: [ENV],
   useFactory: (env: Env): ObjectStorage =>
     env.STORAGE_DRIVER === 's3'
-      ? new S3Storage({ endpoint: env.S3_ENDPOINT, region: env.S3_REGION, bucket: env.S3_BUCKET_PREVIEWS, accessKeyId: env.S3_ACCESS_KEY_ID, secretAccessKey: env.S3_SECRET_ACCESS_KEY })
+      ? new S3Storage({ endpoint: env.S3_ENDPOINT, region: env.S3_REGION, bucket: env.S3_BUCKET_PREVIEWS, accessKeyId: env.S3_ACCESS_KEY_ID, secretAccessKey: env.S3_SECRET_ACCESS_KEY, forcePathStyle: env.S3_URL_STYLE === 'path' })
       : new LocalStorage(env.LOCAL_STORAGE_DIR),
 };
 

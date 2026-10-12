@@ -61,12 +61,12 @@ export class LocalStorage implements ObjectStorage {
 /** S3 / R2 / MinIO storage with per-object noindex + cache headers. */
 export class S3Storage implements ObjectStorage {
   private client: any;
-  constructor(private readonly opts: { endpoint: string; region: string; bucket: string; accessKeyId: string; secretAccessKey: string }) {}
+  constructor(private readonly opts: { endpoint: string; region: string; bucket: string; accessKeyId: string; secretAccessKey: string; forcePathStyle?: boolean }) {}
   private sdk() {
     if (!this.client) {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { S3Client } = require('@aws-sdk/client-s3');
-      this.client = new S3Client({ region: this.opts.region, endpoint: this.opts.endpoint || undefined, forcePathStyle: !!this.opts.endpoint, credentials: { accessKeyId: this.opts.accessKeyId, secretAccessKey: this.opts.secretAccessKey } });
+      this.client = new S3Client({ region: this.opts.region, endpoint: this.opts.endpoint || undefined, forcePathStyle: this.opts.forcePathStyle ?? !!this.opts.endpoint, credentials: { accessKeyId: this.opts.accessKeyId, secretAccessKey: this.opts.secretAccessKey } });
     }
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     return { client: this.client, cmd: require('@aws-sdk/client-s3') };

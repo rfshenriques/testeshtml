@@ -31,6 +31,7 @@ export const EnvSchema = z.object({
   BUILD_WORK_DIR: str('.work/builds'),
   S3_ENDPOINT: str(''),
   S3_REGION: str('us-east-1'),
+  S3_URL_STYLE: z.enum(['path', 'virtual-host']).default('path'),
   S3_BUCKET_PREVIEWS: str('sitewright-previews'),
   S3_ACCESS_KEY_ID: str(''),
   S3_SECRET_ACCESS_KEY: str(''),
