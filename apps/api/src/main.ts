@@ -14,7 +14,8 @@ import { ENV, Env } from './shared/config/config.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true, rawBody: true });
   app.useLogger(app.get(Logger));
-  app.use(helmet({ contentSecurityPolicy: false }));
+  // Previews, photos and proposals are embedded cross-origin (separate preview domain, sandboxed thumbnails): allow it.
+  app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' }, crossOriginEmbedderPolicy: false }));
   app.use(cookieParser());
   app.use(json({ limit: '2mb' }));
   app.use(urlencoded({ extended: true }));
