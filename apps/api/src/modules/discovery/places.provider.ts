@@ -34,6 +34,11 @@ export const placesClientProvider: Provider = {
   provide: PLACES_CLIENT,
   inject: [ENV, REDIS, CostLedgerService, QuotaService],
   useFactory: (env: Env, redis: Redis, costs: CostLedgerService, quotas: QuotaService): PlacesApi => {
+    if (!env.GOOGLE_MAPS_API_KEY) {
+      // Boot without a key (console, previews, outreach all work); discovery fails loudly and clearly.
+      const missing = async () => { throw new Error('GOOGLE_MAPS_API_KEY is not set: discovery cannot call the Places API'); };
+      return { searchNearby: missing, details: missing };
+    }
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const pkg = require('@sitewright/places-client');
     const client = new pkg.PlacesClient({

@@ -174,7 +174,7 @@ export class MailboxService {
 
   async list(now = new Date()) {
     const boxes = await this.prisma.mailbox.findMany({ orderBy: { address: 'asc' }, include: { domainRef: true } });
-    return Promise.all(boxes.map(async (mb) => ({ ...mb, warmup: MailboxService.warmupCap(mb.warmupStartedAt, now), effectiveCap: this.effectiveCap(mb, now), usedToday: await this.usedToday(mb, now), reputation: await this.reputation(mb.id, now) })));
+    return Promise.all(boxes.map(async (mb) => ({ ...mb, warmupStage: MailboxService.warmupCap(mb.warmupStartedAt, now).week - 1, warmup: MailboxService.warmupCap(mb.warmupStartedAt, now), effectiveCap: this.effectiveCap(mb, now), usedToday: await this.usedToday(mb, now), reputation: await this.reputation(mb.id, now) })));
   }
 
   async capacity(now = new Date()) {

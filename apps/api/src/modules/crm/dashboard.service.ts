@@ -33,7 +33,7 @@ export class DashboardService {
         list: campaigns.map((c) => ({ id: c.id, name: c.name, status: c.status, countryCode: c.countryCode, spendUsd: Number(c.spendUsd), budgetUsdCap: Number(c.budgetUsdCap), leads: leadCounts.find((l) => l.campaignId === c.id)?._count._all ?? 0 })),
       },
       funnel: funnel.map((f) => ({ stage: f.stage, count: f._count._all })),
-      sends: { today: sentToday, cap: Math.min(cap, this.env.MAX_SENDS_PER_DAY_GLOBAL), perMailbox: boxes.map((b) => ({ id: b.id, address: b.address, status: b.status, sentToday: b.usedToday, dailyCap: b.effectiveCap, warmupStage: b.warmup.week })) },
+      sends: { today: sentToday, cap: Math.min(cap, this.env.MAX_SENDS_PER_DAY_GLOBAL), perMailbox: boxes.map((b) => ({ id: b.id, address: b.address, status: b.status, sentToday: b.usedToday, dailyCap: b.effectiveCap, warmupStage: b.warmup.week - 1 })) },
       replyQueue, reviewQueue, approvalQueue, alerts, economics, viewsToday,
     };
   }

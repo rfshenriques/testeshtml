@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import { loadDotenv } from './shared/config/load-dotenv';
+loadDotenv();
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { runCli } from './cli/commands';

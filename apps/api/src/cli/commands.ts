@@ -7,6 +7,7 @@ import { QualificationService } from '../modules/qualification/qualification.ser
 import { PrismaService } from '../shared/prisma/prisma.service';
 import { CostLedgerService } from '../modules/ops/cost-ledger.service';
 import { RetentionService } from '../modules/compliance/retention.service';
+import { demoSeed } from './demo-seed';
 
 export type CliCommand = (app: INestApplicationContext, args: string[]) => Promise<number>;
 
@@ -75,6 +76,13 @@ export const commands: Record<string, { description: string; run: CliCommand }> 
       const c = await campaigns.get(campaignId);
       console.log(`\nspend: $${Number(c.spendUsd).toFixed(2)} / cap $${Number(c.budgetUsdCap).toFixed(2)}  status=${c.status}`);
       console.log('costs:', await costs.totalsByCategory(campaignId));
+      return 0;
+    },
+  },
+  'demo-seed': {
+    description: 'Populate the database with a realistic demo campaign (no external calls); run once on a dev database',
+    run: async (app) => {
+      console.log(await demoSeed(app));
       return 0;
     },
   },

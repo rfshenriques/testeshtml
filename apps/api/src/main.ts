@@ -1,4 +1,6 @@
 import 'reflect-metadata';
+import { loadDotenv } from './shared/config/load-dotenv';
+loadDotenv();
 import { NestFactory } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 import helmet from 'helmet';

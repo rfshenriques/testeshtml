@@ -41,7 +41,11 @@ export class OutreachAdminController {
   @Get('outreach/sequence') sequenceConfig() { return this.sequence.config(); }
   @Put('outreach/sequence') updateSequence(@Body() body: { steps: unknown }, @Req() req: any) { return this.sequence.updateConfig(body.steps, req.actor); }
 
-  @Get('outreach/domains') domains() { return this.prisma.sendingDomain.findMany({ include: { mailboxes: true }, orderBy: { domain: 'asc' } }); }
+  @Get('outreach/domains')
+  async domains() {
+    const rows = await this.prisma.sendingDomain.findMany({ include: { mailboxes: true }, orderBy: { domain: 'asc' } });
+    return rows.map((d) => ({ ...d, mailboxes: d.mailboxes.map((m) => ({ ...m, warmupStage: MailboxService.warmupCap(m.warmupStartedAt).week - 1 })) }));
+  }
   @Post('outreach/domains') addDomain(@Body() body: { domain: string }, @Req() req: any) { return this.mailboxes.addDomain(body.domain, req.actor); }
   @Post('outreach/domains/:id/pause') async pauseDomain(@Param('id') id: string) { await this.prisma.sendingDomain.update({ where: { id }, data: { status: 'paused' } }); return { ok: true }; }
   @Post('outreach/domains/:id/resume') async resumeDomain(@Param('id') id: string) {
