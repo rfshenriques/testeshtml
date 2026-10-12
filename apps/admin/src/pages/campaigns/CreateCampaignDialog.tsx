@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { X } from 'lucide-react';
 import { CampaignGeometrySchema, type CampaignGeometry } from '@sitewright/shared-types';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
-import { Button, Dialog, Field, Input, Textarea, Switch, Note, Loading, Badge } from '@/components/ui';
+import { Button, Dialog, Field, Input, Textarea, Switch, Note, Loading, SegmentedControl } from '@/components/ui';
 import type { PlaceTypeTiers } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -26,23 +27,24 @@ function PlaceTypePicker({ tiers, selected, onChange }: { tiers: PlaceTypeTiers[
   };
   const TIER_NOTE = { A: 'Highest willingness to pay; professional and trades.', B: 'Hospitality, beauty, fitness, specialist retail.', C: 'Low ticket; include only with a cheap starter tier.' };
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {(['A', 'B', 'C'] as const).map((tier) => {
         const all = tiers[tier].every((t) => selected.has(t));
         const some = tiers[tier].some((t) => selected.has(t));
         return (
-          <fieldset key={tier} className="rounded-md border p-2">
-            <legend className="flex items-center gap-2 px-1 text-xs font-medium">
-              Tier {tier} <span className="font-normal text-muted-fg">{TIER_NOTE[tier]}</span>
-              <Button type="button" size="sm" variant="ghost" onClick={() => setTier(tier, !all)}>
+          <fieldset key={tier}>
+            <legend className="mb-2 flex w-full items-center gap-3">
+              <span className="text-sm font-medium">Tier {tier}</span>
+              <span className="text-sm text-muted-fg">{TIER_NOTE[tier]}</span>
+              <Button type="button" variant="link" className="ml-auto text-sm" onClick={() => setTier(tier, !all)}>
                 {all ? 'Clear tier' : some ? 'Select rest' : 'Select tier'}
               </Button>
             </legend>
             <div className="flex flex-wrap gap-1.5">
               {tiers[tier].map((t) => (
-                <label key={t} className={cn('cursor-pointer rounded-full border px-2 py-0.5 text-xs select-none', selected.has(t) ? 'border-primary bg-accent text-primary' : 'hover:bg-muted')}>
+                <label key={t} className={cn('cursor-pointer rounded-full border px-2.5 py-0.5 text-sm select-none transition-colors', selected.has(t) ? 'border-primary bg-[color-mix(in_oklab,var(--primary)_10%,transparent)] text-primary' : 'text-muted-fg hover:bg-muted hover:text-fg')}>
                   <input type="checkbox" className="sr-only" checked={selected.has(t)} onChange={() => toggle(t)} />
-                  {t}
+                  {t.replace(/_/g, ' ')}
                 </label>
               ))}
             </div>
@@ -148,27 +150,34 @@ export function CreateCampaignDialog({ open, onClose, onCreated }: { open: boole
         </>
       }
     >
-      <form id="create-campaign" onSubmit={submit} className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-3">
+      <form id="create-campaign" onSubmit={submit} className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Name" htmlFor="c-name" className="sm:col-span-2">
             <Input id="c-name" data-autofocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Dublin dentists Q4" />
           </Field>
-          <Field label="Country (ISO-2)" htmlFor="c-cc" hint="Must have a jurisdiction policy or the gate fails closed.">
-            <Input id="c-cc" value={countryCode} onChange={(e) => setCountryCode(e.target.value.toUpperCase())} maxLength={2} placeholder="IE" />
+          <Field label="Country (ISO-2)" htmlFor="c-cc" hint="Needs a jurisdiction policy or the gate fails closed.">
+            <Input id="c-cc" className="uppercase" value={countryCode} onChange={(e) => setCountryCode(e.target.value.toUpperCase())} maxLength={2} placeholder="IE" />
           </Field>
         </div>
 
-        <fieldset className="space-y-2">
-          <legend className="text-xs font-medium text-muted-fg">Territory</legend>
-          <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Geometry type">
-            {(['bbox', 'circle', 'polygon', 'cities'] as GeomKind[]).map((k) => (
-              <Button key={k} type="button" size="sm" variant={kind === k ? 'default' : 'outline'} role="radio" aria-checked={kind === k} onClick={() => setKind(k)}>
-                {k === 'bbox' ? 'Bounding box' : k === 'circle' ? 'Point + radius' : k === 'polygon' ? 'GeoJSON polygon' : 'City list'}
-              </Button>
-            ))}
+        <fieldset className="space-y-3 border-t pt-5">
+          <legend className="float-left mb-3 text-base font-semibold">Territory</legend>
+          <div className="clear-both">
+            <SegmentedControl
+              aria-label="Geometry type"
+              size="md"
+              value={kind}
+              onChange={(k) => setKind(k)}
+              options={[
+                { value: 'bbox', label: 'Bounding box' },
+                { value: 'circle', label: 'Point + radius' },
+                { value: 'polygon', label: 'GeoJSON polygon' },
+                { value: 'cities', label: 'City list' },
+              ]}
+            />
           </div>
           {kind === 'bbox' && (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {num(bbox.minLng, (v) => setBbox({ ...bbox, minLng: v }), 'bb-minlng', 'Min lng (W)')}
               {num(bbox.minLat, (v) => setBbox({ ...bbox, minLat: v }), 'bb-minlat', 'Min lat (S)')}
               {num(bbox.maxLng, (v) => setBbox({ ...bbox, maxLng: v }), 'bb-maxlng', 'Max lng (E)')}
@@ -176,7 +185,7 @@ export function CreateCampaignDialog({ open, onClose, onCreated }: { open: boole
             </div>
           )}
           {kind === 'circle' && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {num(circle.lat, (v) => setCircle({ ...circle, lat: v }), 'ci-lat', 'Centre lat')}
               {num(circle.lng, (v) => setCircle({ ...circle, lng: v }), 'ci-lng', 'Centre lng')}
               {num(circle.radiusM, (v) => setCircle({ ...circle, radiusM: v }), 'ci-r', 'Radius (m)')}
@@ -184,27 +193,27 @@ export function CreateCampaignDialog({ open, onClose, onCreated }: { open: boole
           )}
           {kind === 'polygon' && (
             <Field label="GeoJSON Polygon (or Feature)" htmlFor="poly">
-              <Textarea id="poly" className="font-mono text-xs" rows={6} value={polygon} onChange={(e) => setPolygon(e.target.value)} placeholder='{"type":"Polygon","coordinates":[[[lng,lat],...]]}' />
+              <Textarea id="poly" className="font-mono text-sm" rows={6} value={polygon} onChange={(e) => setPolygon(e.target.value)} placeholder='{"type":"Polygon","coordinates":[[[lng,lat],...]]}' />
             </Field>
           )}
           {kind === 'cities' && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {cities.map((c, i) => (
-                <div key={i} className="grid grid-cols-[1fr_90px_90px_90px_auto] items-end gap-2">
+                <div key={i} className="grid grid-cols-[1fr_90px_90px_90px_auto] items-end gap-3">
                   <Field label={i === 0 ? 'City' : ''} htmlFor={`city-${i}`}>
-                    <Input id={`city-${i}`} value={c.name} onChange={(e) => setCities(cities.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+                    <Input id={`city-${i}`} aria-label={i === 0 ? undefined : 'City'} value={c.name} onChange={(e) => setCities(cities.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
                   </Field>
                   <Field label={i === 0 ? 'Lat' : ''} htmlFor={`city-lat-${i}`}>
-                    <Input id={`city-lat-${i}`} value={c.lat} onChange={(e) => setCities(cities.map((x, j) => (j === i ? { ...x, lat: e.target.value } : x)))} />
+                    <Input id={`city-lat-${i}`} aria-label={i === 0 ? undefined : 'Lat'} value={c.lat} onChange={(e) => setCities(cities.map((x, j) => (j === i ? { ...x, lat: e.target.value } : x)))} />
                   </Field>
                   <Field label={i === 0 ? 'Lng' : ''} htmlFor={`city-lng-${i}`}>
-                    <Input id={`city-lng-${i}`} value={c.lng} onChange={(e) => setCities(cities.map((x, j) => (j === i ? { ...x, lng: e.target.value } : x)))} />
+                    <Input id={`city-lng-${i}`} aria-label={i === 0 ? undefined : 'Lng'} value={c.lng} onChange={(e) => setCities(cities.map((x, j) => (j === i ? { ...x, lng: e.target.value } : x)))} />
                   </Field>
                   <Field label={i === 0 ? 'Radius m' : ''} htmlFor={`city-r-${i}`}>
-                    <Input id={`city-r-${i}`} value={c.radiusM} onChange={(e) => setCities(cities.map((x, j) => (j === i ? { ...x, radiusM: e.target.value } : x)))} />
+                    <Input id={`city-r-${i}`} aria-label={i === 0 ? undefined : 'Radius m'} value={c.radiusM} onChange={(e) => setCities(cities.map((x, j) => (j === i ? { ...x, radiusM: e.target.value } : x)))} />
                   </Field>
-                  <Button type="button" variant="ghost" size="sm" aria-label="Remove city" disabled={cities.length === 1} onClick={() => setCities(cities.filter((_, j) => j !== i))}>
-                    ×
+                  <Button type="button" variant="ghost" size="icon" className="text-muted-fg" aria-label="Remove city" disabled={cities.length === 1} onClick={() => setCities(cities.filter((_, j) => j !== i))}>
+                    <X className="size-4" aria-hidden />
                   </Button>
                 </div>
               ))}
@@ -215,21 +224,22 @@ export function CreateCampaignDialog({ open, onClose, onCreated }: { open: boole
           )}
         </fieldset>
 
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 text-xs font-medium text-muted-fg">
-            Place types <Badge>{types.size} selected</Badge>
+        <div className="space-y-4 border-t pt-5">
+          <div className="flex items-baseline gap-3">
+            <span className="text-base font-semibold">Place types</span>
+            <span className="text-sm text-muted-fg tabular-nums">{types.size} selected</span>
           </div>
           {placeTypes.isLoading ? <Loading /> : placeTypes.data ? <PlaceTypePicker tiers={placeTypes.data.tiers} selected={types} onChange={setTypes} /> : <Note tone="warning">Could not load place types.</Note>}
-          <Field label="Excluded types (comma separated, optional)" htmlFor="c-excl">
+          <Field label="Excluded types" htmlFor="c-excl" hint="Comma separated, optional.">
             <Input id="c-excl" value={excluded} onChange={(e) => setExcluded(e.target.value)} placeholder="car_dealer, lodging" />
           </Field>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-4">
+        <div className="grid gap-4 border-t pt-5 sm:grid-cols-4">
           <Field label="Budget cap (USD)" htmlFor="c-budget" hint="Hard stop for Places + LLM spend.">
             <Input id="c-budget" inputMode="decimal" value={budget} onChange={(e) => setBudget(e.target.value)} />
           </Field>
-          <Field label="Max leads (optional)" htmlFor="c-max">
+          <Field label="Max leads" htmlFor="c-max" hint="Optional.">
             <Input id="c-max" inputMode="numeric" value={maxLeads} onChange={(e) => setMaxLeads(e.target.value)} />
           </Field>
           <Field label="Language override" htmlFor="c-lang" hint="Defaults to the jurisdiction language.">
@@ -241,11 +251,7 @@ export function CreateCampaignDialog({ open, onClose, onCreated }: { open: boole
             </div>
           </Field>
         </div>
-        {error && (
-          <Note tone="critical" className="text-sm">
-            {error}
-          </Note>
-        )}
+        {error && <Note tone="critical">{error}</Note>}
       </form>
     </Dialog>
   );

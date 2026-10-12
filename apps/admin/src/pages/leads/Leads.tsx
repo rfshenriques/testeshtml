@@ -126,13 +126,13 @@ export function LeadsPage() {
       col.accessor('stage', { header: 'Stage', size: 128, cell: (c) => <StageLabel stage={c.getValue()} /> }),
       col.accessor('score', { id: 'score', header: 'Score', size: 76, enableSorting: true, cell: (c) => <span className="tabular-nums">{c.getValue() == null ? '—' : c.getValue()!.toFixed(2)}</span> }),
       col.accessor('legalGate', { header: 'Gate', size: 100, cell: (c) => <GateLabel gate={c.getValue()} reason={c.row.original.legalGateReason} /> }),
-      col.accessor('websiteStatus', { header: 'Website', size: 100, cell: (c) => <span className="text-muted-fg">{c.getValue().replace(/_/g, ' ')}</span> }),
-      col.accessor('vertical', { header: 'Vertical', size: 100, cell: (c) => <span className="truncate">{c.getValue() ?? '—'}</span> }),
+      col.accessor('websiteStatus', { header: 'Website', size: 96, cell: (c) => <span className="text-muted-fg">{c.getValue().replace(/_/g, ' ')}</span> }),
+      col.accessor('vertical', { header: 'Vertical', size: 92, cell: (c) => <span className="truncate">{c.getValue() ?? '—'}</span> }),
       col.accessor('countryCode', { header: 'CC', size: 48 }),
       col.accessor((r) => r.primaryContact, {
         id: 'contact',
         header: 'Primary contact',
-        size: 240,
+        size: 260,
         cell: (c) => {
           const v = c.getValue();
           const phone = c.row.original.phone;
@@ -226,7 +226,7 @@ export function LeadsPage() {
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-fg" aria-hidden />
-          <Input aria-label="Search leads" className="w-60 pl-9" placeholder="Search name or place id" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input aria-label="Search leads" className="w-44 pl-9" placeholder="Search leads" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select aria-label="Campaign" className="w-44" value={filters.campaignId ?? ''} onChange={(e) => setFilter('campaignId', e.target.value)}>
           <option value="">All campaigns</option>
@@ -266,8 +266,8 @@ export function LeadsPage() {
             </option>
           ))}
         </Select>
-        <Input aria-label="Country code" className="w-16" placeholder="CC" maxLength={2} value={filters.countryCode ?? ''} onChange={(e) => setFilter('countryCode', e.target.value.toUpperCase())} />
-        <Input aria-label="Minimum score" className="w-28" type="number" step="0.05" min={0} max={1} placeholder="Min score" value={filters.minScore ?? ''} onChange={(e) => setFilter('minScore', e.target.value)} />
+        <Input aria-label="Country code" className="w-14 px-2 text-center uppercase" placeholder="CC" maxLength={2} value={filters.countryCode ?? ''} onChange={(e) => setFilter('countryCode', e.target.value.toUpperCase())} />
+        <Input aria-label="Minimum score" className="w-28 no-spin" type="number" step="0.05" min={0} max={1} placeholder="Min score" value={filters.minScore ?? ''} onChange={(e) => setFilter('minScore', e.target.value)} />
         {activeFilters.length > 0 && (
           <Button variant="link" onClick={clearFilters} className="ml-1 text-sm">
             Clear filters
@@ -314,7 +314,7 @@ export function LeadsPage() {
                     className={cn('t-label flex h-10 shrink-0 items-center px-3 first:pl-4', numeric && 'justify-end')}
                   >
                     {sortable ? (
-                      <button type="button" className="inline-flex items-center gap-1 rounded hover:text-fg focus-visible:outline-2 focus-visible:outline-ring" onClick={h.column.getToggleSortingHandler()}>
+                      <button type="button" className="t-label inline-flex items-center gap-1 rounded hover:text-fg focus-visible:outline-2 focus-visible:outline-ring" onClick={h.column.getToggleSortingHandler()}>
                         {flexRender(h.column.columnDef.header, h.getContext())}
                         {dir === 'desc' ? <ArrowDown className="size-3" aria-hidden /> : dir === 'asc' ? <ArrowUp className="size-3" aria-hidden /> : <ArrowUpDown className="size-3 opacity-50" aria-hidden />}
                       </button>

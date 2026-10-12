@@ -10,7 +10,7 @@ import { api, ApiError } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
 import { cn } from '@/lib/utils';
-import { Badge, Button, ConfirmDialog, Dialog, EmptyState, ErrorState, Loading, Note, Section, Skeleton } from '@/components/ui';
+import { Badge, Button, ConfirmDialog, Dialog, EmptyState, ErrorState, Loading, Note, SubSection, Divider, Skeleton, SegmentedControl } from '@/components/ui';
 import type { Brand, ColourScheme, GeneratedSite, LeadDetail, SiteImage, SiteVariants, Typography } from '@/lib/types';
 
 export interface StyleCombo { templateId: string; colourScheme: ColourScheme; typography: Typography }
@@ -76,7 +76,7 @@ export function StylesTab({ d, refresh }: { d: LeadDetail; refresh: () => void }
   if (variants.isError) {
     const err = variants.error;
     if (err instanceof ApiError && err.status === 422) {
-      return <EmptyState title="Profile the lead first" description={<>{err.message || 'The style gallery needs a classification.'} Run <strong>Profile (classify)</strong> under Notes &amp; actions; the gallery unlocks at stage profiled or later.</>} />;
+      return <EmptyState title="Profile the lead first" description={<>{err.message || 'The style gallery needs a classification.'} Run <strong>Profile (classify)</strong> under Actions; the gallery unlocks at stage profiled or later.</>} />;
     }
     return <ErrorState error={err} onRetry={() => variants.refetch()} />;
   }
@@ -84,8 +84,9 @@ export function StylesTab({ d, refresh }: { d: LeadDetail; refresh: () => void }
   if (!v) return <Loading />;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <BrandHeader brand={v.brand} images={v.images} />
+      <Divider />
       {adopting && (
         <Note tone="warning">
           Rebuilding and republishing <strong>{d.lead.businessName}</strong> with <span className="font-mono">{describe(adopting.combo)}</span>… this usually takes under a minute. The gallery stays usable meanwhile.
@@ -99,31 +100,23 @@ export function StylesTab({ d, refresh }: { d: LeadDetail; refresh: () => void }
               Open the new preview <ExternalLink className="size-3" aria-hidden />
             </a>
           ) : (
-            <>Built but not published yet — use “Publish preview” under Notes &amp; actions.</>
+            <>Built but not published yet — use “Publish preview” under Actions.</>
           )}
         </Note>
       )}
-      <Section
+      <SubSection
         title="Style gallery"
-        description="Every template family × colour scheme, built with this lead's real copy and photos. Thumbnails render as you scroll (first build of a combination takes ~5 s)."
+        description="Every template family × colour scheme, built with this lead's real copy and photos. Thumbnails render as you scroll."
         actions={<TypographyToggle value={typo} options={v.typography} onChange={setTypography} />}
       >
         <StylesGrid leadId={id} businessName={d.lead.businessName} variants={v} typography={typo} adopting={adopting?.combo ?? null} onAdopt={(combo) => rebuild.mutateAsync(combo)} />
-      </Section>
+      </SubSection>
     </div>
   );
 }
 
 function TypographyToggle({ value, options, onChange }: { value: Typography; options: Typography[]; onChange: (t: Typography) => void }) {
-  return (
-    <div role="radiogroup" aria-label="Typography" className="inline-flex h-8 items-center gap-1 rounded-md bg-muted p-1 text-xs">
-      {options.map((t) => (
-        <button key={t} type="button" role="radio" aria-checked={value === t} onClick={() => onChange(t)} className={cn('h-6 rounded px-2 font-medium transition-colors', value === t ? 'bg-card text-fg shadow-xs' : 'text-muted-fg hover:text-fg')}>
-          <span className="font-mono">{t}</span> {TYPOGRAPHY_LABEL[t] ?? t}
-        </button>
-      ))}
-    </div>
-  );
+  return <SegmentedControl aria-label="Typography" value={value} onChange={onChange} options={options.map((t) => ({ value: t, label: TYPOGRAPHY_LABEL[t] ?? t }))} />;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -131,13 +124,13 @@ function TypographyToggle({ value, options, onChange }: { value: Typography; opt
 
 export function BrandHeader({ brand, images }: { brand: Brand | null; images: SiteImage[] }) {
   return (
-    <Section title="Brand & photos" description="From the business's Google listing. Shown with attribution; replaced by the client's own photography after signing.">
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+    <SubSection title="Brand & photos" description="From the business's Google listing. Shown with attribution; replaced by the client's own photography after signing.">
+      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <div>
-          <div className="text-xs font-medium text-muted-fg">Palette {brand ? <Badge variant="outline" className="ml-1">from {brand.source === 'photos' ? 'their photos' : 'operator'}</Badge> : null}</div>
+          <div className="t-label">Palette{brand ? <span className="ml-2 normal-case tracking-normal">from {brand.source === 'photos' ? 'their photos' : 'operator'}</span> : null}</div>
           {brand ? (
             <div className="mt-2 space-y-2">
-              <div className="flex flex-wrap gap-3 text-xs">
+              <div className="flex flex-wrap gap-4 text-sm">
                 <Swatch colour={brand.primary} label="primary" large />
                 <Swatch colour={brand.accent} label="accent" large />
                 {brand.heroBg && <Swatch colour={brand.heroBg} label="hero bg" large />}
@@ -151,19 +144,19 @@ export function BrandHeader({ brand, images }: { brand: Brand | null; images: Si
               )}
             </div>
           ) : (
-            <p className="mt-2 text-xs text-muted-fg">No palette yet: the listing has no usable photos to derive colours from, so “From their photos” would render the same as scheme A.</p>
+            <p className="mt-2 text-sm text-muted-fg">No palette yet: the listing has no usable photos to derive colours from, so “From their photos” would render the same as scheme A.</p>
           )}
         </div>
         <div>
-          <div className="text-xs font-medium text-muted-fg">Photos ({images.length})</div>
+          <div className="t-label">Photos ({images.length})</div>
           {images.length === 0 ? (
-            <p className="mt-2 text-xs text-muted-fg">No photos on the listing; the mockup uses neutral placeholders.</p>
+            <p className="mt-2 text-sm text-muted-fg">No photos on the listing; the mockup uses neutral placeholders.</p>
           ) : (
             <ul className="mt-2 flex gap-2 overflow-x-auto pb-1">
               {images.map((img, i) => (
                 <li key={`${img.url}-${i}`} className="w-36 shrink-0">
                   <img src={img.url} alt={img.alt} loading="lazy" className="h-24 w-36 rounded-md border bg-muted object-cover" />
-                  <div className="mt-1 truncate text-[11px] text-muted-fg" title={img.credit ?? undefined}>
+                  <div className="mt-1 truncate text-xs text-muted-fg" title={img.credit ?? undefined}>
                     {img.credit ?? 'No attribution supplied'}
                     {img.source ? ` · ${img.source.replace(/_/g, ' ')}` : ''}
                   </div>
@@ -173,7 +166,7 @@ export function BrandHeader({ brand, images }: { brand: Brand | null; images: Si
           )}
         </div>
       </div>
-    </Section>
+    </SubSection>
   );
 }
 
@@ -184,7 +177,7 @@ function Swatch({ colour, label, large }: { colour: string; label?: string; larg
       {label ? (
         <span>
           <span className="block">{label}</span>
-          <span className="block font-mono text-[11px] text-muted-fg">{colour}</span>
+          <span className="block font-mono text-xs text-muted-fg">{colour}</span>
         </span>
       ) : (
         <span className="sr-only">{colour}</span>
@@ -202,7 +195,7 @@ export function StylesGrid({ leadId, businessName, variants, typography, adoptin
   const combos: StyleCombo[] = variants.templates.flatMap((t) => variants.colourSchemes.map((colourScheme) => ({ templateId: t.id, colourScheme, typography })));
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="styles-grid">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" data-testid="styles-grid">
         {combos.map((combo) => (
           <VariantCard
             key={`${combo.templateId}-${combo.colourScheme}-${combo.typography}`}
@@ -328,32 +321,31 @@ function VariantCard({ leadId, combo, brandAvailable, current, adopting, onOpen,
       data-disabled={disabled || undefined}
       aria-disabled={disabled || undefined}
       aria-label={label}
-      className={cn('flex flex-col overflow-hidden rounded-lg border bg-card text-card-fg shadow-xs', current && 'border-primary ring-2 ring-primary/40', disabled && 'opacity-70')}
+      className={cn('flex flex-col overflow-hidden rounded-lg border bg-card text-card-fg', current && 'border-primary ring-2 ring-primary/30', disabled && 'opacity-60')}
     >
-      <div className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+      <div className="flex items-center justify-between gap-2 px-4 py-3">
         <div className="min-w-0">
-          <div className="truncate font-medium">{combo.templateId}</div>
-          <div className="truncate text-muted-fg">{SCHEME_LABEL[combo.colourScheme]}</div>
+          <div className="truncate text-base font-medium">{combo.templateId}</div>
+          <div className="truncate text-sm text-muted-fg">{SCHEME_LABEL[combo.colourScheme]}</div>
         </div>
         <div className="flex shrink-0 gap-1">
-          {current && <Badge variant="primary">Current</Badge>}
+          {current && <Badge variant="info">Current</Badge>}
           {adopting && <Badge variant="warning">Rebuilding…</Badge>}
-          {combo.colourScheme === 'brand' && !disabled && <Badge variant="outline">brand</Badge>}
         </div>
       </div>
       <div className="border-y">
         {disabled ? (
-          <div className="flex items-center justify-center p-4 text-center text-xs text-muted-fg" style={{ aspectRatio: `${PAGE_W} / ${PAGE_H}` }}>
+          <div className="flex items-center justify-center p-4 text-center text-sm text-muted-fg" style={{ aspectRatio: `${PAGE_W} / ${PAGE_H}` }}>
             No palette could be derived from the listing's photos, so this would look identical to Scheme A.
           </div>
         ) : !inView || q.isPending ? (
           <div className="relative" style={{ aspectRatio: `${PAGE_W} / ${PAGE_H}` }} role="status" aria-label={`Loading ${label}`}>
             <Skeleton className="absolute inset-0 rounded-none" />
-            {q.isFetching && <Loading label="Building…" className="absolute inset-x-0 bottom-0 justify-center p-2 text-xs" />}
+            {q.isFetching && <Loading label="Building…" className="absolute inset-x-0 bottom-0 justify-center p-2" />}
           </div>
         ) : q.isError ? (
-          <div className="flex flex-col items-center justify-center gap-2 p-4 text-center text-xs" style={{ aspectRatio: `${PAGE_W} / ${PAGE_H}` }}>
-            <span className="text-critical">{q.error instanceof Error ? q.error.message : 'Build failed'}</span>
+          <div className="flex flex-col items-center justify-center gap-2 p-4 text-center text-sm" style={{ aspectRatio: `${PAGE_W} / ${PAGE_H}` }}>
+            <span className="text-bad-fg">{q.error instanceof Error ? q.error.message : 'Build failed'}</span>
             <Button size="sm" variant="outline" onClick={() => q.refetch()}>
               Retry
             </Button>
@@ -362,8 +354,8 @@ function VariantCard({ leadId, combo, brandAvailable, current, adopting, onOpen,
           <ScaledPage html={q.data ?? ''} title={`${label} thumbnail`} />
         )}
       </div>
-      <div className="flex items-center justify-between gap-2 px-2 py-2">
-        <Button size="sm" variant="ghost" disabled={disabled} onClick={onOpen} aria-label={`Open full size: ${label}`}>
+      <div className="flex items-center justify-between gap-2 px-3 py-2.5">
+        <Button size="sm" variant="ghost" className="text-muted-fg" disabled={disabled} onClick={onOpen} aria-label={`Open full size: ${label}`}>
           <Maximize2 className="size-3.5" aria-hidden /> Open full size
         </Button>
         <Button size="sm" variant={current ? 'outline' : 'default'} disabled={disabled || current || adopting} onClick={onUse} aria-label={`Use this style: ${label}`}>
@@ -392,13 +384,16 @@ function VariantModalBody({ leadId, combo, current, device, setDevice, onClose, 
       description={<span className="font-mono text-xs">{describe(combo)}</span>}
       footer={
         <>
-          <div role="radiogroup" aria-label="Device" className="mr-auto inline-flex h-8 items-center gap-1 rounded-md bg-muted p-1 text-xs">
-            <button type="button" role="radio" aria-checked={device === 'desktop'} onClick={() => setDevice('desktop')} className={cn('inline-flex h-6 items-center gap-1 rounded px-2 font-medium', device === 'desktop' ? 'bg-card text-fg shadow-xs' : 'text-muted-fg hover:text-fg')}>
-              <Monitor className="size-3.5" aria-hidden /> Desktop
-            </button>
-            <button type="button" role="radio" aria-checked={device === 'mobile'} onClick={() => setDevice('mobile')} className={cn('inline-flex h-6 items-center gap-1 rounded px-2 font-medium', device === 'mobile' ? 'bg-card text-fg shadow-xs' : 'text-muted-fg hover:text-fg')}>
-              <Smartphone className="size-3.5" aria-hidden /> Mobile (390px)
-            </button>
+          <div className="mr-auto">
+            <SegmentedControl
+              aria-label="Device"
+              value={device}
+              onChange={setDevice}
+              options={[
+                { value: 'desktop', label: <><Monitor className="size-3.5" aria-hidden /> Desktop</> },
+                { value: 'mobile', label: <><Smartphone className="size-3.5" aria-hidden /> Mobile (390px)</> },
+              ]}
+            />
           </div>
           <Button variant="outline" onClick={onClose}>
             Close
@@ -415,7 +410,7 @@ function VariantModalBody({ leadId, combo, current, device, setDevice, onClose, 
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : (
         <div className={cn('flex justify-center', device === 'mobile' && 'bg-muted/40 py-3')}>
-          <iframe title={`${label} full size`} srcDoc={q.data} sandbox="allow-same-origin" className={cn('h-[70vh] rounded-md border bg-white', device === 'mobile' ? 'w-[390px] max-w-full' : 'w-full')} />
+          <iframe title={`${label} full size`} srcDoc={q.data} sandbox="allow-same-origin" className={cn('h-[70vh] rounded-lg border bg-white', device === 'mobile' ? 'w-[390px] max-w-full' : 'w-full')} />
         </div>
       )}
     </Dialog>

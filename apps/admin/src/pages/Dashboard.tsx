@@ -96,7 +96,7 @@ export function DashboardPage() {
                   {funnel.every((f) => f.count === 0) ? (
                     <EmptyState title="No leads yet" description="Start a campaign to populate the funnel." />
                   ) : (
-                    <ChartBox height={Math.max(220, funnel.length * 30 + 30)}>
+                    <ChartBox height={Math.max(200, funnel.length * 26 + 28)}>
                       <ResponsiveContainer>
                         <BarChart data={funnel} layout="vertical" margin={{ left: 0, right: 40, top: 4, bottom: 0 }} barCategoryGap={6}>
                           <CartesianGrid horizontal={false} stroke={C.grid} strokeDasharray="0" />

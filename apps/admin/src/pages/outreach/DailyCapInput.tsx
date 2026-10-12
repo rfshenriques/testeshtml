@@ -32,7 +32,7 @@ export function DailyCapInput({ value, warmupStage, onSave, saving, id }: { valu
           onBlur={() => setV(String(n))}
           aria-describedby={`${id}-ceiling`}
         />
-        <span id={`${id}-ceiling`} className="text-sm text-muted-fg tabular-nums">
+        <span id={`${id}-ceiling`} className="text-sm whitespace-nowrap text-muted-fg tabular-nums">
           / {MAILBOX_DAILY_CEILING}
         </span>
         <Button size="sm" variant="outline" disabled={n === value || saving} loading={saving} onClick={() => onSave(n)}>
@@ -40,7 +40,7 @@ export function DailyCapInput({ value, warmupStage, onSave, saving, id }: { valu
         </Button>
       </div>
       {aboveWarmup && (
-        <span className="max-w-48 text-xs leading-4 text-warn-fg" role="status">
+        <span className="max-w-44 text-xs leading-4 text-warn-fg" role="status">
           Above the warmup schedule for week {warmupStage + 1} ({scheduleCap}/day); the server will enforce the schedule.
         </span>
       )}

@@ -25,7 +25,7 @@ describe('KillSwitchControl', () => {
 
   it('shows the state and keeps the engage button disabled until the phrase is typed', () => {
     renderIt(false);
-    expect(screen.getByText(/kill switch: off/i)).toBeTruthy();
+    expect(screen.getByText(/kill switch off/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /engage kill switch/i }));
     const dialog = screen.getByRole('dialog');
     const confirm = within(dialog).getByRole('button', { name: /^engage kill switch$/i });

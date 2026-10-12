@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useSearchParams } from 'react-router';
 import { CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { MAILBOX_DAILY_CEILING, WARMUP_SCHEDULE, WARMUP_REAL_SHARE, MAX_TOUCHES_PER_BUSINESS, SequenceConfigSchema, type SequenceStep } from '@sitewright/shared-types';
-import { X } from 'lucide-react';
+import { X, Pause, Play } from 'lucide-react';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
@@ -180,13 +180,12 @@ function Mailboxes() {
                   <Table bare>
                     <THead>
                       <tr>
-                        <TH>Address</TH>
-                        <TH>Status</TH>
+                        <TH>Mailbox</TH>
                         <TH>Warmup</TH>
-                        <TH className="min-w-56">Sent today</TH>
+                        <TH className="min-w-36">Sent today</TH>
                         <TH>Daily cap</TH>
-                        <TH numeric>Bounce 7d / 30d</TH>
-                        <TH numeric>Complaint 7d / 30d</TH>
+                        <TH numeric>Bounce 7d</TH>
+                        <TH numeric>Complaint 7d</TH>
                         <TH numeric>Reply rate</TH>
                         <TH />
                       </tr>
@@ -199,13 +198,13 @@ function Mailboxes() {
                           <TR key={m.id}>
                             <TD>
                               <div className="font-medium">{m.address}</div>
-                              {m.pauseReason && <CellSub className="text-bad-fg">{m.pauseReason}</CellSub>}
+                              <CellSub className="flex items-center gap-2">
+                                <StatusLabel status={m.status} className="gap-1.5" />
+                                {m.pauseReason && <span className="text-bad-fg">· {m.pauseReason}</span>}
+                              </CellSub>
                             </TD>
                             <TD>
-                              <StatusLabel status={m.status} />
-                            </TD>
-                            <TD>
-                              <div className="tabular-nums">
+                              <div className="whitespace-nowrap tabular-nums">
                                 Week {m.warmupStage + 1} · {stageCap}/day
                               </div>
                               <CellSub>since {fmtDay(m.warmupStartedAt)}</CellSub>
@@ -216,13 +215,27 @@ function Mailboxes() {
                             <TD>
                               <DailyCapInput id={`cap-${m.id}`} value={m.dailyCap} warmupStage={m.warmupStage} saving={setCap.isPending && setCap.variables?.id === m.id} onSave={(cap) => setCap.mutate({ id: m.id, cap })} />
                             </TD>
-                            <TD numeric className={cn(rep && (rep.bounceRate7d > 0.03 || rep.bounceRate30d > 0.03) && 'font-medium text-bad-fg')}>
-                              {rep ? `${fmtPct(rep.bounceRate7d)} / ${fmtPct(rep.bounceRate30d)}` : '—'}
+                            <TD numeric className={cn('whitespace-nowrap', rep && (rep.bounceRate7d > 0.03 || rep.bounceRate30d > 0.03) && 'font-medium text-bad-fg')}>
+                              {rep ? (
+                                <>
+                                  {fmtPct(rep.bounceRate7d)}
+                                  <CellSub>30d {fmtPct(rep.bounceRate30d)}</CellSub>
+                                </>
+                              ) : (
+                                '—'
+                              )}
                             </TD>
-                            <TD numeric className={cn(rep && (rep.complaintRate7d > 0.001 || rep.complaintRate30d > 0.001) && 'font-medium text-bad-fg')}>
-                              {rep ? `${fmtPct(rep.complaintRate7d, 2)} / ${fmtPct(rep.complaintRate30d, 2)}` : '—'}
+                            <TD numeric className={cn('whitespace-nowrap', rep && (rep.complaintRate7d > 0.001 || rep.complaintRate30d > 0.001) && 'font-medium text-bad-fg')}>
+                              {rep ? (
+                                <>
+                                  {fmtPct(rep.complaintRate7d, 2)}
+                                  <CellSub>30d {fmtPct(rep.complaintRate30d, 2)}</CellSub>
+                                </>
+                              ) : (
+                                '—'
+                              )}
                             </TD>
-                            <TD numeric className={cn(rep && rep.sent30d >= 200 && rep.replyRate < 0.01 && 'font-medium text-warn-fg')}>
+                            <TD numeric className={cn('whitespace-nowrap', rep && rep.sent30d >= 200 && rep.replyRate < 0.01 && 'font-medium text-warn-fg')}>
                               {rep ? (
                                 <>
                                   {fmtPct(rep.replyRate)}
@@ -234,12 +247,12 @@ function Mailboxes() {
                             </TD>
                             <TD className="text-right">
                               {m.status === 'paused' ? (
-                                <Button size="sm" variant="outline" loading={resume.isPending && resume.variables === m.id} onClick={() => resume.mutate(m.id)}>
-                                  Resume
+                                <Button size="iconSm" variant="outline" aria-label={`Resume ${m.address}`} title="Resume mailbox" loading={resume.isPending && resume.variables === m.id} onClick={() => resume.mutate(m.id)}>
+                                  {!(resume.isPending && resume.variables === m.id) && <Play className="size-4" aria-hidden />}
                                 </Button>
                               ) : m.status !== 'burned' ? (
-                                <Button size="sm" variant="outline" onClick={() => setPausing(repByMailbox.get(m.id) ?? ({ ...m, reputation: undefined as never } as MailboxWithReputation))}>
-                                  Pause
+                                <Button size="iconSm" variant="outline" aria-label={`Pause ${m.address}`} title="Pause mailbox" onClick={() => setPausing(repByMailbox.get(m.id) ?? ({ ...m, reputation: undefined as never } as MailboxWithReputation))}>
+                                  <Pause className="size-4" aria-hidden />
                                 </Button>
                               ) : null}
                             </TD>
@@ -298,8 +311,6 @@ function rateSeries(s: ReputationSeries) {
   }));
 }
 
-const refLabel = (value: string, position: 'insideTopRight' | 'insideBottomRight') => ({ value, fontSize: 12, fill: C.critical, position });
-
 function Reputation() {
   const [days, setDays] = React.useState<7 | 30>(30);
   const q = useQuery({ queryKey: [...keys.outreach, 'reputation', days], queryFn: () => api.outreach.reputation(days), refetchInterval: 60_000 });
@@ -320,28 +331,28 @@ function Reputation() {
               return (
                 <Section key={s.mailboxId} title={s.address} description={`${fmtNum(s.series.reduce((a, d) => a + d.sent, 0))} sent in ${days} days`}>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <ChartBox title="Bounce & complaint rate" height={180}>
+                    <ChartBox title="Bounce & complaint rate" right={<span className="text-xs text-muted-fg">guardrails 3% · 0.1%</span>} height={180}>
                       <ResponsiveContainer>
                         <LineChart data={data} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke={C.grid} />
                           <XAxis dataKey="day" tickFormatter={fmtDay} {...axisProps} minTickGap={24} />
                           <YAxis tickFormatter={(v: number) => `${(v * 100).toFixed(1)}%`} {...axisProps} axisLine={false} width={44} domain={[0, (max: number) => Math.max(0.035, max * 1.2)]} />
                           <Tooltip {...tooltipStyle} labelFormatter={(l) => fmtDay(String(l))} formatter={(v, n) => [fmtPct(Number(v), 2), String(n)]} />
-                          <ReferenceLine y={0.03} stroke={C.critical} strokeDasharray="4 3" label={refLabel('3% bounce', 'insideTopRight')} />
-                          <ReferenceLine y={0.001} stroke={C.critical} strokeDasharray="2 3" label={refLabel('0.1% complaint', 'insideBottomRight')} />
+                          <ReferenceLine y={0.03} stroke={C.critical} strokeDasharray="4 3" />
+                          <ReferenceLine y={0.001} stroke={C.critical} strokeDasharray="2 3" />
                           <Line type="monotone" dataKey="bounce" name="bounce" stroke={C.s1} strokeWidth={2} dot={false} isAnimationActive={false} />
                           <Line type="monotone" dataKey="complaint" name="complaint" stroke={C.s2} strokeWidth={2} dot={false} isAnimationActive={false} />
                         </LineChart>
                       </ResponsiveContainer>
                     </ChartBox>
-                    <ChartBox title="Reply rate" height={180}>
+                    <ChartBox title="Reply rate" right={<span className="text-xs text-muted-fg">1% floor after 200 sends</span>} height={180}>
                       <ResponsiveContainer>
                         <LineChart data={data} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                           <CartesianGrid vertical={false} stroke={C.grid} />
                           <XAxis dataKey="day" tickFormatter={fmtDay} {...axisProps} minTickGap={24} />
-                          <YAxis tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`} {...axisProps} axisLine={false} width={36} />
+                          <YAxis tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`} {...axisProps} axisLine={false} width={44} />
                           <Tooltip {...tooltipStyle} labelFormatter={(l) => fmtDay(String(l))} formatter={(v, n) => [n === 'sent' ? fmtNum(Number(v)) : fmtPct(Number(v)), String(n)]} />
-                          <ReferenceLine y={0.01} stroke={C.critical} strokeDasharray="4 3" label={refLabel('1% floor', 'insideTopRight')} />
+                          <ReferenceLine y={0.01} stroke={C.critical} strokeDasharray="4 3" />
                           <Line type="monotone" dataKey="reply" name="reply" stroke={C.s3} strokeWidth={2} dot={false} isAnimationActive={false} />
                         </LineChart>
                       </ResponsiveContainer>

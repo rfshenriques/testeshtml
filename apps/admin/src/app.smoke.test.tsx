@@ -70,20 +70,26 @@ describe('console smoke', () => {
   it('renders the dashboard with the kill switch in the top bar and the 50/day ceiling', async () => {
     mount('/dashboard');
     await waitFor(() => expect(screen.getByText('Dublin dentists')).toBeTruthy());
-    expect(screen.getByTestId('kill-switch').textContent).toMatch(/kill switch: off/i);
+    expect(screen.getByTestId('kill-switch').textContent).toMatch(/kill switch off/i);
     expect(screen.getAllByText(/ceiling 50\/mailbox/i).length).toBeGreaterThan(0);
     expect(screen.getByText('Cost per lead')).toBeTruthy();
   });
 
-  it('renders the compliance screen with prior-consent countries marked BLOCKED and no delete control', async () => {
+  it('renders the compliance screen with prior-consent countries marked blocked and no delete control', async () => {
     mount('/compliance');
-    await waitFor(() => expect(screen.getByText(/BLOCKED/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/^Blocked \(consent\)/)).toBeTruthy());
     expect(screen.queryByRole('button', { name: /delete/i })).toBeNull();
   });
 
   it('renders the leads table with a row and the outreach mailbox screen', async () => {
     mount('/leads');
     await waitFor(() => expect(screen.getByText('Acme Dental')).toBeTruthy());
+    // stage is a status dot + plain text, not a badge
+    const stage = screen.getByTestId('stage-label');
+    expect(stage.textContent).toBe('quoted');
+    expect(stage.getAttribute('data-tone')).toBe('info');
+    expect(stage.querySelector('.rounded-full')).not.toBeNull();
+    expect(stage.className).not.toMatch(/rounded-full/);
     cleanup();
     mount('/outreach?tab=mailboxes');
     await waitFor(() => expect(screen.getByText('anna@get-agency.com')).toBeTruthy());

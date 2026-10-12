@@ -14,7 +14,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
 Textarea.displayName = 'Textarea';
 
 export const Select = React.forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(({ className, children, ...props }, ref) => (
-  <select ref={ref} className={cn('flex pr-8 pl-3', control, className)} {...props}>
+  <select ref={ref} className={cn('ui-select flex pr-9 pl-3', control, className)} {...props}>
     {children}
   </select>
 ));

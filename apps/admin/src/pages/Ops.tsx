@@ -8,7 +8,6 @@ import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
 import { cn, fmtNum, fmtUsd } from '@/lib/utils';
 import { PageHeader, QueryState, Section, Button, Progress, Table, THead, TBody, TR, TH, TD, CellSub, EmptyState, Checkbox, ConfirmDialog, Note, StatusLabel } from '@/components/ui';
-import { KillSwitchControl } from '@/components/layout/KillSwitch';
 import { C, axisProps, tooltipStyle, ChartBox } from '@/components/charts/common';
 import { AlertList, EconomicsTiles } from './Dashboard';
 
@@ -36,7 +35,7 @@ export function OpsPage() {
 
   return (
     <>
-      <PageHeader title="Ops" description="Cost ledger, queue depths, API quotas and alerts. Refreshes every 15 seconds." actions={<QueryState query={q}>{(o) => <KillSwitchControl engaged={o.killSwitch} />}</QueryState>} />
+      <PageHeader title="Ops" description="Cost ledger, queue depths, API quotas and alerts. Refreshes every 15 seconds. The kill switch lives in the top bar." />
       <QueryState query={q}>
         {(o) => {
           const totalCost = o.costs.byCategory.reduce((s, c) => s + c.usd, 0);
@@ -98,7 +97,7 @@ export function OpsPage() {
                           <BarChart data={byCampaign} layout="vertical" margin={{ left: 0, right: 48, top: 4, bottom: 0 }} barCategoryGap={6}>
                             <CartesianGrid horizontal={false} stroke={C.grid} />
                             <XAxis type="number" {...axisProps} axisLine={false} tickFormatter={(v: number) => `$${v}`} />
-                            <YAxis type="category" dataKey="name" width={148} {...axisProps} axisLine={false} interval={0} />
+                            <YAxis type="category" dataKey="name" width={168} {...axisProps} axisLine={false} interval={0} tickFormatter={(v: string) => (v.length > 22 ? `${v.slice(0, 21)}…` : v)} />
                             <Tooltip {...tooltipStyle} formatter={(v) => [fmtUsd(Number(v)), 'USD']} />
                             <Bar dataKey="usd" fill={C.s1} radius={[0, 4, 4, 0]} maxBarSize={16} isAnimationActive={false} />
                           </BarChart>

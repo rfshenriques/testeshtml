@@ -31,7 +31,8 @@ export function Dialog({ open, onClose, title, description, children, footer, si
     if (!open) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const node = ref.current;
-    const focusable = node?.querySelector<HTMLElement>('[data-autofocus], input, select, textarea, button:not([data-close])');
+    // Side sheets focus the sheet itself so the first tab/button does not light up on open; modals focus their first control.
+    const focusable = side === 'right' ? node?.querySelector<HTMLElement>('[data-autofocus]') : node?.querySelector<HTMLElement>('[data-autofocus], input, select, textarea, button:not([data-close])');
     (focusable ?? node)?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -60,7 +61,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
       document.body.style.overflow = prevOverflow;
       previouslyFocused?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open, onClose, side]);
 
   if (!open) return null;
   const isSheet = side === 'right';

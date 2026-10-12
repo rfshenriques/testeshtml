@@ -2,11 +2,11 @@ import * as React from 'react';
 import type { Tile, TileStatus } from '@/lib/types';
 
 const FILL: Record<TileStatus, string> = {
-  pending: 'var(--muted-fg)',
-  searching: 'var(--series-4)',
-  saturated: 'var(--series-2)',
+  pending: 'var(--neutral-dot)',
+  searching: 'var(--series-2)',
+  saturated: 'var(--series-4)',
   done: 'var(--series-1)',
-  failed: 'var(--critical)',
+  failed: 'var(--bad-dot)',
 };
 
 /** Simple SVG map: tile bboxes normalised into the viewport, no map library. */
@@ -36,7 +36,7 @@ export function TileMap({ tiles, width = 640, height = 400 }: { tiles: Tile[]; w
   const ordered = [...tiles].sort((a, b) => a.depth - b.depth);
   return (
     <div className="relative">
-      <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full rounded-md border bg-muted/30" role="img" aria-label={`Tile map: ${tiles.length} tiles`}>
+      <svg viewBox={`0 0 ${width} ${height}`} className="h-auto w-full rounded-lg border bg-muted/40" role="img" aria-label={`Tile map: ${tiles.length} tiles`}>
         {ordered.map((t) => {
           const x1 = x(t.bbox[0]), x2 = x(t.bbox[2]), y1 = y(t.bbox[3]), y2 = y(t.bbox[1]);
           return (
@@ -46,7 +46,7 @@ export function TileMap({ tiles, width = 640, height = 400 }: { tiles: Tile[]; w
               y={y1}
               width={Math.max(1, x2 - x1)}
               height={Math.max(1, y2 - y1)}
-              fill={FILL[t.status] ?? 'var(--muted-fg)'}
+              fill={FILL[t.status] ?? 'var(--neutral-dot)'}
               fillOpacity={t.status === 'pending' ? 0.25 : 0.55}
               stroke="var(--card)"
               strokeWidth={1}
@@ -63,10 +63,10 @@ export function TileMap({ tiles, width = 640, height = 400 }: { tiles: Tile[]; w
           );
         })}
       </svg>
-      <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-fg">
+      <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-fg">
         {(Object.keys(FILL) as TileStatus[]).map((s) => (
-          <span key={s} className="flex items-center gap-1">
-            <span className="inline-block size-3 rounded-sm" style={{ background: FILL[s], opacity: s === 'pending' ? 0.4 : 0.8 }} aria-hidden /> {s}
+          <span key={s} className="flex items-center gap-1.5">
+            <span className="inline-block size-2.5 rounded-sm" style={{ background: FILL[s], opacity: s === 'pending' ? 0.4 : 0.8 }} aria-hidden /> {s}
           </span>
         ))}
         <span className="ml-auto tabular-nums" aria-live="polite">

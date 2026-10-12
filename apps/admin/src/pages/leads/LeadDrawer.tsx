@@ -59,7 +59,7 @@ export function LeadDrawer({ id, onClose }: { id: string; onClose: () => void })
         }
         header={
           d ? (
-            <TabsList aria-label="Lead sections" className="-mb-px border-b-0">
+            <TabsList aria-label="Lead sections" className="-mb-px gap-x-5 border-b-0">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="contacts" badge={d.contacts.length}>Contacts</TabsTrigger>
               <TabsTrigger value="site">Site & quote</TabsTrigger>
@@ -68,7 +68,7 @@ export function LeadDrawer({ id, onClose }: { id: string; onClose: () => void })
               <TabsTrigger value="timeline" badge={d.events.length}>Timeline</TabsTrigger>
               <TabsTrigger value="review" badge={d.reviewItems.filter((r) => r.status === 'open').length}>Review</TabsTrigger>
               <TabsTrigger value="gate">Gate</TabsTrigger>
-              <TabsTrigger value="actions">Notes & actions</TabsTrigger>
+              <TabsTrigger value="actions">Actions</TabsTrigger>
             </TabsList>
           ) : undefined
         }
@@ -312,7 +312,7 @@ function SiteQuote({ d, refresh }: { d: LeadDetail; refresh: () => void }) {
         {site?.previewUrl ? (
           <iframe title="Generated site preview" src={site.previewUrl} className="h-[480px] w-full rounded-lg border bg-white" sandbox="allow-same-origin allow-scripts" loading="lazy" />
         ) : site ? (
-          <Note tone="warning">Built but not published (no preview URL). Use “Publish preview” under Notes &amp; actions.</Note>
+          <Note tone="warning">Built but not published (no preview URL). Use “Publish preview” under Actions.</Note>
         ) : (
           <EmptyState title="Nothing to preview" description="Run Generate site after profiling." />
         )}

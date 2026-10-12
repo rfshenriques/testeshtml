@@ -38,21 +38,13 @@ export function Toaster() {
     () => toasts,
   );
   return (
-    <div aria-live="polite" aria-atomic="false" className="pointer-events-none fixed right-4 bottom-4 z-[100] flex w-80 flex-col gap-2">
+    <div aria-live="polite" aria-atomic="false" className="pointer-events-none fixed right-6 bottom-6 z-[100] flex w-80 flex-col gap-2">
       {list.map((t) => (
-        <div
-          key={t.id}
-          role={t.kind === 'error' ? 'alert' : 'status'}
-          className={cn(
-            'pointer-events-auto flex items-start gap-2 rounded-md border bg-card p-3 text-sm shadow-lg',
-            t.kind === 'error' && 'border-critical',
-            t.kind === 'success' && 'border-success',
-          )}
-        >
-          {t.kind === 'success' ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> : t.kind === 'error' ? <AlertTriangle className="mt-0.5 size-4 shrink-0 text-critical" aria-hidden /> : <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />}
+        <div key={t.id} role={t.kind === 'error' ? 'alert' : 'status'} className="pointer-events-auto flex items-start gap-3 rounded-lg border bg-card p-4 shadow-lg">
+          {t.kind === 'success' ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-good-dot" aria-hidden /> : t.kind === 'error' ? <AlertTriangle className="mt-0.5 size-4 shrink-0 text-bad-dot" aria-hidden /> : <Info className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />}
           <div className="min-w-0 flex-1">
             <div className="font-medium">{t.title}</div>
-            {t.description && <div className="mt-0.5 break-words text-muted-fg">{t.description}</div>}
+            {t.description && <div className={cn('mt-0.5 text-sm break-words text-muted-fg')}>{t.description}</div>}
           </div>
           <button type="button" aria-label="Dismiss" onClick={() => dismiss(t.id)} className="rounded p-0.5 text-muted-fg hover:text-fg">
             <X className="size-4" />
