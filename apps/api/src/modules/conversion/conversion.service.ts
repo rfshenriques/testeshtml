@@ -17,6 +17,7 @@ export const PROVISIONING_CHECKLIST: { key: string; label: string }[] = [
   { key: 'cms', label: 'CMS attached (Decap for starter, Payload for business/premium); client login + 2-page guide delivered' },
   { key: 'email', label: 'Business email set up (if purchased)' },
   { key: 'gbp_analytics', label: 'Google Business Profile linked, analytics (Plausible/GA4), Search Console verified, sitemap submitted' },
+  { key: 'nfc_tags', label: 'Google review + website NFC tags programmed and shipped (count per plan; extras invoiced per tag)' },
   { key: 'uptime', label: 'Uptime monitoring registered' },
   { key: 'handover', label: 'Handover call done and written summary sent' },
 ];
@@ -64,7 +65,9 @@ export class ConversionService {
       await tx.quote.update({ where: { id: quoteId }, data: { acceptedAt: new Date(), tier, stripeSessionId: info.stripeSessionId ?? quote.stripeSessionId, stripeCustomerId: info.stripeCustomerId ?? null, stripeSubscriptionId: info.stripeSubscriptionId ?? null, ...(t ? { buildFee: new Prisma.Decimal(t.buildFee), monthlyFee: new Prisma.Decimal(t.monthly), lineItems: t.lineItems } : {}) } });
       await tx.lead.update({ where: { id: quote.leadId }, data: { stage: 'won', previousStage: quote.lead.stage, sequenceStoppedAt: new Date(), sequenceStopReason: 'won' } });
       await tx.outreachMessage.updateMany({ where: { leadId: quote.leadId, status: 'queued' }, data: { status: 'cancelled', error: 'won' } });
-      await tx.provisioning.upsert({ where: { leadId: quote.leadId }, create: { leadId: quote.leadId, checklist: PROVISIONING_CHECKLIST.map((c) => ({ ...c, done: false, doneAt: null, by: null, note: null })) as unknown as Prisma.InputJsonValue, cmsKind: tier === 'starter' ? 'decap' : 'payload' }, update: {} });
+      const nfcTags = Number(t?.nfcTags ?? 0) + Number((t?.lineItems ?? []).find((l: any) => /^Extra NFC tags ×(\d+)/.test(l.label))?.label.match(/×(\d+)/)?.[1] ?? 0);
+      const checklist = PROVISIONING_CHECKLIST.map((c) => ({ ...c, label: c.key === 'nfc_tags' ? `${c.label} — ${nfcTags} tag${nfcTags === 1 ? '' : 's'} for this plan` : c.label, done: false, doneAt: null, by: null, note: c.key === 'nfc_tags' ? `tags: ${nfcTags}` : null }));
+      await tx.provisioning.upsert({ where: { leadId: quote.leadId }, create: { leadId: quote.leadId, checklist: checklist as unknown as Prisma.InputJsonValue, cmsKind: tier === 'starter' ? 'decap' : 'payload' }, update: {} });
     });
     await this.leadEvents.emit(quote.leadId, 'quote.accepted', { tier, stripeSessionId: info.stripeSessionId ?? null, actor: info.actor ?? 'stripe' });
     await this.audit.log('quote.accepted', { quoteId, tier, stripe: info }, { actor: info.actor ?? 'stripe', leadId: quote.leadId, subjectId: quoteId });

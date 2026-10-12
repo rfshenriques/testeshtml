@@ -45,6 +45,9 @@ export const keys = {
   placeTypes: ['place-types'] as const,
   leads: ['leads'] as const,
   lead: (id: string) => ['leads', id] as const,
+  /** Style gallery: kept outside `lead(id)` so drawer refreshes do not refetch 24 rendered variants. */
+  siteVariants: (id: string) => ['site-variants', id] as const,
+  siteVariant: (id: string, template: string, colourScheme: string, typography: string) => ['site-variant', id, template, colourScheme, typography] as const,
   review: ['review'] as const,
   generator: ['generator'] as const,
   outreach: ['outreach'] as const,

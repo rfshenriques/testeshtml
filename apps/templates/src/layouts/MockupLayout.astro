@@ -13,7 +13,7 @@ interface Props { input: BuildInput }
 const { input } = Astro.props;
 const { brief, copy, mockup } = input;
 const lang = (brief.languageCode || brief.classification.languageCode || 'en').split(/[-_]/)[0] || 'en';
-const theme = themeCss(input.template, input.colourScheme, input.typography);
+const theme = themeCss(input.template, input.colourScheme, input.typography, input.brand ?? null);
 const jsonLd = jsonForScript(localBusinessJsonLd(input));
 ---
 <!doctype html>

@@ -113,12 +113,32 @@ export interface Contact {
   id: string; leadId: string; email: string; emailType: EmailType; source: string; sourceUrl: string | null; sourceLicence?: string | null;
   confidence: number; verification: VerifyState; verifiedAt: string | null; verifier?: string | null; isPrimary: boolean; createdAt: string;
 }
+/** a|b|c are a template's fixed palettes; `brand` derives the palette from the lead's own Google photos (falls back to a when there is no brand). */
+export type ColourScheme = 'a' | 'b' | 'c' | 'brand';
+export const COLOUR_SCHEME_IDS: ColourScheme[] = ['a', 'b', 'c', 'brand'];
+export type Typography = 'a' | 'b';
+export const TYPOGRAPHY_IDS: Typography[] = ['a', 'b'];
+/** Palette extracted from the business's own material. Hex colours. */
+export interface Brand { source: 'photos' | 'operator'; primary: string; accent: string; heroBg?: string; swatches: string[] }
+/** Photo used on the mockup; `credit` is the attribution text shown with it. */
+export interface SiteImage { url: string; alt: string; credit: string | null; source?: 'google_places' | 'unsplash' | 'operator' }
 export interface GeneratedSite {
-  id: string; leadId: string; templateId: string; colourScheme: string; typography: string; contentBrief: ContentBrief | Record<string, unknown>;
+  id: string; leadId: string; templateId: string; colourScheme: ColourScheme; typography: Typography; contentBrief: ContentBrief | Record<string, unknown>;
   copy: SiteCopy; copyViolations: unknown | null; buildHash: string; previewUrl: string | null; previewSlug: string; expiresAt: string;
   takenDownAt: string | null; publishedAt: string | null; views: number; lastViewedAt: string | null; createdAt: string; updatedAt: string;
+  brand: Brand | null; images: SiteImage[];
   lead?: LeadSummary;
 }
+/** GET /admin/leads/:id/site/variants — the style gallery inputs (422 until the lead is profiled). */
+export interface SiteVariants {
+  current: { templateId: string; colourScheme: ColourScheme; typography: Typography } | null;
+  brand: Brand | null;
+  images: SiteImage[];
+  templates: { id: TemplateFamily | string; verticals: string[]; sections: string[] }[];
+  colourSchemes: ColourScheme[];
+  typography: Typography[];
+}
+export interface SiteVariantParams { template: string; colourScheme: ColourScheme; typography: Typography }
 export interface Quote {
   id: string; leadId: string; slug: string; currency: string; buildFee: number | string; monthlyFee: number | string; tier: TierName;
   lineItems: { label: string; oneOff: number; monthly: number }[]; allTiers: Record<string, unknown>; validUntil: string; acceptedAt: string | null; createdAt: string;

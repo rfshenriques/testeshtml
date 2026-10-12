@@ -11,7 +11,9 @@
  */
 import type { TemplateFamily } from '@sitewright/shared-types';
 
-export type ColourScheme = 'a' | 'b' | 'c';
+export type ColourScheme = 'a' | 'b' | 'c' | 'brand';
+export type FixedScheme = 'a' | 'b' | 'c';
+export interface BrandInput { primary: string; accent: string; heroBg?: string | undefined }
 export type Typography = 'a' | 'b';
 
 export interface Palette {
@@ -39,7 +41,7 @@ export interface Palette {
   border: string;
 }
 
-export const PALETTES: Record<TemplateFamily, Record<ColourScheme, Palette>> = {
+export const PALETTES: Record<TemplateFamily, Record<FixedScheme, Palette>> = {
   hospitality: {
     a: { bg: '#fbf6ee', surface: '#ffffff', text: '#2a1f14', muted: '#64513f', primary: '#8a3b12', onPrimary: '#ffffff', accent: '#2f5d3a', onAccent: '#ffffff', heroBg: '#2a1f14', onHero: '#fbf6ee', border: '#e5d9c8' },
     b: { bg: '#f4f6f8', surface: '#ffffff', text: '#141a21', muted: '#4a5663', primary: '#1d3b5a', onPrimary: '#ffffff', accent: '#a9402a', onAccent: '#ffffff', heroBg: '#141a21', onHero: '#f4f6f8', border: '#d8dee5' },
@@ -119,8 +121,67 @@ export const CONTRAST_PAIRS: ReadonlyArray<[fg: keyof Palette, bg: keyof Palette
   ['onHero', 'heroBg'],
 ];
 
-export function themeCss(family: TemplateFamily, scheme: ColourScheme, typography: Typography): string {
-  const p = PALETTES[family][scheme];
+/**
+ * Palette for a family/scheme. `brand` derives the palette from the lead's own colours (spec change:
+ * colours come from the business's Google listing photos), adjusted until every contrast pair meets AA.
+ */
+export function resolvePalette(family: TemplateFamily, scheme: ColourScheme, brand?: BrandInput | null): Palette {
+  if (scheme !== 'brand') return PALETTES[family][scheme];
+  const base = PALETTES[family].a;
+  if (!brand) return base;
+  return derivePalette(base, brand);
+}
+
+export function derivePalette(base: Palette, brand: BrandInput): Palette {
+  const primary = ensureContrastOn(brand.primary, base.bg, 4.5);
+  const accent = ensureContrastOn(brand.accent, base.bg, 4.5);
+  const heroBg = brand.heroBg ? ensureContrastOn(brand.heroBg, '#ffffff', 4.5) : darken(primary, 0.55);
+  const p: Palette = {
+    ...base,
+    primary,
+    onPrimary: contrastRatio('#ffffff', primary) >= 4.5 ? '#ffffff' : '#111111',
+    accent,
+    onAccent: contrastRatio('#ffffff', accent) >= 4.5 ? '#ffffff' : '#111111',
+    heroBg,
+    onHero: contrastRatio(base.bg, heroBg) >= 4.5 ? base.bg : contrastRatio('#ffffff', heroBg) >= 4.5 ? '#ffffff' : '#111111',
+    border: mix(primary, base.bg, 0.8),
+  };
+  return p;
+}
+
+/** Darken (or, for very dark inputs, lighten) a colour until it reads on `bg` at the requested ratio. */
+export function ensureContrastOn(hex: string, bg: string, min: number): string {
+  let c = normaliseHex(hex);
+  if (contrastRatio(c, bg) >= min) return c;
+  const bgLum = relativeLuminance(bg);
+  for (let i = 0; i < 40 && contrastRatio(c, bg) < min; i++) c = bgLum > 0.5 ? darken(c, 0.08) : lighten(c, 0.08);
+  return c;
+}
+
+export function normaliseHex(hex: string): string {
+  const [r, g, b] = hexToRgb(hex);
+  return rgbToHex(r, g, b);
+}
+export function rgbToHex(r: number, g: number, b: number): string {
+  const c = (n: number) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
+  return `#${c(r)}${c(g)}${c(b)}`;
+}
+export function darken(hex: string, amount: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  return rgbToHex(r * (1 - amount), g * (1 - amount), b * (1 - amount));
+}
+export function lighten(hex: string, amount: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  return rgbToHex(r + (255 - r) * amount, g + (255 - g) * amount, b + (255 - b) * amount);
+}
+export function mix(a: string, b: string, weightOfB: number): string {
+  const [r1, g1, b1] = hexToRgb(a);
+  const [r2, g2, b2] = hexToRgb(b);
+  return rgbToHex(r1 + (r2 - r1) * weightOfB, g1 + (g2 - g1) * weightOfB, b1 + (b2 - b1) * weightOfB);
+}
+
+export function themeCss(family: TemplateFamily, scheme: ColourScheme, typography: Typography, brand?: BrandInput | null): string {
+  const p = resolvePalette(family, scheme, brand);
   const t = TYPOGRAPHY[typography];
   const vars = [
     `--bg:${p.bg}`, `--surface:${p.surface}`, `--text:${p.text}`, `--muted:${p.muted}`,
@@ -163,7 +224,7 @@ export interface ContrastFailure { family: TemplateFamily; scheme: ColourScheme;
 export function contrastFailures(min = 4.5): ContrastFailure[] {
   const out: ContrastFailure[] = [];
   for (const family of Object.keys(PALETTES) as TemplateFamily[]) {
-    for (const scheme of Object.keys(PALETTES[family]) as ColourScheme[]) {
+    for (const scheme of Object.keys(PALETTES[family]) as FixedScheme[]) {
       const p = PALETTES[family][scheme];
       for (const [fg, bg] of CONTRAST_PAIRS) {
         const ratio = contrastRatio(p[fg], p[bg]);

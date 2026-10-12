@@ -28,3 +28,18 @@ describe('design tokens', () => {
     expect(css).toContain('--font-display:Georgia');
   });
 });
+
+import { derivePalette, resolvePalette, CONTRAST_PAIRS as PAIRS, contrastRatio as cr, PALETTES as P } from './tokens';
+import { describe as d2, it as it2, expect as ex2 } from 'vitest';
+d2('brand palettes', () => {
+  it2('derives an AA-compliant palette from arbitrary brand colours', () => {
+    for (const brand of [{ primary: '#ffe066', accent: '#aaffcc' }, { primary: '#102030', accent: '#ff0000', heroBg: '#f0f0f0' }, { primary: '#888888', accent: '#777777' }]) {
+      const p = derivePalette(P.hospitality.a, brand);
+      for (const [fg, bg] of PAIRS) ex2(cr(p[fg], p[bg]), `${fg}/${bg} for ${JSON.stringify(brand)}`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+  it2('falls back to scheme a without a brand', () => {
+    ex2(resolvePalette('trades', 'brand', null)).toEqual(P.trades.a);
+    ex2(resolvePalette('trades', 'b', null)).toEqual(P.trades.b);
+  });
+});

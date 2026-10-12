@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { ExternalLink, Star } from 'lucide-react';
+import { ExternalLink, Mail, Phone, Star } from 'lucide-react';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
@@ -10,6 +10,7 @@ import { Dialog, Tabs, TabsList, TabsTrigger, TabsContent, KV, JsonView, StageBa
 import { ScoreBreakdownView } from '@/components/ScoreBreakdown';
 import type { LeadDetail, LeadAction, TierName } from '@/lib/types';
 import { QuotePreviewTool } from '@/pages/Pricing';
+import { StylesTab } from './StylesTab';
 
 const MANUAL_ACTIONS: { action: LeadAction; label: string; confirm?: 'send' | 'suppress' | 'publish'; destructive?: boolean }[] = [
   { action: 'requalify', label: 'Requalify' },
@@ -49,6 +50,7 @@ function LeadBody({ d, refresh }: { d: LeadDetail; refresh: () => void }) {
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="contacts" badge={d.contacts.length}>Contacts</TabsTrigger>
         <TabsTrigger value="site">Site & quote</TabsTrigger>
+        <TabsTrigger value="styles">Styles</TabsTrigger>
         <TabsTrigger value="outreach" badge={d.messages.length + d.replies.length}>Outreach</TabsTrigger>
         <TabsTrigger value="timeline" badge={d.events.length}>Timeline</TabsTrigger>
         <TabsTrigger value="review" badge={d.reviewItems.filter((r) => r.status === 'open').length}>Review</TabsTrigger>
@@ -58,6 +60,7 @@ function LeadBody({ d, refresh }: { d: LeadDetail; refresh: () => void }) {
       <TabsContent value="overview"><Overview d={d} /></TabsContent>
       <TabsContent value="contacts"><Contacts d={d} refresh={refresh} /></TabsContent>
       <TabsContent value="site"><SiteQuote d={d} refresh={refresh} /></TabsContent>
+      <TabsContent value="styles"><StylesTab d={d} refresh={refresh} /></TabsContent>
       <TabsContent value="outreach"><Outreach d={d} /></TabsContent>
       <TabsContent value="timeline"><Timeline d={d} refresh={refresh} /></TabsContent>
       <TabsContent value="review"><ReviewTab d={d} /></TabsContent>
@@ -82,7 +85,7 @@ function Overview({ d }: { d: LeadDetail }) {
             ['Website', <span key="w"><Badge variant="outline">{lead.websiteStatus}</Badge> {lead.websiteUrl && <a className="ml-1 text-primary hover:underline" href={lead.websiteUrl} target="_blank" rel="noreferrer noopener">{lead.websiteUrl}</a>}</span>],
             ['Type / vertical', `${lead.primaryType ?? '—'} / ${lead.vertical ?? '—'}`],
             ['Rating', lead.rating == null ? '—' : <span key="r" className="inline-flex items-center gap-1"><Star className="size-3" aria-hidden /> {lead.rating} ({lead.reviewCount ?? 0} reviews)</span>],
-            ['Phone', lead.phone],
+            ['Phone', lead.phone ? <a key="ph" className="inline-flex items-center gap-1 text-primary hover:underline" href={`tel:${lead.phone.replace(/[^+\d]/g, '')}`}><Phone className="size-3" aria-hidden /> {lead.phone}</a> : '—'],
             ['Address', addr],
             ['Business status', lead.businessStatus],
             ['Price level', lead.priceLevel],
@@ -161,8 +164,19 @@ function Contacts({ d, refresh }: { d: LeadDetail; refresh: () => void }) {
     },
   });
   const primary = useMutation({ mutationFn: (cid: string) => api.leads.setPrimaryContact(d.lead.id, cid), onSuccess: () => { toast.success('Primary contact set'); refresh(); } });
+  const tel = d.lead.phone ? `tel:${d.lead.phone.replace(/[^+\d]/g, '')}` : null;
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-xs font-medium text-muted-fg">Phone (Google listing)</span>
+        {tel ? (
+          <a className="inline-flex items-center gap-1 text-primary hover:underline" href={tel}>
+            <Phone className="size-3" aria-hidden /> {d.lead.phone}
+          </a>
+        ) : (
+          <span className="text-muted-fg">none on the listing</span>
+        )}
+      </div>
       {d.contacts.length === 0 ? (
         <EmptyState title="No contacts" description="Run Enrich, or add one manually with its source (the GDPR Art.14 notice names it)." />
       ) : (
@@ -181,7 +195,10 @@ function Contacts({ d, refresh }: { d: LeadDetail; refresh: () => void }) {
             {d.contacts.map((c) => (
               <TR key={c.id}>
                 <TD>
-                  {c.email} {c.isPrimary && <Badge variant="primary">primary</Badge>}
+                  <a className="inline-flex items-center gap-1 text-primary hover:underline" href={`mailto:${c.email}`}>
+                    <Mail className="size-3" aria-hidden /> {c.email}
+                  </a>{' '}
+                  {c.isPrimary && <Badge variant="primary">primary</Badge>}
                 </TD>
                 <TD>{c.emailType}</TD>
                 <TD>

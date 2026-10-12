@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, NotFoundException, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Header, NotFoundException, Param, Post, Put, Query, Req, UnprocessableEntityException, UseGuards } from '@nestjs/common';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { AdminTokenGuard } from '../../shared/auth/admin-token.guard';
@@ -34,6 +34,18 @@ export class GeneratorController {
     const site = await this.prisma.generatedSite.findUnique({ where: { leadId: id } });
     if (!site) throw new NotFoundException('no generated site');
     return site;
+  }
+
+  @Get('leads/:id/site/variants')
+  variants(@Param('id') id: string) {
+    return this.generator.variants(id).catch((e) => { throw new UnprocessableEntityException({ error: 'NOT_READY', message: (e as Error).message }); });
+  }
+
+  @Get('leads/:id/site/variant')
+  @Header('content-type', 'text/html; charset=utf-8')
+  @Header('x-robots-tag', 'noindex, nofollow, noarchive')
+  variant(@Param('id') id: string, @Query('template') template: any, @Query('colourScheme') colourScheme: any = 'a', @Query('typography') typography: any = 'a') {
+    return this.generator.variantHtml(id, template, colourScheme, typography).catch((e) => { throw new UnprocessableEntityException({ error: 'NOT_READY', message: (e as Error).message }); });
   }
 
   @Put('leads/:id/site/copy')

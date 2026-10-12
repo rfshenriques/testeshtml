@@ -11,10 +11,11 @@ describe('pricing engine (spec §10.1)', () => {
     expect(selectTier({ ...base, primaryType: 'shoe_store', reviewCount: 3 }).tier).toBe('starter');
     expect(selectTier({ ...base, primaryType: 'cafe', reviewCount: 30 }).tier).toBe('business');
   });
-  it('never quotes premium to a bottom-quartile lead', () => {
+  it('never quotes premium to a bottom-quartile lead, but only once a distribution exists', () => {
     const s = selectTier({ ...base, score: 0.3 });
     expect(s.tier).toBe('business');
     expect(s.reasoning.join(' ')).toMatch(/bottom quartile/);
+    expect(selectTier({ ...base, score: 0.3, bottomQuartileScore: null }).tier).toBe('premium');
   });
   it('applies country multipliers and currency, always in local currency', () => {
     const mt = computeQuote(config, base);
@@ -34,5 +35,14 @@ describe('pricing engine (spec §10.1)', () => {
     expect(q.tiers.starter.lineItems).toHaveLength(4);
     expect(q.tiers.starter.monthly).toBe(49 + 79);
     expect(q.tiers.starter.buildFee).toBe(690 + 290 + 450);
+  });
+  it('includes NFC tags per tier and prices extra tags by quantity', () => {
+    const q = computeQuote(config, { ...base, addOns: ['nfcTagExtra', 'nfcTagExtra', 'nfcTagExtra'] });
+    expect(q.tiers.starter.nfcTags).toBe(0);
+    expect(q.tiers.business.nfcTags).toBe(1);
+    expect(q.tiers.premium.nfcTags).toBe(2);
+    expect(q.tiers.premium.lineItems.map((l) => l.label)).toEqual(expect.arrayContaining(['Google review + website NFC tags ×2 (included)', 'Extra NFC tags ×3']));
+    expect(q.tiers.starter.lineItems.find((l) => l.label.includes('included'))).toBeUndefined();
+    expect(q.tiers.business.buildFee).toBe(1450 + 45);
   });
 });

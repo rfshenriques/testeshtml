@@ -52,13 +52,31 @@ export const SiteCopySchema = z.object({
 export type SiteCopy = z.infer<typeof SiteCopySchema>;
 
 /** The full input an Astro template build receives. */
+/** Palette derived from the lead's own material (Google listing photos). Hex colours; the templates enforce contrast. */
+export const BrandSchema = z.object({
+  source: z.enum(['photos', 'operator']),
+  primary: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  accent: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  heroBg: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  swatches: z.array(z.string().regex(/^#[0-9a-fA-F]{6}$/)).max(8).default([]),
+});
+export type Brand = z.infer<typeof BrandSchema>;
+
+export const SiteImageSchema = z.object({
+  url: z.string(), alt: z.string(), credit: z.string().nullable(), placeholder: z.literal(true),
+  source: z.enum(['google_places', 'unsplash', 'operator']).optional(),
+});
+export type SiteImage = z.infer<typeof SiteImageSchema>;
+
 export const SiteBuildInputSchema = z.object({
   template: z.enum(['hospitality', 'appointment', 'trades', 'professional', 'retail', 'fitness']),
-  colourScheme: z.enum(['a', 'b', 'c']),
+  /** a|b|c are the template's fixed schemes; `brand` derives the palette from input.brand (falls back to a). */
+  colourScheme: z.enum(['a', 'b', 'c', 'brand']),
   typography: z.enum(['a', 'b']),
   brief: ContentBriefSchema,
   copy: SiteCopySchema,
-  images: z.array(z.object({ url: z.string(), alt: z.string(), credit: z.string().nullable(), placeholder: z.literal(true) })),
+  images: z.array(SiteImageSchema),
+  brand: BrandSchema.nullable().optional(),
   mockup: z.object({
     agencyName: z.string(),
     agencyUrl: z.string(),
@@ -74,6 +92,8 @@ export type SiteBuildInput = z.infer<typeof SiteBuildInputSchema>;
 
 export const TierSchema = z.object({
   buildFee: z.number(), monthly: z.number(), pages: z.number(), revisions: z.number(), updatesPerMonth: z.number(), label: z.string(),
+  /** Google-review / website NFC tags shipped with the plan (business 1, premium 2). Extras via the nfcTagExtra add-on. */
+  nfcTags: z.number().int().min(0).default(0),
 });
 export const PricingConfigSchema = z.object({
   currency: z.string(),
@@ -87,6 +107,7 @@ export const PricingConfigSchema = z.object({
     multilingual: z.object({ perLanguage: z.number(), monthly: z.number() }),
     domainAndEmail: z.object({ setup: z.number(), monthly: z.number() }),
     photography: z.object({ oneOff: z.number() }),
+    nfcTagExtra: z.object({ perTag: z.number() }).default({ perTag: 15 }),
   }),
   countryMultipliers: z.record(z.string(), z.number()),
   currencyRates: z.record(z.string(), z.number()),

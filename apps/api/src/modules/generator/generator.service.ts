@@ -1,6 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@sitewright/db';
-import { COLOUR_SCHEMES, ContentBrief, SiteBuildInput, SiteCopy, SiteCopySchema, TEMPLATE_FAMILIES, TemplateFamily, TYPOGRAPHY_PAIRINGS, VERTICAL_TEMPLATE, Vertical } from '@sitewright/shared-types';
+import { Brand, COLOUR_SCHEMES, ColourSchemeId, ContentBrief, SiteBuildInput, SiteCopy, SiteCopySchema, SiteImage, TEMPLATE_FAMILIES, TemplateFamily, TYPOGRAPHY_PAIRINGS, VERTICAL_TEMPLATE, Vertical } from '@sitewright/shared-types';
+import { createHash } from 'node:crypto';
+import * as fs from 'node:fs/promises';
+import { PlacePhotosService } from './place-photos.service';
+import { extractBrand } from './brand';
 import { customAlphabet } from 'nanoid';
 import * as path from 'node:path';
 import { z } from 'zod';
@@ -48,6 +52,7 @@ export class GeneratorService {
     private readonly links: LinkTokenService,
     private readonly gate: GateService,
     private readonly builder: AstroSiteBuilder,
+    private readonly placePhotos: PlacePhotosService,
   ) {
     this.images = new UnsplashSource(env.UNSPLASH_ACCESS_KEY);
   }
@@ -63,19 +68,32 @@ export class GeneratorService {
     }));
   }
 
-  async generate(leadId: string, opts: { templateId?: TemplateFamily; colourScheme?: 'a' | 'b' | 'c'; typography?: 'a' | 'b'; regenerateCopy?: boolean; advance?: boolean; reason?: string } = {}) {
+  /**
+   * Everything a build needs for a lead, in one place. Copy is generated once and reused; listing
+   * photos + the derived brand palette are fetched once and stored on the site record.
+   */
+  async assembleInput(leadId: string, opts: { templateId?: TemplateFamily; colourScheme?: ColourSchemeId; typography?: 'a' | 'b'; regenerateCopy?: boolean } = {}) {
     const lead = await this.prisma.lead.findUniqueOrThrow({ where: { id: leadId }, include: { site: true } });
     if (lead.stage === 'suppressed' || lead.stage === 'excluded') throw new Error(`lead ${leadId} is ${lead.stage}`);
-    // Gate runs before generation (spec §8). A blocked lead gets no mockup (no cost, no legal exposure).
-    const g = await this.gate.evaluate(leadId, { context: 'pre-generation' });
-    if (g.result !== 'clear') {
-      await this.leadEvents.emit(leadId, 'generation.skipped', { reason: `legal gate ${g.reason}` });
-      return { skipped: true as const, reason: g.reason };
-    }
     const brief = await this.profiling.brief(leadId);
     const vertical = brief.classification.vertical;
+    const slug = lead.site?.previewSlug ?? newSlug();
+    const expiresAt = lead.site?.expiresAt && lead.site.expiresAt > new Date() ? lead.site.expiresAt : new Date(Date.now() + this.env.PREVIEW_TTL_DAYS * 86400_000);
+
+    // Images + brand: reuse what is stored; otherwise fetch the listing's photos, else licensed stock.
+    let images = (lead.site?.images as unknown as SiteImage[] | null) ?? null;
+    let brand = (lead.site?.brand as unknown as Brand | null) ?? null;
+    if (!images || !images.length) {
+      const fetched = await this.placePhotos.fetchAndStore(leadId, lead.placeId, slug, lead.campaignId);
+      if (fetched.length) {
+        images = fetched.map((f) => f.image);
+        brand = brand ?? (await extractBrand(fetched.map((f) => f.bytes)).catch(() => null));
+      } else {
+        images = await selectImages(this.images, vertical, lead.placeId);
+      }
+    }
     const template = opts.templateId ?? (lead.site?.templateId as TemplateFamily | undefined) ?? VERTICAL_TEMPLATE[vertical] ?? 'professional';
-    const colourScheme = opts.colourScheme ?? (lead.site?.colourScheme as 'a' | 'b' | 'c' | undefined) ?? COLOUR_SCHEMES[seededIndex(lead.placeId, COLOUR_SCHEMES.length, 'cs')];
+    const colourScheme: ColourSchemeId = opts.colourScheme ?? (lead.site?.colourScheme as ColourSchemeId | undefined) ?? (brand ? 'brand' : COLOUR_SCHEMES[seededIndex(lead.placeId, 3, 'cs')]);
     const typography = opts.typography ?? (lead.site?.typography as 'a' | 'b' | undefined) ?? TYPOGRAPHY_PAIRINGS[seededIndex(lead.placeId, TYPOGRAPHY_PAIRINGS.length, 'ty')];
 
     let copy: SiteCopy;
@@ -87,31 +105,90 @@ export class GeneratorService {
       copy = r.copy;
       violations = r.violations;
     }
-
-    const slug = lead.site?.previewSlug ?? newSlug();
-    const expiresAt = lead.site?.expiresAt && lead.site.expiresAt > new Date() ? lead.site.expiresAt : new Date(Date.now() + this.env.PREVIEW_TTL_DAYS * 86400_000);
-    const images = await selectImages(this.images, vertical, lead.placeId);
+    // Persist what was assembled (copy, photos, palette) even before the first build so the style gallery and
+    // the public photo URLs work, and nothing is fetched or written twice.
+    await this.prisma.generatedSite.upsert({
+      where: { leadId },
+      create: { leadId, previewSlug: slug, templateId: template, colourScheme, typography, contentBrief: brief as unknown as Prisma.InputJsonValue, copy: copy as unknown as Prisma.InputJsonValue, copyViolations: violations as unknown as Prisma.InputJsonValue, brand: (brand ?? null) as unknown as Prisma.InputJsonValue, images: images as unknown as Prisma.InputJsonValue, buildHash: 'pending', expiresAt, objectPrefix: images.some((i) => i.source === 'google_places') ? `previews/${slug}/` : null },
+      update: { copy: copy as unknown as Prisma.InputJsonValue, brand: (brand ?? null) as unknown as Prisma.InputJsonValue, images: images as unknown as Prisma.InputJsonValue, ...(images.some((i) => i.source === 'google_places') && !lead.site?.objectPrefix ? { objectPrefix: `previews/${slug}/` } : {}) },
+    });
     const input: SiteBuildInput = {
-      template, colourScheme, typography, brief, copy, images,
+      template, colourScheme, typography, brief, copy, images, brand,
       mockup: {
         agencyName: this.env.AGENCY_NAME, agencyUrl: this.env.AGENCY_URL, businessName: lead.businessName, previewSlug: slug,
         formEndpoint: `${this.env.APP_BASE_URL}/p/${slug}/form`, takedownUrl: this.links.takedownUrl(leadId), expiresAt: expiresAt.toISOString(),
         mapEmbedUrl: brief.lat != null && brief.lng != null ? `https://www.google.com/maps?q=${brief.lat},${brief.lng}&z=15&output=embed` : null,
       },
     };
+    return { lead, input, slug, expiresAt, violations, brief };
+  }
+
+  async generate(leadId: string, opts: { templateId?: TemplateFamily; colourScheme?: ColourSchemeId; typography?: 'a' | 'b'; regenerateCopy?: boolean; advance?: boolean; reason?: string } = {}) {
+    // Gate runs before generation (spec §8). A blocked lead gets no mockup (no cost, no legal exposure).
+    const g = await this.gate.evaluate(leadId, { context: 'pre-generation' });
+    if (g.result !== 'clear') {
+      await this.leadEvents.emit(leadId, 'generation.skipped', { reason: `legal gate ${g.reason}` });
+      return { skipped: true as const, reason: g.reason };
+    }
+    const { lead, input, slug, expiresAt, violations, brief } = await this.assembleInput(leadId, opts);
     const outDir = path.resolve(this.env.BUILD_WORK_DIR, slug);
     const build = await this.builder.build(input, outDir);
     if (build.ms > 20_000) this.log.warn({ leadId, ms: build.ms }, 'site build exceeded the 20 s target');
-
+    const data = {
+      templateId: input.template, colourScheme: input.colourScheme, typography: input.typography,
+      contentBrief: brief as unknown as Prisma.InputJsonValue, copy: input.copy as unknown as Prisma.InputJsonValue, copyViolations: violations as unknown as Prisma.InputJsonValue,
+      brand: (input.brand ?? null) as unknown as Prisma.InputJsonValue, images: input.images as unknown as Prisma.InputJsonValue,
+      buildHash: build.buildHash, buildPath: outDir, expiresAt,
+    };
     const site = await this.prisma.generatedSite.upsert({
       where: { leadId },
-      create: { leadId, templateId: template, colourScheme, typography, contentBrief: brief as unknown as Prisma.InputJsonValue, copy: copy as unknown as Prisma.InputJsonValue, copyViolations: violations as unknown as Prisma.InputJsonValue, buildHash: build.buildHash, previewSlug: slug, buildPath: outDir, expiresAt },
-      update: { templateId: template, colourScheme, typography, contentBrief: brief as unknown as Prisma.InputJsonValue, copy: copy as unknown as Prisma.InputJsonValue, copyViolations: violations as unknown as Prisma.InputJsonValue, buildHash: build.buildHash, buildPath: outDir, expiresAt, takenDownAt: null },
+      create: { leadId, previewSlug: slug, ...data },
+      update: { ...data, takenDownAt: null },
     });
-    await this.leadEvents.emit(leadId, 'site.built', { template, colourScheme, typography, buildHash: build.buildHash, ms: build.ms, violations: violations.length, reason: opts.reason ?? null });
-    if (lead.stage === 'profiled') await this.leadEvents.advance(leadId, 'generated', { template });
+    await this.leadEvents.emit(leadId, 'site.built', { template: input.template, colourScheme: input.colourScheme, typography: input.typography, buildHash: build.buildHash, ms: build.ms, violations: violations.length, brand: input.brand?.source ?? null, photos: input.images.filter((i) => i.source === 'google_places').length, reason: opts.reason ?? null });
+    if (lead.stage === 'profiled') await this.leadEvents.advance(leadId, 'generated', { template: input.template });
     if (opts.advance ?? true) await this.pipeline.enqueue('previewPublish', 'publish', leadId, {}, { force: true });
     return { skipped: false as const, site, build, violations };
+  }
+
+  /** Style gallery: every family × scheme × typography for a lead, built on demand and cached by input hash. */
+  async variantHtml(leadId: string, template: TemplateFamily, colourScheme: ColourSchemeId, typography: 'a' | 'b'): Promise<string> {
+    if (!TEMPLATE_FAMILIES.includes(template) || !COLOUR_SCHEMES.includes(colourScheme) || !TYPOGRAPHY_PAIRINGS.includes(typography)) throw new Error('unknown variant');
+    const { input } = await this.assembleInput(leadId, { templateId: template, colourScheme, typography });
+    const key = `${template}-${colourScheme}-${typography}`;
+    const hash = createHash('sha256').update(JSON.stringify({ ...input, mockup: { ...input.mockup, expiresAt: '' } })).digest('hex').slice(0, 16);
+    const dir = path.resolve(this.env.BUILD_WORK_DIR, 'variants', leadId);
+    const cached = path.join(dir, `${key}-${hash}.html`);
+    try {
+      return await fs.readFile(cached, 'utf8');
+    } catch { /* build below */ }
+    const outDir = path.join(dir, `build-${key}`);
+    await this.builder.build(input, outDir);
+    const html = await fs.readFile(path.join(outDir, 'index.html'), 'utf8');
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(cached, html);
+    await fs.rm(outDir, { recursive: true, force: true });
+    return html;
+  }
+
+  async variants(leadId: string) {
+    const site = await this.prisma.generatedSite.findUnique({ where: { leadId } });
+    const lead = await this.prisma.lead.findUniqueOrThrow({ where: { id: leadId } });
+    if (!lead.classification) throw new Error('lead has no classification yet (profile it first)');
+    let brand = (site?.brand as unknown as Brand | null) ?? null;
+    let images = (site?.images as unknown as SiteImage[] | null) ?? [];
+    if (!site) {
+      // No site yet: assemble once so photos/brand exist for the gallery (no build).
+      const a = await this.assembleInput(leadId).catch(() => null);
+      brand = a?.input.brand ?? null;
+      images = a?.input.images ?? [];
+    }
+    return {
+      current: site ? { templateId: site.templateId, colourScheme: site.colourScheme, typography: site.typography } : null,
+      brand, images,
+      templates: this.templates().map((t) => ({ id: t.id, verticals: t.verticals, sections: t.sections })),
+      colourSchemes: [...COLOUR_SCHEMES], typography: [...TYPOGRAPHY_PAIRINGS],
+    };
   }
 
   /** LLM copy + hallucination guard with one targeted regeneration per violating field, then neutral fallback. */

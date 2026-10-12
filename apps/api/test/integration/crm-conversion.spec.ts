@@ -94,7 +94,8 @@ describe('CRM, dashboard, conversion and billing (integration)', () => {
     expect(q2!.acceptedAt).toBeTruthy();
     expect(q2!.tier).toBe('business');
     const prov = await request(app.getHttpServer()).get(`/admin/conversion/provisioning/${lead.id}`).set(AUTH).expect(200);
-    expect(prov.body.checklist).toHaveLength(8);
+    expect(prov.body.checklist).toHaveLength(9);
+    expect(prov.body.checklist.find((c: any) => c.key === 'nfc_tags').note).toBe('tags: 1');
     expect(prov.body.cmsKind).toBe('payload');
     expect(prov.body.subscription.tier).toBe('business');
     expect(prov.body.subscription.updatesIncluded).toBe(2);

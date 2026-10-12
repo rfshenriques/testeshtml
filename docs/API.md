@@ -177,3 +177,8 @@ interface Paginated<T> { items: T[]; total: number; nextCursor: string|null }
 - `POST /admin/conversion/quotes/:quoteId/accept` `{ tier? }` — manual acceptance (offline payment)
 - `GET /q/:slug/thanks` — Stripe success page
 - `GET /admin/ops/alerts` without `all=1` returns unacknowledged alerts only; `PUT /admin/compliance/jurisdictions/:cc` upserts.
+- `GET /admin/leads/:id/site/variants` → `{ current, brand, images, templates, colourSchemes: ['a','b','c','brand'], typography: ['a','b'] }` (422 until the lead is profiled)
+- `GET /admin/leads/:id/site/variant?template=&colourScheme=&typography=` → `text/html` of that style for the lead (built on demand, cached)
+- `POST /admin/leads/:id/site/rebuild` `{ templateId?, colourScheme?: 'a'|'b'|'c'|'brand', typography? }` adopts a style
+- `/p/:slug/photos/*` serves the listing photos as soon as they are stored (before publishing); pages still require publishing
+- Pricing: `tiers.<tier>.nfcTags`, `addOns.nfcTagExtra.perTag`; repeat `'nfcTagExtra'` in `addOns` for quantity

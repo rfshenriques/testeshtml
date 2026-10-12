@@ -16,7 +16,7 @@ export interface PlacesSearchResult {
 export interface PlaceDetails extends PlacesSearchResult {
   nationalPhoneNumber: string | null; internationalPhoneNumber: string | null;
   regularOpeningHours: { weekdayDescriptions: string[] } | null; priceLevel: number | null;
-  editorialSummary: string | null; reviews: { text: string; rating: number | null }[]; photos: { name: string }[];
+  editorialSummary: string | null; reviews: { text: string; rating: number | null }[]; photos: { name: string; authorAttributions?: { displayName?: string; uri?: string }[] }[];
   addressComponents: { longText: string; shortText: string; types: string[] }[];
 }
 export interface PlacesApi {

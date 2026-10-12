@@ -3,7 +3,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable, type SortingState, type RowSelectionState } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ArrowDown, ArrowUp, ArrowUpDown, Search, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Copy, Search, X } from 'lucide-react';
 import { VERTICALS } from '@sitewright/shared-types';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/query';
@@ -26,6 +26,28 @@ const BULK: { action: LeadAction; label: string; confirm?: boolean; destructive?
   { action: 'enqueue_outreach', label: 'Enqueue outreach', confirm: true },
   { action: 'suppress', label: 'Suppress', confirm: true, destructive: true },
 ];
+
+/** Copies `value` to the clipboard without opening the row's drawer. */
+function CopyButton({ value, label }: { value: string; label: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title="Copy to clipboard"
+      className="shrink-0 rounded p-0.5 text-muted-fg hover:bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-ring"
+      onClick={(e) => {
+        e.stopPropagation();
+        navigator.clipboard?.writeText(value).then(
+          () => toast.success('Copied', value),
+          () => toast.error('Could not copy', 'Clipboard access was refused by the browser.'),
+        );
+      }}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      <Copy className="size-3.5" aria-hidden />
+    </button>
+  );
+}
 
 export function LeadsPage() {
   const nav = useNavigate();
@@ -109,15 +131,24 @@ export function LeadsPage() {
         size: 220,
         cell: (c) => {
           const v = c.getValue();
-          return v ? (
-            <div className="min-w-0">
-              <div className="truncate">{v.email}</div>
-              <div className="text-xs text-muted-fg">
-                {v.verification} · {v.source}
+          const phone = c.row.original.phone;
+          if (!v && !phone) return <span className="text-muted-fg">none</span>;
+          return (
+            <div className="min-w-0 leading-tight">
+              {v ? (
+                <div className="flex items-center gap-1">
+                  <span className="truncate" title={v.email}>{v.email}</span>
+                  <CopyButton value={v.email} label={`Copy ${v.email}`} />
+                </div>
+              ) : (
+                <div className="text-muted-fg">no email</div>
+              )}
+              <div className="truncate text-xs text-muted-fg">
+                {phone && <span className="tabular-nums text-fg/80">{phone}</span>}
+                {phone && v && ' · '}
+                {v && <>{v.verification} · {v.source}</>}
               </div>
             </div>
-          ) : (
-            <span className="text-muted-fg">none</span>
           );
         },
       }),

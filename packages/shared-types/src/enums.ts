@@ -26,7 +26,8 @@ export const VERTICAL_TEMPLATE: Record<Vertical, TemplateFamily> = {
   other: 'professional',
 };
 
-export const COLOUR_SCHEMES = ['a', 'b', 'c'] as const;
+export const COLOUR_SCHEMES = ['a', 'b', 'c', 'brand'] as const;
+export type ColourSchemeId = (typeof COLOUR_SCHEMES)[number];
 export const TYPOGRAPHY_PAIRINGS = ['a', 'b'] as const;
 
 /** High-value Google place types (spec §5.3), weighted by willingness to pay and likelihood of lacking a website. */

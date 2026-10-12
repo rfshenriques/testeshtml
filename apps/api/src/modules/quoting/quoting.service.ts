@@ -63,9 +63,11 @@ export class QuotingService implements OnModuleInit {
     return computeQuote(config, { countryCode: lead.countryCode, currency: policy?.defaultCurrency ?? config.currency, primaryType: lead.primaryType, reviewCount: lead.reviewCount, score: lead.score, bottomQuartileScore: quartile, addOns: opts.addOns, tier: opts.tier });
   }
 
-  private async bottomQuartile(campaignId: string): Promise<number> {
-    const rows = await this.prisma.$queryRaw<{ q: number | null }[]>`SELECT percentile_cont(0.25) WITHIN GROUP (ORDER BY score) AS q FROM "Lead" WHERE "campaignId" = ${campaignId} AND score IS NOT NULL`;
-    return Number(rows[0]?.q ?? 0);
+  /** Bottom-quartile score of the campaign, or null while fewer than 8 leads are scored (the rule needs a distribution). */
+  private async bottomQuartile(campaignId: string): Promise<number | null> {
+    const rows = await this.prisma.$queryRaw<{ q: number | null; n: bigint | number }[]>`SELECT percentile_cont(0.25) WITHIN GROUP (ORDER BY score) AS q, count(*) AS n FROM "Lead" WHERE "campaignId" = ${campaignId} AND score IS NOT NULL AND stage NOT IN ('excluded')`;
+    if (!rows[0] || Number(rows[0].n) < 8 || rows[0].q == null) return null;
+    return Number(rows[0].q);
   }
 
   async createQuote(leadId: string, opts: { tier?: TierName; addOns?: string[]; actor?: string } = {}) {

@@ -280,6 +280,8 @@ model GeneratedSite {
   contentBrief Json
   copy         Json
   copyViolations Json?
+  brand        Json?
+  images       Json?
   buildHash    String
   previewUrl   String?
   previewSlug  String    @unique

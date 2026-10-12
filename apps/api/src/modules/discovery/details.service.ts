@@ -68,7 +68,7 @@ export function normaliseDetails(raw: Record<string, any>): PlaceDetails {
     priceLevel: typeof raw.priceLevel === 'number' ? raw.priceLevel : priceLevelFromEnum(raw.priceLevel),
     editorialSummary: text(raw.editorialSummary),
     reviews: (raw.reviews ?? []).map((r: any) => ({ text: text(r.text) ?? '', rating: r.rating ?? null })),
-    photos: (raw.photos ?? []).map((p: any) => ({ name: p.name })),
+    photos: (raw.photos ?? []).map((p: any) => ({ name: p.name, authorAttributions: p.authorAttributions ?? [] })),
     addressComponents: raw.addressComponents ?? [],
   };
 }

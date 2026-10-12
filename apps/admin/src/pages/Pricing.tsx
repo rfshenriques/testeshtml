@@ -9,7 +9,10 @@ import { PageHeader, Section, Button, Input, Select, Field, Badge, Note, Loading
 import type { QuoteComputation } from '@/lib/types';
 
 const TIERS: TierName[] = ['starter', 'business', 'premium'];
-const ADDONS = ['contentManagement', 'maintenance', 'seoLocal', 'copywritingExtra', 'ecommerce', 'multilingual', 'domainAndEmail', 'photography'] as const;
+const ADDONS = ['contentManagement', 'maintenance', 'seoLocal', 'copywritingExtra', 'ecommerce', 'multilingual', 'domainAndEmail', 'photography', 'nfcTagExtra'] as const;
+/** Add-ons the quote engine accepts repeated in `addOns` (one entry per unit). */
+const QUANTITY_ADDONS: Record<string, { label: string; unit: string }> = { nfcTagExtra: { label: 'Extra NFC tags', unit: 'tag' } };
+const ADDON_HINT: Partial<Record<(typeof ADDONS)[number], string>> = { nfcTagExtra: 'Google review + website NFC tags beyond the ones included in the tier; `perTag` one-off.' };
 
 export function PricingPage() {
   const qc = useQueryClient();
@@ -31,6 +34,11 @@ export function PricingPage() {
   const num = (v: number, set: (n: number) => void, label: string) => (
     <Field label={label}>
       <Input type="number" step="any" value={Number.isFinite(v) ? v : ''} onChange={(e) => set(parseFloat(e.target.value))} className="tabular-nums" />
+    </Field>
+  );
+  const int = (v: number, set: (n: number) => void, label: string, id?: string) => (
+    <Field label={label} htmlFor={id}>
+      <Input id={id} type="number" step={1} min={0} inputMode="numeric" value={Number.isFinite(v) ? v : ''} onChange={(e) => set(Math.max(0, Math.floor(parseInt(e.target.value, 10) || 0)))} className="tabular-nums" />
     </Field>
   );
 
@@ -67,6 +75,7 @@ export function PricingPage() {
                       {num(tier.revisions, (n) => set({ revisions: n }), 'Revisions')}
                       {num(tier.updatesPerMonth, (n) => set({ updatesPerMonth: n }), 'Updates/mo')}
                     </div>
+                    {int(tier.nfcTags ?? 0, (n) => set({ nfcTags: n }), 'NFC tags included (Google review + website)', `tier-${t}-nfc`)}
                   </fieldset>
                 );
               })}
@@ -75,11 +84,12 @@ export function PricingPage() {
           <Section title="Add-ons">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {ADDONS.map((k) => {
-                const a = cfg.addOns[k] as Record<string, number>;
+                const a = ((cfg.addOns as Record<string, Record<string, number> | undefined>)[k] ?? (k === 'nfcTagExtra' ? { perTag: 15 } : {})) as Record<string, number>;
                 return (
                   <fieldset key={k} className="space-y-2 rounded-md border p-3">
                     <legend className="px-1 text-xs font-semibold">{k}</legend>
                     {Object.keys(a).map((f) => num(a[f]!, (n) => setCfg({ ...cfg, addOns: { ...cfg.addOns, [k]: { ...a, [f]: n } } }), f))}
+                    {ADDON_HINT[k] && <p className="text-xs text-muted-fg">{ADDON_HINT[k]}</p>}
                   </fieldset>
                 );
               })}
@@ -137,12 +147,20 @@ function RecordEditor({ title, description, value, onChange, keyPlaceholder }: {
   );
 }
 
+/** Flat add-on list for the quote engine: boolean add-ons once, quantity add-ons repeated once per unit (`['nfcTagExtra','nfcTagExtra']` = 2 extra tags). */
+export function buildAddOns(flags: Set<string>, quantities: Record<string, number>): string[] {
+  const out = Array.from(flags).filter((a) => !QUANTITY_ADDONS[a]);
+  for (const [key, qty] of Object.entries(quantities)) for (let i = 0; i < Math.max(0, Math.floor(qty)); i++) out.push(key);
+  return out;
+}
+
 export function QuotePreviewTool({ initialLeadId = '', compact }: { initialLeadId?: string; compact?: boolean }) {
   const [leadId, setLeadId] = React.useState(initialLeadId);
   const [tier, setTier] = React.useState<TierName | ''>('');
   const [addOns, setAddOns] = React.useState<Set<string>>(new Set());
+  const [quantities, setQuantities] = React.useState<Record<string, number>>({});
   const [result, setResult] = React.useState<QuoteComputation | null>(null);
-  const preview = useMutation({ mutationFn: () => api.pricing.preview({ leadId: leadId.trim(), tier: tier || undefined, addOns: Array.from(addOns) }), onSuccess: setResult });
+  const preview = useMutation({ mutationFn: () => api.pricing.preview({ leadId: leadId.trim(), tier: tier || undefined, addOns: buildAddOns(addOns, quantities) }), onSuccess: setResult });
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end gap-2">
@@ -157,9 +175,14 @@ export function QuotePreviewTool({ initialLeadId = '', compact }: { initialLeadI
             {TIERS.map((t) => <option key={t}>{t}</option>)}
           </Select>
         </Field>
-        <div className="flex flex-wrap gap-2">
-          {ADDONS.map((a) => (
+        <div className="flex flex-wrap items-end gap-2">
+          {ADDONS.filter((a) => !QUANTITY_ADDONS[a]).map((a) => (
             <Checkbox key={a} id={`pp-${a}`} label={a} checked={addOns.has(a)} onChange={(e) => { const n = new Set(addOns); e.target.checked ? n.add(a) : n.delete(a); setAddOns(n); }} />
+          ))}
+          {ADDONS.filter((a) => QUANTITY_ADDONS[a]).map((a) => (
+            <Field key={a} label={`${QUANTITY_ADDONS[a]!.label} (qty)`} htmlFor={`pp-${a}-qty`} className="w-36">
+              <Input id={`pp-${a}-qty`} type="number" min={0} step={1} inputMode="numeric" className="tabular-nums" value={quantities[a] ?? 0} onChange={(e) => setQuantities({ ...quantities, [a]: Math.max(0, Math.floor(parseInt(e.target.value, 10) || 0)) })} />
+            </Field>
           ))}
         </div>
         <Button variant="outline" loading={preview.isPending} disabled={!leadId.trim()} onClick={() => preview.mutate()}>

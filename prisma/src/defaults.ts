@@ -2,9 +2,9 @@
 export const DEFAULT_PRICING = {
   currency: 'EUR',
   tiers: {
-    starter: { buildFee: 690, monthly: 49, pages: 5, revisions: 1, updatesPerMonth: 0, label: 'Starter' },
-    business: { buildFee: 1450, monthly: 99, pages: 10, revisions: 2, updatesPerMonth: 2, label: 'Business' },
-    premium: { buildFee: 2900, monthly: 189, pages: 0, revisions: 3, updatesPerMonth: 4, label: 'Premium' },
+    starter: { buildFee: 690, monthly: 49, pages: 5, revisions: 1, updatesPerMonth: 0, label: 'Starter', nfcTags: 0 },
+    business: { buildFee: 1450, monthly: 99, pages: 10, revisions: 2, updatesPerMonth: 2, label: 'Business', nfcTags: 1 },
+    premium: { buildFee: 2900, monthly: 189, pages: 0, revisions: 3, updatesPerMonth: 4, label: 'Premium', nfcTags: 2 },
   },
   addOns: {
     contentManagement: { monthly: 39, updatesIncluded: 2 },
@@ -15,6 +15,7 @@ export const DEFAULT_PRICING = {
     multilingual: { perLanguage: 350, monthly: 19 },
     domainAndEmail: { setup: 60, monthly: 9 },
     photography: { oneOff: 450 },
+    nfcTagExtra: { perTag: 15 },
   },
   countryMultipliers: {
     MT: 1.0, IE: 1.15, NL: 1.15, SE: 1.1, DK: 1.2, FI: 1.1, NO: 1.3, FR: 1.1, BE: 1.1, LU: 1.3, PT: 0.8,

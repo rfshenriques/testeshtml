@@ -10,7 +10,7 @@ import type {
   LeadAction, LeadDetail, LeadSummary, LeadsQuery, Mailbox, MailboxWithReputation, MessagePreview, OpsCosts, OpsOverview,
   OutreachMessage, Paginated, PlaceTypeTiers, PricingConfig, Provisioning, Quote, QuoteComputation, ReplyIntent,
   ReputationSeries, RetentionStatus, ReviewQueueItem, ScheduleRow, SequenceStep, SiteCopy, Suppression, TemplateInfo,
-  TierName, CrmTask, Classification,
+  TierName, CrmTask, Classification, SiteVariants, SiteVariantParams,
 } from './types';
 import { auth } from './auth';
 
@@ -132,7 +132,11 @@ export const api = {
     setPrimaryContact: (id: string, contactId: string) => post<unknown>(`/admin/leads/${encodeURIComponent(id)}/contacts/${encodeURIComponent(contactId)}/primary`),
     site: (id: string) => get<GeneratedSite>(`/admin/leads/${encodeURIComponent(id)}/site`),
     saveCopy: (id: string, copy: SiteCopy) => put<GeneratedSite>(`/admin/leads/${encodeURIComponent(id)}/site/copy`, { copy }),
-    rebuild: (id: string, body: { templateId?: string; colourScheme?: string; typography?: string }) => post<unknown>(`/admin/leads/${encodeURIComponent(id)}/site/rebuild`, body),
+    rebuild: (id: string, body: { templateId?: string; colourScheme?: string; typography?: string }) => post<ActionResult>(`/admin/leads/${encodeURIComponent(id)}/site/rebuild`, body),
+    /** Style gallery inputs: current combo, brand palette, photos, template families. 422 until the lead has a classification. */
+    siteVariants: (id: string) => get<SiteVariants>(`/admin/leads/${encodeURIComponent(id)}/site/variants`),
+    /** Fully built page for one template/scheme/typography combo (self-contained HTML). First build of a combo takes ~5 s; render it via iframe `srcDoc`. */
+    siteVariantHtml: (id: string, params: SiteVariantParams, signal?: AbortSignal) => get<string>(`/admin/leads/${encodeURIComponent(id)}/site/variant`, { ...params }, { raw: 'text', signal }),
     quote: (id: string) => get<Quote>(`/admin/leads/${encodeURIComponent(id)}/quote`),
     createQuote: (id: string, body: { tier?: TierName; addOns?: string[] }) => post<Quote>(`/admin/leads/${encodeURIComponent(id)}/quote`, body),
     addTask: (id: string, body: { title: string; dueAt?: string }) => post<CrmTask>(`/admin/leads/${encodeURIComponent(id)}/tasks`, body),

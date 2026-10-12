@@ -4,12 +4,12 @@
  *
  *   pnpm --filter @sitewright/templates exec tsx scripts/check-contrast.ts
  */
-import { CONTRAST_PAIRS, PALETTES, contrastRatio, type ColourScheme } from '../src/theme/tokens';
+import { CONTRAST_PAIRS, PALETTES, contrastRatio, type FixedScheme } from '../src/theme/tokens';
 import type { TemplateFamily } from '@sitewright/shared-types';
 
 let failures = 0;
 for (const family of Object.keys(PALETTES) as TemplateFamily[]) {
-  for (const scheme of Object.keys(PALETTES[family]) as ColourScheme[]) {
+  for (const scheme of Object.keys(PALETTES[family]) as FixedScheme[]) {
     const p = PALETTES[family][scheme];
     const cells = CONTRAST_PAIRS.map(([fg, bg]) => {
       const r = contrastRatio(p[fg], p[bg]);

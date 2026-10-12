@@ -79,9 +79,11 @@ export class PreviewService {
   /** Resolve a public request. Never serves a taken-down or expired site (410) and never leaks whether a slug exists beyond 404. */
   async serve(slug: string, filePath: string, visitor?: { ip: string; ua: string }): Promise<ServeResult> {
     const site = await this.prisma.generatedSite.findUnique({ where: { previewSlug: slug }, select: { id: true, leadId: true, objectPrefix: true, expiresAt: true, takenDownAt: true, publishedAt: true } });
-    if (!site || !site.objectPrefix || !site.publishedAt) return { status: 404 };
+    if (!site || !site.objectPrefix) return { status: 404 };
     if (site.takenDownAt || site.expiresAt <= new Date()) return { status: 410 };
     let rel = filePath.replace(/^\/+/, '');
+    // Listing photos are reachable as soon as they are stored (the operator previews styles before publishing); pages only once published.
+    if (!site.publishedAt && !rel.startsWith('photos/')) return { status: 404 };
     if (!rel || rel.endsWith('/')) rel += 'index.html';
     const obj = (await this.storage.get(site.objectPrefix + rel)) ?? (!path.extname(rel) ? await this.storage.get(`${site.objectPrefix}${rel}/index.html`) : null);
     if (!obj) return { status: 404 };

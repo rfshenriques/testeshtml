@@ -40,6 +40,7 @@ export async function demoSeed(app: INestApplicationContext) {
   await costs.record({ category: 'email_verify', units: 38, usd: 0.3, campaignId: campaign.id, provider: 'zerobounce' });
   await costs.record({ category: 'llm', units: 61000, usd: 0.7, campaignId: campaign.id, provider: 'claude' });
 
+  // Every demo business is fictional and uses the reserved .example domain, which cannot receive mail.
   const businesses: { name: string; type: string; vertical: string; city: string; ws: any; rating: number; reviews: number; stage: any; contact?: string; emailType?: any; lat: number; lng: number }[] = [
     { name: 'Valletta Dental Clinic Ltd', type: 'dentist', vertical: 'dental', city: 'Valletta', ws: 'none', rating: 4.8, reviews: 132, stage: 'contacted', contact: 'info@vallettadental.example', emailType: 'role_generic', lat: 35.8992, lng: 14.5120 },
     { name: 'Harbour Bakery Ltd', type: 'bakery', vertical: 'bakery', city: 'Sliema', ws: 'social_only', rating: 4.6, reviews: 88, stage: 'profiled', contact: 'hello@harbourbakery.example', emailType: 'role_generic', lat: 35.9110, lng: 14.5030 },
@@ -108,6 +109,8 @@ export async function demoSeed(app: INestApplicationContext) {
   }
   // Camilleri Physio: quoted + sequence running + one sent + a reply with a draft
   const physio = leads['Camilleri Physiotherapy Ltd'];
+  // Mark the sequence as already started/stopped BEFORE quoting so the quote hook does not auto-start a second one.
+  await prisma.lead.update({ where: { id: physio }, data: { sequenceStartedAt: new Date(Date.now() - 2 * 86400_000), sequenceStoppedAt: new Date(Date.now() - 86400_000), sequenceStopReason: 'reply: interested' } });
   const q = await quoting.createQuote(physio);
   const rp = await generator.generate(physio, { advance: false });
   if (!rp.skipped) { await preview.publish(physio); await prisma.generatedSite.update({ where: { leadId: physio }, data: { views: 3, lastViewedAt: new Date() } }); }
@@ -118,6 +121,7 @@ export async function demoSeed(app: INestApplicationContext) {
   await prisma.reviewItem.create({ data: { leadId: physio, type: 'reply_draft', payload: { intent: 'interested' } } });
   // Valletta Dental: sequence running, step 1 sent, step 2 queued awaiting approval
   const dental = leads['Valletta Dental Clinic Ltd'];
+  await prisma.lead.update({ where: { id: dental }, data: { sequenceStartedAt: new Date(Date.now() - 3 * 86400_000) } });
   await quoting.createQuote(dental);
   const rd = await generator.generate(dental, { advance: false });
   if (!rd.skipped) await preview.publish(dental);

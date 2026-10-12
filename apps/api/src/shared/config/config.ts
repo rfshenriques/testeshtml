@@ -63,6 +63,8 @@ export const EnvSchema = z.object({
   BOOKING_LINK_URL: str('https://example.com/book'),
 
   UNSPLASH_ACCESS_KEY: str(''),
+  USE_PLACE_PHOTOS: bool.default(true),
+  PLACE_PHOTOS_MAX: num(4),
 
   LEGAL_ENTITY_NAME: z.string().min(1),
   LEGAL_ENTITY_REG_NO: z.string().min(1),
