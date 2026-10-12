@@ -84,10 +84,22 @@ Public, internet-facing endpoints (unauthenticated): `/p/:slug` previews, `/q/:s
 `/webhooks/email`, `/robots.txt`, `/health`. In production put previews on a separate domain
 (`PREVIEW_HOST`) and tracking on a subdomain of the sending domain (`TRACKING_HOST`).
 
-## Deploy
+## Deploy (Railway)
 
-Railway (spec default): one service from `apps/api` (`pnpm build` then `node apps/api/dist/main.js`),
-Railway Postgres and Redis, `pnpm db:deploy` on release. Serve `apps/admin/dist` statically (any
-host) pointing at the API. Object storage: set `STORAGE_DRIVER=s3` with R2/S3/MinIO credentials.
+One Docker service built from the root `Dockerfile` runs the API, the BullMQ workers and serves the
+operator console (`apps/admin/dist`) at `/`. `scripts/railway-start.sh` applies migrations, runs the
+idempotent base seed, optionally loads demo data (`DEMO_SEED=true`, only into an empty database) and
+starts the server. Required Railway resources in the same project:
+
+- Postgres (`DATABASE_URL=${{Postgres.DATABASE_URL}}`)
+- Redis (`REDIS_URL=${{Redis.REDIS_URL}}`)
+- a Bucket for previews (`STORAGE_DRIVER=s3`, `S3_ENDPOINT=${{previews.ENDPOINT}}`, `S3_BUCKET_PREVIEWS=${{previews.BUCKET}}`,
+  `S3_REGION=${{previews.REGION}}`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_URL_STYLE=virtual-host`)
+- `APP_BASE_URL`, `PREVIEW_HOST` (`<base>/p` until a separate preview domain exists), `QUOTE_HOST`
+  (`<base>/q`), `TRACKING_HOST` (`<base>/t`), `ADMIN_API_TOKEN`, and the legal identity variables.
+
+Pushing to `master` redeploys. Healthcheck: `/health`. Adding real providers is a variable change:
+`GOOGLE_MAPS_API_KEY`, `ANTHROPIC_API_KEY`, `EMAIL_PROVIDER=ses` + AWS keys, `STRIPE_SECRET_KEY` +
+`STRIPE_WEBHOOK_SECRET` (webhook URL `<base>/webhooks/stripe`), `EMAIL_VERIFY_PROVIDER` + key.
 CI (`.github/workflows/ci.yml`) runs install → generate → build → typecheck → test with Postgres
 and Redis services.
