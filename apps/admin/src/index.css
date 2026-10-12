@@ -1,31 +1,58 @@
 @import "tailwindcss";
 
-/* Theme tokens. Light by default, dark via prefers-color-scheme (data-theme overrides for tests/manual). */
+/*
+ * Theme tokens. Light by default, dark via prefers-color-scheme (data-theme overrides for tests/manual).
+ *
+ * Rules of the system:
+ *  - one accent (blue) for primary actions, links, active nav and focus rings; everything else neutral
+ *  - statuses are tinted chips (pale background + dark text of the same hue), never saturated fills
+ *  - 1px borders, no drop shadows except dialogs, drawers and dropdowns
+ */
 :root {
   color-scheme: light;
   --bg: #f7f7f5;
-  --fg: #0b0b0b;
+  --fg: #1a1a1a;
   --card: #ffffff;
-  --card-fg: #0b0b0b;
-  --muted: #eeede9;
-  --muted-fg: #52514e;
-  --border: #dedcd6;
+  --card-fg: #1a1a1a;
+  --muted: #efeeea;
+  --muted-fg: #5c5b57;
+  --border: #e4e2dc;
   --input: #ffffff;
   --primary: #2a78d6;
   --primary-fg: #ffffff;
   --accent: #e8f0fb;
-  --destructive: #d03b3b;
+  --destructive: #c53030;
   --destructive-fg: #ffffff;
-  --success: #0ca30c;
-  --warning: #b97a00;
-  --warning-bg: #fff4d6;
-  --critical: #d03b3b;
-  --critical-bg: #fde6e6;
   --ring: #2a78d6;
+
+  /* status chips: pale background + dark text of the same hue; dot = saturated marker */
+  --good-bg: #e7f5ea;
+  --good-fg: #14532d;
+  --good-dot: #1f9d4d;
+  --warn-bg: #fbf0d9;
+  --warn-fg: #6f4400;
+  --warn-dot: #d9960b;
+  --bad-bg: #fde8e8;
+  --bad-fg: #8a1c1c;
+  --bad-dot: #d03b3b;
+  --info-bg: #e8f0fb;
+  --info-fg: #1b4f8f;
+  --info-dot: #2a78d6;
+  --neutral-bg: #efeeea;
+  --neutral-fg: #44433f;
+  --neutral-dot: #9a9892;
+
+  /* legacy aliases kept for anything that still references them */
+  --success: var(--good-dot);
+  --warning: var(--warn-fg);
+  --warning-bg: var(--warn-bg);
+  --critical: var(--bad-fg);
+  --critical-bg: var(--bad-bg);
+
   --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --series-4: #eda100;
+  --series-2: #d9960b;
+  --series-3: #1f9d4d;
+  --series-4: #8b5cf6;
   --series-5: #e87ba4;
   --seq-250: #86b6ef;
   --seq-350: #5598e7;
@@ -34,6 +61,7 @@
   --seq-650: #104281;
   --grid: #e6e4de;
 }
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
@@ -41,31 +69,46 @@
     --fg: #f0efec;
     --card: #1a1a19;
     --card-fg: #f0efec;
-    --muted: #262624;
-    --muted-fg: #c3c2b7;
-    --border: #33332f;
+    --muted: #242422;
+    --muted-fg: #a9a8a0;
+    --border: #2e2e2b;
     --input: #1f1f1d;
-    --primary: #3987e5;
+    --primary: #4b92e8;
     --primary-fg: #ffffff;
-    --accent: #1e2a3a;
+    --accent: #1b2a3d;
     --destructive: #e66767;
-    --destructive-fg: #0b0b0b;
-    --success: #2fbf2f;
-    --warning: #fab219;
-    --warning-bg: #3a2e0a;
-    --critical: #e66767;
-    --critical-bg: #3a1a1a;
-    --ring: #3987e5;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-4: #c98500;
-    --series-5: #d55181;
+    --destructive-fg: #121211;
+    --ring: #4b92e8;
+    --good-bg: #14301c;
+    --good-fg: #8fdca3;
+    --good-dot: #3bbf6a;
+    --warn-bg: #3a2a08;
+    --warn-fg: #f2c868;
+    --warn-dot: #e0a627;
+    --bad-bg: #3d1717;
+    --bad-fg: #f3a0a0;
+    --bad-dot: #e66767;
+    --info-bg: #1b2a3d;
+    --info-fg: #9cc4f3;
+    --info-dot: #4b92e8;
+    --neutral-bg: #2a2a27;
+    --neutral-fg: #cfcec6;
+    --neutral-dot: #7c7b75;
+    --success: var(--good-dot);
+    --warning: var(--warn-fg);
+    --warning-bg: var(--warn-bg);
+    --critical: var(--bad-fg);
+    --critical-bg: var(--bad-bg);
+    --series-1: #4b92e8;
+    --series-2: #e0a627;
+    --series-3: #3bbf6a;
+    --series-4: #a78bfa;
+    --series-5: #e58fb2;
     --seq-250: #184f95;
     --seq-350: #1c5cab;
     --seq-450: #256abf;
-    --seq-550: #3987e5;
-    --seq-650: #6da7ec;
+    --seq-550: #4b92e8;
+    --seq-650: #7fb0ee;
     --grid: #2a2a27;
   }
 }
@@ -75,31 +118,46 @@
   --fg: #f0efec;
   --card: #1a1a19;
   --card-fg: #f0efec;
-  --muted: #262624;
-  --muted-fg: #c3c2b7;
-  --border: #33332f;
+  --muted: #242422;
+  --muted-fg: #a9a8a0;
+  --border: #2e2e2b;
   --input: #1f1f1d;
-  --primary: #3987e5;
+  --primary: #4b92e8;
   --primary-fg: #ffffff;
-  --accent: #1e2a3a;
+  --accent: #1b2a3d;
   --destructive: #e66767;
-  --destructive-fg: #0b0b0b;
-  --success: #2fbf2f;
-  --warning: #fab219;
-  --warning-bg: #3a2e0a;
-  --critical: #e66767;
-  --critical-bg: #3a1a1a;
-  --ring: #3987e5;
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --series-4: #c98500;
-  --series-5: #d55181;
+  --destructive-fg: #121211;
+  --ring: #4b92e8;
+  --good-bg: #14301c;
+  --good-fg: #8fdca3;
+  --good-dot: #3bbf6a;
+  --warn-bg: #3a2a08;
+  --warn-fg: #f2c868;
+  --warn-dot: #e0a627;
+  --bad-bg: #3d1717;
+  --bad-fg: #f3a0a0;
+  --bad-dot: #e66767;
+  --info-bg: #1b2a3d;
+  --info-fg: #9cc4f3;
+  --info-dot: #4b92e8;
+  --neutral-bg: #2a2a27;
+  --neutral-fg: #cfcec6;
+  --neutral-dot: #7c7b75;
+  --success: var(--good-dot);
+  --warning: var(--warn-fg);
+  --warning-bg: var(--warn-bg);
+  --critical: var(--bad-fg);
+  --critical-bg: var(--bad-bg);
+  --series-1: #4b92e8;
+  --series-2: #e0a627;
+  --series-3: #3bbf6a;
+  --series-4: #a78bfa;
+  --series-5: #e58fb2;
   --seq-250: #184f95;
   --seq-350: #1c5cab;
   --seq-450: #256abf;
-  --seq-550: #3987e5;
-  --seq-650: #6da7ec;
+  --seq-550: #4b92e8;
+  --seq-650: #7fb0ee;
   --grid: #2a2a27;
 }
 
@@ -117,14 +175,51 @@
   --color-accent: var(--accent);
   --color-destructive: var(--destructive);
   --color-destructive-fg: var(--destructive-fg);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-warning-bg: var(--warning-bg);
-  --color-critical: var(--critical);
-  --color-critical-bg: var(--critical-bg);
   --color-ring: var(--ring);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-good-bg: var(--good-bg);
+  --color-good-fg: var(--good-fg);
+  --color-good-dot: var(--good-dot);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-fg: var(--warn-fg);
+  --color-warn-dot: var(--warn-dot);
+  --color-bad-bg: var(--bad-bg);
+  --color-bad-fg: var(--bad-fg);
+  --color-bad-dot: var(--bad-dot);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-info-dot: var(--info-dot);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-neutral-fg: var(--neutral-fg);
+  --color-neutral-dot: var(--neutral-dot);
+  /* legacy colour names still used by a few call sites */
+  --color-success: var(--good-dot);
+  --color-warning: var(--warn-fg);
+  --color-warning-bg: var(--warn-bg);
+  --color-critical: var(--bad-fg);
+  --color-critical-bg: var(--bad-bg);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Type scale: 12 meta · 13 secondary · 15 body · 17 section · 22 page · 28/32 stat. Nothing below 12. */
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-base: 15px;
+  --text-base--line-height: 22px;
+  --text-lg: 17px;
+  --text-lg--line-height: 24px;
+  --text-xl: 22px;
+  --text-xl--line-height: 28px;
+  --text-2xl: 28px;
+  --text-2xl--line-height: 34px;
+  --text-3xl: 32px;
+  --text-3xl--line-height: 38px;
+
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-xs: none;
 }
 
 html, body, #root { height: 100%; }
@@ -132,9 +227,32 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.5;
+  font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 * { border-color: var(--border); }
-:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+:focus-visible { outline: 2px solid color-mix(in oklab, var(--ring) 40%, transparent); outline-offset: 2px; }
 .recharts-wrapper, .recharts-surface { outline: none; }
+
+/* numbers always line up */
+table, [role="grid"], .tabular, input[type="number"] { font-variant-numeric: tabular-nums; }
+
+/* 12px uppercase label used for table headers, group labels and meta */
+@utility t-label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-fg);
+}
+
+/* hide the number spinners inside compact table inputs */
+.no-spin::-webkit-outer-spin-button, .no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.no-spin { -moz-appearance: textfield; }
+
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }

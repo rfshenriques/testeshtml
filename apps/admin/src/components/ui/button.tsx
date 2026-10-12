@@ -3,23 +3,32 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+/**
+ * default    filled accent, the one primary action on a screen
+ * outline    secondary, neutral 1px border
+ * destructive outlined red; `danger` is the filled red reserved for destructive confirms and the kill switch
+ * ghost      tertiary, text only
+ * link       inline text link
+ */
 export const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-ring',
+  'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-ring',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-fg hover:opacity-90',
-        secondary: 'bg-muted text-fg hover:bg-border',
-        outline: 'border bg-transparent hover:bg-muted',
-        ghost: 'hover:bg-muted',
-        destructive: 'bg-destructive text-destructive-fg hover:opacity-90',
-        link: 'text-primary underline-offset-4 hover:underline',
+        default: 'bg-primary text-primary-fg hover:bg-[color-mix(in_oklab,var(--primary)_88%,black)]',
+        secondary: 'border bg-card text-fg hover:bg-muted',
+        outline: 'border bg-card text-fg hover:bg-muted',
+        ghost: 'text-fg hover:bg-muted',
+        destructive: 'border border-[color-mix(in_oklab,var(--destructive)_55%,transparent)] bg-card text-destructive hover:bg-bad-bg',
+        danger: 'bg-destructive text-destructive-fg hover:opacity-90',
+        link: 'h-auto px-0 text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: 'h-9 px-3',
-        sm: 'h-7 px-2 text-xs',
-        lg: 'h-10 px-5',
-        icon: 'size-8',
+        default: 'h-9 px-3.5 text-base',
+        sm: 'h-8 px-3 text-sm',
+        lg: 'h-10 px-5 text-base',
+        icon: 'size-9',
+        iconSm: 'size-8',
       },
     },
     defaultVariants: { variant: 'default', size: 'default' },

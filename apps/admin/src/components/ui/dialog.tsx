@@ -14,12 +14,15 @@ interface DialogProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   /** side sheet instead of a centered modal */
   side?: 'right';
+  /** Custom header content rendered below the title (e.g. a tab bar); only for side sheets. */
+  header?: React.ReactNode;
+  bodyClassName?: string;
 }
 
-const SIZES = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-3xl', xl: 'max-w-6xl' };
+const SIZES = { sm: 'max-w-[480px]', md: 'max-w-[560px]', lg: 'max-w-3xl', xl: 'max-w-6xl' };
 
 /** Accessible modal: focus moves in, Escape closes, focus returns, backdrop click closes. */
-export function Dialog({ open, onClose, title, description, children, footer, size = 'md', side }: DialogProps) {
+export function Dialog({ open, onClose, title, description, children, footer, size = 'md', side, header, bodyClassName }: DialogProps) {
   const ref = React.useRef<HTMLDivElement>(null);
   const titleId = React.useId();
   const descId = React.useId();
@@ -60,8 +63,9 @@ export function Dialog({ open, onClose, title, description, children, footer, si
   }, [open, onClose]);
 
   if (!open) return null;
+  const isSheet = side === 'right';
   return createPortal(
-    <div className={cn('fixed inset-0 z-50 flex bg-black/40 backdrop-blur-[1px]', side === 'right' ? 'justify-end' : 'items-center justify-center p-4')} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className={cn('fixed inset-0 z-50 flex bg-black/40', isSheet ? 'justify-end' : 'items-center justify-center p-4')} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={ref}
         role="dialog"
@@ -69,28 +73,28 @@ export function Dialog({ open, onClose, title, description, children, footer, si
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
-        className={cn(
-          'flex flex-col bg-card text-card-fg shadow-xl outline-none',
-          side === 'right' ? 'h-full w-full max-w-4xl border-l' : cn('max-h-[90vh] w-full rounded-lg border', SIZES[size]),
-        )}
+        className={cn('flex flex-col bg-card text-card-fg shadow-xl outline-none', isSheet ? 'h-full w-full max-w-[880px] border-l' : cn('max-h-[90vh] w-full rounded-lg border', SIZES[size]))}
       >
-        <div className="flex items-start justify-between gap-4 border-b p-4">
-          <div>
-            <h2 id={titleId} className="text-base font-semibold">
-              {title}
-            </h2>
-            {description && (
-              <p id={descId} className="mt-1 text-sm text-muted-fg">
-                {description}
-              </p>
-            )}
+        <div className={cn('flex flex-col', isSheet ? 'border-b px-6 pt-5' : 'px-6 pt-6')}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2 id={titleId} className={cn('font-semibold', isSheet ? 'text-xl tracking-[-0.01em]' : 'text-lg')}>
+                {title}
+              </h2>
+              {description && (
+                <div id={descId} className="mt-1 text-sm text-muted-fg">
+                  {description}
+                </div>
+              )}
+            </div>
+            <Button data-close variant="ghost" size="iconSm" className="-mt-1 -mr-2 text-muted-fg" aria-label="Close" onClick={onClose}>
+              <X className="size-4" />
+            </Button>
           </div>
-          <Button data-close variant="ghost" size="icon" aria-label="Close" onClick={onClose}>
-            <X className="size-4" />
-          </Button>
+          {header && <div className="mt-4">{header}</div>}
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
-        {footer && <div className="flex flex-wrap items-center justify-end gap-2 border-t p-3">{footer}</div>}
+        <div className={cn('min-h-0 flex-1 overflow-y-auto', isSheet ? 'p-6' : 'px-6 pt-4 pb-6', bodyClassName)}>{children}</div>
+        {footer && <div className={cn('flex flex-wrap items-center justify-end gap-2 border-t', isSheet ? 'px-6 py-4' : 'px-6 py-4')}>{footer}</div>}
       </div>
     </div>,
     document.body,
@@ -133,14 +137,14 @@ export function ConfirmDialog({ open, onClose, onConfirm, title, blastRadius, co
       open={open}
       onClose={onClose}
       title={title}
-      size="sm"
+      size="md"
       footer={
         <>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button
-            variant={destructive ? 'destructive' : 'default'}
+            variant={destructive ? 'danger' : 'default'}
             disabled={!ready}
             loading={busy || loading}
             onClick={async () => {
@@ -157,24 +161,24 @@ export function ConfirmDialog({ open, onClose, onConfirm, title, blastRadius, co
         </>
       }
     >
-      <div className="space-y-3 text-sm">
-        <div className="rounded-md border border-warning bg-warning-bg p-3">
-          <div className="text-xs font-semibold uppercase tracking-wide">Blast radius</div>
-          <div className="mt-1">{blastRadius}</div>
+      <div className="space-y-4">
+        <div className="rounded-md border bg-muted/50 px-4 py-3">
+          <div className="t-label">Blast radius</div>
+          <div className="mt-1.5 leading-relaxed">{blastRadius}</div>
         </div>
         {children}
         {typeToConfirm && (
-          <div className="flex flex-col gap-1">
-            <label htmlFor={inputId} className="text-xs text-muted-fg">
-              Type <span className="font-mono font-semibold text-fg">{typeToConfirm}</span> to confirm
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor={inputId} className="text-sm font-medium">
+              Type <span className="rounded bg-muted px-1 font-mono text-xs font-semibold">{typeToConfirm}</span> to confirm
             </label>
-            <input id={inputId} data-autofocus autoComplete="off" className="h-9 rounded-md border bg-input px-3 font-mono text-sm" value={typed} onChange={(e) => setTyped(e.target.value)} />
+            <input id={inputId} data-autofocus autoComplete="off" className="h-9 rounded-md border bg-input px-3 font-mono text-base focus-visible:border-primary focus-visible:outline-2 focus-visible:outline-ring" value={typed} onChange={(e) => setTyped(e.target.value)} />
           </div>
         )}
         {acknowledge && (
-          <label htmlFor={ackId} className="flex items-start gap-2 text-sm">
-            <input id={ackId} type="checkbox" className="mt-0.5 size-4" checked={acked} onChange={(e) => setAcked(e.target.checked)} />
-            <span>{acknowledge}</span>
+          <label htmlFor={ackId} className="flex items-start gap-2.5">
+            <input id={ackId} type="checkbox" className="mt-1 size-4 shrink-0 accent-[var(--primary)]" checked={acked} onChange={(e) => setAcked(e.target.checked)} />
+            <span className="leading-relaxed">{acknowledge}</span>
           </label>
         )}
       </div>
