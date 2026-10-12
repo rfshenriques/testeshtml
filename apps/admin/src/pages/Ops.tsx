@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
 import { cn, fmtNum, fmtUsd } from '@/lib/utils';
-import { PageHeader, QueryState, Section, Button, Badge, Progress, Table, THead, TBody, TR, TH, TD, EmptyState, Checkbox, ConfirmDialog, Note } from '@/components/ui';
+import { PageHeader, QueryState, Section, Button, Progress, Table, THead, TBody, TR, TH, TD, CellSub, EmptyState, Checkbox, ConfirmDialog, Note, StatusLabel } from '@/components/ui';
 import { KillSwitchControl } from '@/components/layout/KillSwitch';
 import { C, axisProps, tooltipStyle, ChartBox } from '@/components/charts/common';
 import { AlertList, EconomicsTiles } from './Dashboard';
@@ -36,113 +36,140 @@ export function OpsPage() {
 
   return (
     <>
-      <PageHeader title="Ops" description="Cost ledger, queue depths, kill switch, API quotas and alerts. Refreshes every 15s." />
+      <PageHeader title="Ops" description="Cost ledger, queue depths, API quotas and alerts. Refreshes every 15 seconds." actions={<QueryState query={q}>{(o) => <KillSwitchControl engaged={o.killSwitch} />}</QueryState>} />
       <QueryState query={q}>
         {(o) => {
           const totalCost = o.costs.byCategory.reduce((s, c) => s + c.usd, 0);
           const byCampaign = [...o.costs.byCampaign].sort((a, b) => b.usd - a.usd).map((c) => ({ ...c, name: c.name ?? campaignName(c.campaignId) }));
           const byCategory = [...o.costs.byCategory].sort((a, b) => b.usd - a.usd);
           return (
-            <div className="space-y-4">
-              <Section title="Kill switch" description="Stops every queue consumer and every billable external call. Public unsubscribe/takedown endpoints keep working. Always visible in the top bar too.">
-                <div className="flex flex-wrap items-center gap-3">
-                  <KillSwitchControl engaged={o.killSwitch} />
-                  {o.killSwitch && <Note tone="critical">Engaged. Nothing is being sent or spent. Queued jobs are preserved.</Note>}
-                </div>
-              </Section>
+            <div className="space-y-6">
+              {o.killSwitch && <Note tone="critical">Kill switch engaged. Nothing is being sent or spent; queued jobs are preserved. Public unsubscribe and takedown endpoints keep working.</Note>}
 
               <EconomicsTiles e={o.economics} />
 
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-6 lg:grid-cols-2">
                 <Section title="Cost by category" description={`${fmtUsd(totalCost)} total`}>
                   {byCategory.length === 0 ? (
                     <EmptyState title="No cost events" />
                   ) : (
-                    <>
-                      <ChartBox height={Math.max(120, byCategory.length * 28 + 20)}>
+                    <div className="space-y-4">
+                      <ChartBox height={Math.max(120, byCategory.length * 30 + 24)}>
                         <ResponsiveContainer>
-                          <BarChart data={byCategory} layout="vertical" margin={{ left: 8, right: 48, top: 4, bottom: 4 }} barCategoryGap={2}>
+                          <BarChart data={byCategory} layout="vertical" margin={{ left: 0, right: 48, top: 4, bottom: 0 }} barCategoryGap={6}>
                             <CartesianGrid horizontal={false} stroke={C.grid} />
-                            <XAxis type="number" {...axisProps} tickFormatter={(v: number) => `$${v}`} />
-                            <YAxis type="category" dataKey="category" width={120} {...axisProps} />
+                            <XAxis type="number" {...axisProps} axisLine={false} tickFormatter={(v: number) => `$${v}`} />
+                            <YAxis type="category" dataKey="category" width={128} {...axisProps} axisLine={false} interval={0} />
                             <Tooltip {...tooltipStyle} formatter={(v) => [fmtUsd(Number(v)), 'USD']} />
                             <Bar dataKey="usd" fill={C.s1} radius={[0, 4, 4, 0]} maxBarSize={16} isAnimationActive={false} />
                           </BarChart>
                         </ResponsiveContainer>
                       </ChartBox>
-                      <Table>
-                        <THead><tr><TH>Category</TH><TH className="text-right">Units</TH><TH className="text-right">USD</TH><TH className="text-right">Share</TH></tr></THead>
+                      <Table bare>
+                        <THead>
+                          <tr>
+                            <TH>Category</TH>
+                            <TH numeric>Units</TH>
+                            <TH numeric>USD</TH>
+                            <TH numeric>Share</TH>
+                          </tr>
+                        </THead>
                         <TBody>
                           {byCategory.map((c) => (
                             <TR key={c.category}>
                               <TD>{c.category}</TD>
-                              <TD className="text-right tabular-nums">{fmtNum(c.units)}</TD>
-                              <TD className="text-right tabular-nums">{fmtUsd(c.usd)}</TD>
-                              <TD className="text-right tabular-nums">{totalCost > 0 ? `${((c.usd / totalCost) * 100).toFixed(1)}%` : '—'}</TD>
+                              <TD numeric>{fmtNum(c.units)}</TD>
+                              <TD numeric>{fmtUsd(c.usd)}</TD>
+                              <TD numeric className="text-muted-fg">{totalCost > 0 ? `${((c.usd / totalCost) * 100).toFixed(1)}%` : '—'}</TD>
                             </TR>
                           ))}
                         </TBody>
                       </Table>
-                    </>
+                    </div>
                   )}
                 </Section>
                 <Section title="Cost by campaign">
                   {byCampaign.length === 0 ? (
                     <EmptyState title="No campaign spend" />
                   ) : (
-                    <>
-                      <ChartBox height={Math.max(120, byCampaign.length * 28 + 20)}>
+                    <div className="space-y-4">
+                      <ChartBox height={Math.max(120, byCampaign.length * 30 + 24)}>
                         <ResponsiveContainer>
-                          <BarChart data={byCampaign} layout="vertical" margin={{ left: 8, right: 48, top: 4, bottom: 4 }} barCategoryGap={2}>
+                          <BarChart data={byCampaign} layout="vertical" margin={{ left: 0, right: 48, top: 4, bottom: 0 }} barCategoryGap={6}>
                             <CartesianGrid horizontal={false} stroke={C.grid} />
-                            <XAxis type="number" {...axisProps} tickFormatter={(v: number) => `$${v}`} />
-                            <YAxis type="category" dataKey="name" width={140} {...axisProps} />
+                            <XAxis type="number" {...axisProps} axisLine={false} tickFormatter={(v: number) => `$${v}`} />
+                            <YAxis type="category" dataKey="name" width={148} {...axisProps} axisLine={false} interval={0} />
                             <Tooltip {...tooltipStyle} formatter={(v) => [fmtUsd(Number(v)), 'USD']} />
                             <Bar dataKey="usd" fill={C.s1} radius={[0, 4, 4, 0]} maxBarSize={16} isAnimationActive={false} />
                           </BarChart>
                         </ResponsiveContainer>
                       </ChartBox>
-                      <Table>
-                        <THead><tr><TH>Campaign</TH><TH className="text-right">USD</TH></tr></THead>
+                      <Table bare>
+                        <THead>
+                          <tr>
+                            <TH>Campaign</TH>
+                            <TH numeric>USD</TH>
+                          </tr>
+                        </THead>
                         <TBody>
                           {byCampaign.map((c) => (
                             <TR key={c.campaignId}>
-                              <TD><Link className="hover:underline" to={`/campaigns/${c.campaignId}`}>{c.name}</Link></TD>
-                              <TD className="text-right tabular-nums">{fmtUsd(c.usd)}</TD>
+                              <TD>
+                                <Link className="hover:underline" to={`/campaigns/${c.campaignId}`}>
+                                  {c.name}
+                                </Link>
+                              </TD>
+                              <TD numeric>{fmtUsd(c.usd)}</TD>
                             </TR>
                           ))}
                         </TBody>
                       </Table>
-                    </>
+                    </div>
                   )}
                 </Section>
               </div>
 
               <Section title="Queues" description="BullMQ depths. Pausing a queue stops its consumers; jobs stay queued.">
-                <Table>
+                <Table bare>
                   <THead>
-                    <tr><TH>Queue</TH><TH className="text-right">Waiting</TH><TH className="text-right">Active</TH><TH className="text-right">Delayed</TH><TH className="text-right">Failed</TH><TH className="text-right">Completed</TH><TH>State</TH><TH /></tr>
+                    <tr>
+                      <TH>Queue</TH>
+                      <TH numeric>Waiting</TH>
+                      <TH numeric>Active</TH>
+                      <TH numeric>Delayed</TH>
+                      <TH numeric>Failed</TH>
+                      <TH numeric>Completed</TH>
+                      <TH>State</TH>
+                      <TH />
+                    </tr>
                   </THead>
                   <TBody>
                     {o.queues.map((qd) => {
                       const key = NAME_TO_KEY[qd.name] ?? qd.name;
+                      const notes = (QUEUES as Record<string, QueueSpec>)[key]?.notes;
                       return (
                         <TR key={qd.name}>
                           <TD>
-                            <div className="font-mono text-xs">{qd.name}</div>
-                            {(QUEUES as Record<string, QueueSpec>)[key]?.notes && <div className="text-xs text-muted-fg">{(QUEUES as Record<string, QueueSpec>)[key]!.notes}</div>}
+                            <div className="font-mono text-sm">{qd.name}</div>
+                            {notes && <CellSub className="max-w-md whitespace-normal">{notes}</CellSub>}
                           </TD>
-                          <TD className={cn('text-right tabular-nums', qd.waiting > 1000 && 'text-warning font-medium')}>{fmtNum(qd.waiting)}</TD>
-                          <TD className="text-right tabular-nums">{fmtNum(qd.active)}</TD>
-                          <TD className="text-right tabular-nums">{fmtNum(qd.delayed)}</TD>
-                          <TD className={cn('text-right tabular-nums', qd.failed > 0 && 'text-critical font-medium')}>{fmtNum(qd.failed)}</TD>
-                          <TD className="text-right tabular-nums">{fmtNum(qd.completed)}</TD>
-                          <TD>{qd.paused ? <Badge variant="warning">paused</Badge> : <Badge variant="success">running</Badge>}</TD>
+                          <TD numeric className={cn(qd.waiting > 1000 && 'font-medium text-warn-fg')}>{fmtNum(qd.waiting)}</TD>
+                          <TD numeric>{fmtNum(qd.active)}</TD>
+                          <TD numeric>{fmtNum(qd.delayed)}</TD>
+                          <TD numeric className={cn(qd.failed > 0 && 'font-medium text-bad-fg')}>{fmtNum(qd.failed)}</TD>
+                          <TD numeric className="text-muted-fg">{fmtNum(qd.completed)}</TD>
                           <TD>
+                            <StatusLabel status={qd.paused ? 'paused' : 'running'} />
+                          </TD>
+                          <TD className="text-right">
                             {qd.paused ? (
-                              <Button size="sm" variant="outline" loading={queueMut.isPending && queueMut.variables?.key === key} onClick={() => queueMut.mutate({ key, pause: false })}>Resume</Button>
+                              <Button size="sm" variant="outline" loading={queueMut.isPending && queueMut.variables?.key === key} onClick={() => queueMut.mutate({ key, pause: false })}>
+                                Resume
+                              </Button>
                             ) : (
-                              <Button size="sm" variant="outline" onClick={() => setPausingQueue(key)}>Pause</Button>
+                              <Button size="sm" variant="outline" onClick={() => setPausingQueue(key)}>
+                                Pause
+                              </Button>
                             )}
                           </TD>
                         </TR>
@@ -157,16 +184,18 @@ export function OpsPage() {
                 {o.quotas.length === 0 ? (
                   <EmptyState title="No quota records today" />
                 ) : (
-                  <ul className="space-y-2">
+                  <ul className="space-y-4">
                     {o.quotas.map((qu) => {
                       const pct = qu.cap > 0 ? qu.used / qu.cap : 0;
                       return (
-                        <li key={`${qu.api}-${qu.day}`} className="text-sm">
-                          <div className="flex justify-between">
+                        <li key={`${qu.api}-${qu.day}`}>
+                          <div className="flex items-baseline justify-between">
                             <span className="font-medium">{qu.api}</span>
-                            <span className="tabular-nums text-xs text-muted-fg">{fmtNum(qu.used)} / {fmtNum(qu.cap)} ({(pct * 100).toFixed(0)}%)</span>
+                            <span className="text-sm text-muted-fg tabular-nums">
+                              {fmtNum(qu.used)} / {fmtNum(qu.cap)} · {(pct * 100).toFixed(0)}%
+                            </span>
                           </div>
-                          <Progress className="mt-1" value={qu.used} max={qu.cap} tone={pct >= 0.9 ? 'critical' : pct >= 0.7 ? 'warning' : 'primary'} label={`${qu.api} quota`} />
+                          <Progress className="mt-2" value={qu.used} max={qu.cap} tone={pct >= 0.9 ? 'critical' : pct >= 0.7 ? 'warning' : 'primary'} label={`${qu.api} quota`} />
                         </li>
                       );
                     })}
@@ -174,7 +203,7 @@ export function OpsPage() {
                 )}
               </Section>
 
-              <Section title={<span id="alerts">Alerts</span>} actions={<Checkbox id="all-alerts" label="Include acknowledged" checked={showAllAlerts} onChange={(e) => setShowAllAlerts(e.target.checked)} />}>
+              <Section title={<span id="alerts">Alerts</span>} actions={<Checkbox id="all-alerts" label={<span className="text-sm">Include acknowledged</span>} checked={showAllAlerts} onChange={(e) => setShowAllAlerts(e.target.checked)} />}>
                 <AlertList alerts={showAllAlerts ? allAlerts.data ?? o.alerts : o.alerts.filter((a) => !a.acknowledgedAt)} onAck={(id) => ack.mutate(id)} acking={ack.isPending ? (ack.variables as string) : null} />
               </Section>
             </div>

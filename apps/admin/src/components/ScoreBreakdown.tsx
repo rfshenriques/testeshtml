@@ -1,6 +1,5 @@
 import type { ScoreBreakdown as SB } from '@/lib/types';
-import { JsonView } from '@/components/ui';
-import { Note } from '@/components/ui';
+import { JsonView, Note } from '@/components/ui';
 
 /** Component explanations from spec §6.3; the UI must explain every automated decision. */
 export const SCORE_COMPONENTS: { key: keyof SB['weights']; label: string; explain: string }[] = [
@@ -11,6 +10,7 @@ export const SCORE_COMPONENTS: { key: keyof SB['weights']; label: string; explai
   { key: 'competitivePressure', label: 'Competitive pressure', explain: 'Share of same-type businesses in the same tile that DO have a live website. Higher share = stronger, verifiable pitch.' },
 ];
 
+/** Compact table with bars: component · value × weight · contribution. Explanations sit under each label at 12px. */
 export function ScoreBreakdownView({ breakdown, score }: { breakdown: SB | null | undefined; score?: number | null }) {
   if (!breakdown) {
     return (
@@ -25,39 +25,45 @@ export function ScoreBreakdownView({ breakdown, score }: { breakdown: SB | null 
     return { ...c, value, weight, contribution: value * weight };
   });
   const total = rows.reduce((s, r) => s + r.contribution, 0);
+  const weightSum = rows.reduce((s, r) => s + r.weight, 0);
   return (
-    <div className="space-y-3" data-testid="score-breakdown">
-      <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-semibold tabular-nums">{Number(breakdown.score ?? total).toFixed(2)}</span>
-        <span className="text-xs text-muted-fg">= Σ component × weight (weights sum to {rows.reduce((s, r) => s + r.weight, 0).toFixed(2)})</span>
+    <div className="space-y-4" data-testid="score-breakdown">
+      <div className="flex items-baseline gap-3">
+        <span className="text-2xl font-semibold tracking-[-0.01em] tabular-nums">{Number(breakdown.score ?? total).toFixed(2)}</span>
+        <span className="text-sm text-muted-fg">Σ component × weight · weights sum to {weightSum.toFixed(2)}</span>
       </div>
       {breakdown.hardExcluded && (
         <Note tone="critical">
           <strong>Hard excluded:</strong> {breakdown.hardExcludeReason ?? 'no reason recorded'}. The score is informational; this lead will not progress.
         </Note>
       )}
-      <ul className="space-y-2">
-        {rows.map((r) => (
-          <li key={r.key} className="rounded-md border p-2">
-            <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="font-medium">{r.label}</span>
-              <span className="font-mono text-xs tabular-nums">
-                {r.value.toFixed(2)} × {r.weight.toFixed(2)} = <strong>{r.contribution.toFixed(3)}</strong>
-              </span>
-            </div>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted" aria-hidden>
-              <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, r.value * 100))}%` }} />
-            </div>
-            <p className="mt-1 text-xs text-muted-fg">{r.explain}</p>
-          </li>
-        ))}
-      </ul>
-      {breakdown.inputs && Object.keys(breakdown.inputs).length > 0 && (
-        <div>
-          <div className="text-xs font-medium text-muted-fg">Inputs used</div>
-          <JsonView value={breakdown.inputs} collapsed />
-        </div>
-      )}
+      <table className="w-full text-base tabular-nums">
+        <thead>
+          <tr className="[&_th]:t-label [&_th]:border-b [&_th]:pb-2 [&_th]:text-left">
+            <th>Component</th>
+            <th className="w-28 text-right!">Value × weight</th>
+            <th className="w-20 text-right!">Adds</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.key} className="border-b align-top last:border-b-0">
+              <td className="py-3 pr-4">
+                <div className="font-medium">{r.label}</div>
+                <div className="mt-1.5 h-1.5 w-full max-w-56 overflow-hidden rounded-full bg-muted" aria-hidden>
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, r.value * 100))}%` }} />
+                </div>
+                <p className="mt-1.5 text-xs leading-4 text-muted-fg">{r.explain}</p>
+              </td>
+              <td className="py-3 text-right whitespace-nowrap text-muted-fg">
+                {r.value.toFixed(2)} × {r.weight.toFixed(2)}
+              </td>
+              <td className="py-3 text-right font-medium whitespace-nowrap">{r.contribution.toFixed(3)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {breakdown.inputs && Object.keys(breakdown.inputs).length > 0 && <JsonView value={breakdown.inputs} collapsed label="inputs used" />}
     </div>
   );
 }

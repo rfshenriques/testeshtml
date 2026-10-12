@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { KeyRound } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { api, ApiError } from '@/lib/api';
 import { Button, Card, Field, Input, Note } from '@/components/ui';
@@ -33,21 +32,21 @@ export function LoginGate() {
 
   return (
     <main className="flex min-h-full items-center justify-center p-6">
-      <Card className="w-full max-w-md p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <KeyRound className="size-5 text-primary" aria-hidden />
-          <h1 className="text-lg font-semibold">Sitewright operator console</h1>
+      <Card className="w-full max-w-md p-8">
+        <div className="mb-6 flex items-center gap-3">
+          <span className="inline-flex size-8 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-fg" aria-hidden>
+            S
+          </span>
+          <div>
+            <h1 className="text-lg font-semibold">Sitewright</h1>
+            <p className="text-sm text-muted-fg">Operator console</p>
+          </div>
         </div>
-        <p className="mb-4 text-sm text-muted-fg">Paste the admin API token. It is stored in this browser only (localStorage) and sent as a bearer header on every request.</p>
-        <form onSubmit={submit} className="space-y-3">
-          <Field label="Admin token" htmlFor="admin-token">
+        <form onSubmit={submit} className="space-y-4">
+          <Field label="Admin token" htmlFor="admin-token" hint="Stored in this browser only and sent as a bearer header on every request.">
             <Input id="admin-token" type="password" autoComplete="off" autoFocus value={token} onChange={(e) => setToken(e.target.value)} placeholder="ADMIN_API_TOKEN" />
           </Field>
-          {error && (
-            <Note tone="critical" className="text-sm">
-              {error}
-            </Note>
-          )}
+          {error && <Note tone="critical">{error}</Note>}
           <Button type="submit" className="w-full" loading={busy} disabled={!token.trim()}>
             Sign in
           </Button>

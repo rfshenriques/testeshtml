@@ -8,6 +8,10 @@ import { cn } from '@/lib/utils';
 
 export const KILL_PHRASE = 'PAUSE EVERYTHING';
 
+/**
+ * Compact status pill ("Kill switch off" with a dot) plus the engage/release action. The engage
+ * button is outlined red while the switch is off; when engaged the pill itself turns red.
+ */
 export function KillSwitchControl({ engaged, unknown, compact }: { engaged: boolean; unknown?: boolean; compact?: boolean }) {
   const qc = useQueryClient();
   const [open, setOpen] = React.useState<null | 'engage' | 'release'>(null);
@@ -15,7 +19,7 @@ export function KillSwitchControl({ engaged, unknown, compact }: { engaged: bool
   const mut = useMutation({
     mutationFn: (next: boolean) => api.ops.killSwitch(next, reason.trim() || undefined),
     onSuccess: (r) => {
-      toast[r.engaged ? 'error' : 'success'](r.engaged ? 'Kill switch ENGAGED' : 'Kill switch released', r.engaged ? 'All sending and spending is paused.' : 'Workers resume on their next tick.');
+      toast[r.engaged ? 'error' : 'success'](r.engaged ? 'Kill switch engaged' : 'Kill switch released', r.engaged ? 'All sending and spending is paused.' : 'Workers resume on their next tick.');
       setOpen(null);
       setReason('');
       void qc.invalidateQueries({ queryKey: ['health'] });
@@ -25,10 +29,10 @@ export function KillSwitchControl({ engaged, unknown, compact }: { engaged: bool
   });
 
   return (
-    <div className={cn('flex items-center gap-2 rounded-md border px-2 py-1', engaged ? 'border-critical bg-critical-bg' : 'bg-card')} data-testid="kill-switch">
-      <span className="flex items-center gap-1.5 text-xs font-semibold" aria-live="polite">
-        <span className={cn('inline-block size-2 rounded-full', unknown ? 'bg-muted-fg' : engaged ? 'bg-critical animate-pulse' : 'bg-success')} aria-hidden />
-        {unknown ? 'Kill switch: unknown' : engaged ? 'KILL SWITCH ENGAGED' : 'Kill switch: off'}
+    <div className="flex items-center gap-2" data-testid="kill-switch">
+      <span className={cn('inline-flex h-8 items-center gap-2 rounded-full border px-3 text-sm font-medium', engaged ? 'border-transparent bg-bad-bg text-bad-fg' : 'bg-card text-fg')} aria-live="polite">
+        <span className={cn('inline-block size-2 rounded-full', unknown ? 'bg-neutral-dot' : engaged ? 'animate-pulse bg-bad-dot' : 'bg-good-dot')} aria-hidden />
+        {unknown ? 'Kill switch unknown' : engaged ? 'Kill switch engaged' : 'Kill switch off'}
       </span>
       {engaged ? (
         <Button size="sm" variant="outline" onClick={() => setOpen('release')}>

@@ -15,7 +15,7 @@ export function DailyCapInput({ value, warmupStage, onSave, saving, id }: { valu
   const aboveWarmup = n > scheduleCap;
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <Input
           id={id}
           aria-label="Daily cap"
@@ -23,7 +23,7 @@ export function DailyCapInput({ value, warmupStage, onSave, saving, id }: { valu
           inputMode="numeric"
           min={0}
           max={MAILBOX_DAILY_CEILING}
-          className="w-20 tabular-nums"
+          className="no-spin h-8 w-16 px-2 text-sm"
           value={v}
           onChange={(e) => {
             const raw = parseInt(e.target.value, 10);
@@ -32,7 +32,7 @@ export function DailyCapInput({ value, warmupStage, onSave, saving, id }: { valu
           onBlur={() => setV(String(n))}
           aria-describedby={`${id}-ceiling`}
         />
-        <span id={`${id}-ceiling`} className="text-xs text-muted-fg">
+        <span id={`${id}-ceiling`} className="text-sm text-muted-fg tabular-nums">
           / {MAILBOX_DAILY_CEILING}
         </span>
         <Button size="sm" variant="outline" disabled={n === value || saving} loading={saving} onClick={() => onSave(n)}>
@@ -40,7 +40,7 @@ export function DailyCapInput({ value, warmupStage, onSave, saving, id }: { valu
         </Button>
       </div>
       {aboveWarmup && (
-        <span className="text-xs text-warning" role="status">
+        <span className="max-w-48 text-xs leading-4 text-warn-fg" role="status">
           Above the warmup schedule for week {warmupStage + 1} ({scheduleCap}/day); the server will enforce the schedule.
         </span>
       )}

@@ -3,13 +3,13 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable, type SortingState, type RowSelectionState } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ArrowDown, ArrowUp, ArrowUpDown, Copy, Search, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Copy, Search } from 'lucide-react';
 import { VERTICALS } from '@sitewright/shared-types';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
 import { cn, fmtNum, relTime } from '@/lib/utils';
-import { Button, PageHeader, Input, Select, StageBadge, GateBadge, Badge, ConfirmDialog, Field, Textarea, ErrorState, Loading, EmptyState, Checkbox } from '@/components/ui';
+import { Button, PageHeader, Input, Select, StageLabel, GateLabel, ConfirmDialog, Field, Textarea, ErrorState, SkeletonRows, EmptyState, Checkbox } from '@/components/ui';
 import type { LeadAction, LeadSummary, LeadsQuery } from '@/lib/types';
 import { LEAD_STAGES, WEBSITE_STATUSES } from '@/lib/types';
 import { LeadDrawer } from './LeadDrawer';
@@ -34,7 +34,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       type="button"
       aria-label={label}
       title="Copy to clipboard"
-      className="shrink-0 rounded p-0.5 text-muted-fg hover:bg-muted hover:text-fg focus-visible:outline-2 focus-visible:outline-ring"
+      className="shrink-0 rounded p-0.5 text-muted-fg opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted hover:text-fg focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-ring"
       onClick={(e) => {
         e.stopPropagation();
         navigator.clipboard?.writeText(value).then(
@@ -48,6 +48,8 @@ function CopyButton({ value, label }: { value: string; label: string }) {
     </button>
   );
 }
+
+const NUMERIC = new Set(['score', 'priority']);
 
 export function LeadsPage() {
   const nav = useNavigate();
@@ -101,7 +103,7 @@ export function LeadsPage() {
     () => [
       col.display({
         id: 'select',
-        size: 36,
+        size: 40,
         header: ({ table }) => (
           <Checkbox aria-label="Select all loaded rows" checked={table.getIsAllRowsSelected()} ref={(el) => { if (el) el.indeterminate = table.getIsSomeRowsSelected() && !table.getIsAllRowsSelected(); }} onChange={table.getToggleAllRowsSelectedHandler()} />
         ),
@@ -109,52 +111,56 @@ export function LeadsPage() {
       }),
       col.accessor('businessName', {
         header: 'Business',
-        size: 260,
+        size: 240,
         cell: (c) => (
           <div className="min-w-0">
-            <div className="truncate font-medium">{c.getValue()}</div>
-            <div className="truncate text-xs text-muted-fg">
-              {c.row.original.city ?? '—'} · {c.row.original.primaryType ?? 'no type'}
+            <div className="truncate font-medium" title={c.getValue()}>
+              {c.getValue()}
+            </div>
+            <div className="truncate text-sm text-muted-fg">
+              {c.row.original.city ?? '—'} · {c.row.original.primaryType?.replace(/_/g, ' ') ?? 'no type'}
             </div>
           </div>
         ),
       }),
-      col.accessor('stage', { header: 'Stage', size: 120, cell: (c) => <StageBadge stage={c.getValue()} /> }),
-      col.accessor('score', { id: 'score', header: 'Score', size: 70, enableSorting: true, cell: (c) => <span className="font-mono tabular-nums">{c.getValue() == null ? '—' : c.getValue()!.toFixed(2)}</span> }),
-      col.accessor('legalGate', { header: 'Gate', size: 110, cell: (c) => <GateBadge gate={c.getValue()} reason={c.row.original.legalGateReason} /> }),
-      col.accessor('websiteStatus', { header: 'Website', size: 100, cell: (c) => <Badge variant="outline">{c.getValue()}</Badge> }),
-      col.accessor('vertical', { header: 'Vertical', size: 110, cell: (c) => c.getValue() ?? '—' }),
-      col.accessor('countryCode', { header: 'CC', size: 50 }),
+      col.accessor('stage', { header: 'Stage', size: 128, cell: (c) => <StageLabel stage={c.getValue()} /> }),
+      col.accessor('score', { id: 'score', header: 'Score', size: 76, enableSorting: true, cell: (c) => <span className="tabular-nums">{c.getValue() == null ? '—' : c.getValue()!.toFixed(2)}</span> }),
+      col.accessor('legalGate', { header: 'Gate', size: 100, cell: (c) => <GateLabel gate={c.getValue()} reason={c.row.original.legalGateReason} /> }),
+      col.accessor('websiteStatus', { header: 'Website', size: 100, cell: (c) => <span className="text-muted-fg">{c.getValue().replace(/_/g, ' ')}</span> }),
+      col.accessor('vertical', { header: 'Vertical', size: 100, cell: (c) => <span className="truncate">{c.getValue() ?? '—'}</span> }),
+      col.accessor('countryCode', { header: 'CC', size: 48 }),
       col.accessor((r) => r.primaryContact, {
         id: 'contact',
         header: 'Primary contact',
-        size: 220,
+        size: 240,
         cell: (c) => {
           const v = c.getValue();
           const phone = c.row.original.phone;
           if (!v && !phone) return <span className="text-muted-fg">none</span>;
           return (
-            <div className="min-w-0 leading-tight">
+            <div className="group min-w-0">
               {v ? (
                 <div className="flex items-center gap-1">
-                  <span className="truncate" title={v.email}>{v.email}</span>
+                  <span className="truncate" title={v.email}>
+                    {v.email}
+                  </span>
                   <CopyButton value={v.email} label={`Copy ${v.email}`} />
                 </div>
               ) : (
                 <div className="text-muted-fg">no email</div>
               )}
-              <div className="truncate text-xs text-muted-fg">
-                {phone && <span className="tabular-nums text-fg/80">{phone}</span>}
+              <div className="truncate text-sm text-muted-fg" title={v ? `${v.verification} · ${v.source}` : undefined}>
+                {phone && <span className="tabular-nums">{phone}</span>}
                 {phone && v && ' · '}
-                {v && <>{v.verification} · {v.source}</>}
+                {v && <>{v.verification}</>}
               </div>
             </div>
           );
         },
       }),
-      col.accessor('priority', { id: 'priority', header: 'Prio', size: 60, enableSorting: true, cell: (c) => <span className="tabular-nums">{c.getValue()}</span> }),
-      col.accessor('lastTouchAt', { id: 'lastTouchAt', header: 'Last touch', size: 100, enableSorting: true, cell: (c) => <span className="text-xs text-muted-fg">{relTime(c.getValue())}</span> }),
-      col.accessor('createdAt', { id: 'createdAt', header: 'Created', size: 100, enableSorting: true, cell: (c) => <span className="text-xs text-muted-fg">{relTime(c.getValue())}</span> }),
+      col.accessor('priority', { id: 'priority', header: 'Prio', size: 64, enableSorting: true, cell: (c) => <span className="tabular-nums">{c.getValue()}</span> }),
+      col.accessor('lastTouchAt', { id: 'lastTouchAt', header: 'Last touch', size: 100, enableSorting: true, cell: (c) => <span className="text-sm text-muted-fg">{relTime(c.getValue())}</span> }),
+      col.accessor('createdAt', { id: 'createdAt', header: 'Created', size: 96, enableSorting: true, cell: (c) => <span className="text-sm text-muted-fg">{relTime(c.getValue())}</span> }),
     ],
     [],
   );
@@ -215,12 +221,12 @@ export function LeadsPage() {
   const activeFilters = ['campaignId', 'stage', 'legalGate', 'countryCode', 'vertical', 'websiteStatus', 'minScore', 'q'].filter((k) => sp.get(k));
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] flex-col">
-      <PageHeader title="Leads" description={`${fmtNum(total)} matching · ${rows.length} loaded`} />
-      <div className="mb-2 flex flex-wrap items-end gap-2">
+    <div className="flex h-[calc(100vh-7.5rem)] flex-col">
+      <PageHeader title="Leads" description={`${fmtNum(total)} matching · ${fmtNum(rows.length)} loaded`} className="mb-4" />
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative">
-          <Search className="pointer-events-none absolute top-2.5 left-2 size-4 text-muted-fg" aria-hidden />
-          <Input aria-label="Search leads" className="w-56 pl-8" placeholder="Search name / place id" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-fg" aria-hidden />
+          <Input aria-label="Search leads" className="w-60 pl-9" placeholder="Search name or place id" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select aria-label="Campaign" className="w-44" value={filters.campaignId ?? ''} onChange={(e) => setFilter('campaignId', e.target.value)}>
           <option value="">All campaigns</option>
@@ -234,7 +240,7 @@ export function LeadsPage() {
           <option value="">Any stage</option>
           {LEAD_STAGES.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {s.replace(/_/g, ' ')}
             </option>
           ))}
         </Select>
@@ -244,11 +250,11 @@ export function LeadsPage() {
           <option value="clear">clear</option>
           <option value="blocked">blocked</option>
         </Select>
-        <Select aria-label="Website status" className="w-32" value={filters.websiteStatus ?? ''} onChange={(e) => setFilter('websiteStatus', e.target.value)}>
+        <Select aria-label="Website status" className="w-36" value={filters.websiteStatus ?? ''} onChange={(e) => setFilter('websiteStatus', e.target.value)}>
           <option value="">Any website</option>
           {WEBSITE_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {s.replace(/_/g, ' ')}
             </option>
           ))}
         </Select>
@@ -260,48 +266,55 @@ export function LeadsPage() {
             </option>
           ))}
         </Select>
-        <Input aria-label="Country code" className="w-20" placeholder="CC" maxLength={2} value={filters.countryCode ?? ''} onChange={(e) => setFilter('countryCode', e.target.value.toUpperCase())} />
-        <Input aria-label="Minimum score" className="w-24" type="number" step="0.05" min={0} max={1} placeholder="min score" value={filters.minScore ?? ''} onChange={(e) => setFilter('minScore', e.target.value)} />
+        <Input aria-label="Country code" className="w-16" placeholder="CC" maxLength={2} value={filters.countryCode ?? ''} onChange={(e) => setFilter('countryCode', e.target.value.toUpperCase())} />
+        <Input aria-label="Minimum score" className="w-28" type="number" step="0.05" min={0} max={1} placeholder="Min score" value={filters.minScore ?? ''} onChange={(e) => setFilter('minScore', e.target.value)} />
         {activeFilters.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            <X className="size-3.5" aria-hidden /> Clear ({activeFilters.length})
+          <Button variant="link" onClick={clearFilters} className="ml-1 text-sm">
+            Clear filters
           </Button>
         )}
       </div>
 
       {selectedIds.length > 0 && (
-        <div className="mb-2 flex flex-wrap items-center gap-2 rounded-md border bg-accent p-2 text-sm" role="region" aria-label="Bulk actions">
-          <span className="font-medium">{selectedIds.length} selected</span>
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border bg-card px-4 py-2.5" role="region" aria-label="Bulk actions">
+          <span className="mr-2 text-sm font-medium tabular-nums">{selectedIds.length} selected</span>
           {BULK.map((b) => (
             <Button key={b.action} size="sm" variant={b.destructive ? 'destructive' : 'outline'} onClick={() => runBulk(b)} loading={bulk.isPending && bulk.variables?.action === b.action}>
               {b.label}
             </Button>
           ))}
-          <Button size="sm" variant="ghost" onClick={() => setRowSelection({})}>
+          <Button size="sm" variant="ghost" className="ml-auto text-muted-fg" onClick={() => setRowSelection({})}>
             Clear selection
           </Button>
         </div>
       )}
 
-      <div className="min-h-0 flex-1 rounded-md border bg-card">
+      <div className="min-h-0 flex-1 overflow-hidden rounded-lg border bg-card">
         {query.isError ? (
-          <div className="p-3">
+          <div className="p-4">
             <ErrorState error={query.error} onRetry={() => query.refetch()} />
           </div>
         ) : query.isLoading ? (
-          <Loading />
+          <SkeletonRows rows={10} />
         ) : rows.length === 0 ? (
-          <EmptyState className="m-3" title="No leads match" description={activeFilters.length ? 'Try clearing a filter.' : 'Leads appear once a campaign has run discovery.'} />
+          <EmptyState title="No leads match" description={activeFilters.length ? 'Try clearing a filter.' : 'Leads appear once a campaign has run discovery.'} action={activeFilters.length ? <Button variant="outline" size="sm" onClick={clearFilters}>Clear filters</Button> : undefined} />
         ) : (
           <div ref={parentRef} className="h-full overflow-auto" role="grid" aria-rowcount={total} aria-label="Leads table">
-            <div className="sticky top-0 z-10 flex border-b bg-muted text-xs text-muted-fg" role="row">
+            <div className="sticky top-0 z-10 flex min-w-max border-b bg-card" role="row">
               {table.getFlatHeaders().map((h) => {
                 const sortable = h.column.getCanSort() && ['score', 'priority', 'lastTouchAt', 'createdAt'].includes(h.column.id);
                 const dir = h.column.getIsSorted();
+                const numeric = NUMERIC.has(h.column.id);
                 return (
-                  <div key={h.id} role="columnheader" aria-sort={dir ? (dir === 'desc' ? 'descending' : 'ascending') : undefined} style={{ width: h.getSize(), flex: h.column.id === 'businessName' ? '1 0 auto' : undefined }} className="flex h-9 shrink-0 items-center px-2 font-medium">
+                  <div
+                    key={h.id}
+                    role="columnheader"
+                    aria-sort={dir ? (dir === 'desc' ? 'descending' : 'ascending') : undefined}
+                    style={{ width: h.getSize(), flex: h.column.id === 'businessName' ? '1 0 auto' : undefined }}
+                    className={cn('t-label flex h-10 shrink-0 items-center px-3 first:pl-4', numeric && 'justify-end')}
+                  >
                     {sortable ? (
-                      <button type="button" className="inline-flex items-center gap-1 hover:text-fg" onClick={h.column.getToggleSortingHandler()}>
+                      <button type="button" className="inline-flex items-center gap-1 rounded hover:text-fg focus-visible:outline-2 focus-visible:outline-ring" onClick={h.column.getToggleSortingHandler()}>
                         {flexRender(h.column.columnDef.header, h.getContext())}
                         {dir === 'desc' ? <ArrowDown className="size-3" aria-hidden /> : dir === 'asc' ? <ArrowUp className="size-3" aria-hidden /> : <ArrowUpDown className="size-3 opacity-50" aria-hidden />}
                       </button>
@@ -312,15 +325,17 @@ export function LeadsPage() {
                 );
               })}
             </div>
-            <div style={{ height: virt.getTotalSize(), position: 'relative' }}>
+            <div style={{ height: virt.getTotalSize(), position: 'relative' }} className="min-w-max">
               {items.map((vi) => {
                 const row = table.getRowModel().rows[vi.index]!;
+                const selected = row.getIsSelected();
+                const open = openLeadId === row.original.id;
                 return (
                   <div
                     key={row.id}
                     role="row"
                     aria-rowindex={vi.index + 1}
-                    aria-selected={row.getIsSelected()}
+                    aria-selected={selected}
                     tabIndex={0}
                     data-index={vi.index}
                     ref={virt.measureElement}
@@ -334,11 +349,14 @@ export function LeadsPage() {
                       if (e.key === 'ArrowDown') (e.currentTarget.nextElementSibling as HTMLElement | null)?.focus();
                       if (e.key === 'ArrowUp') (e.currentTarget.previousElementSibling as HTMLElement | null)?.focus();
                     }}
-                    className={cn('absolute left-0 flex w-full cursor-pointer items-center border-b text-sm hover:bg-muted/50 focus-visible:bg-accent focus-visible:outline-none', row.getIsSelected() && 'bg-accent/60', openLeadId === row.original.id && 'bg-accent')}
+                    className={cn(
+                      'absolute left-0 flex w-full min-w-max cursor-pointer items-center border-b transition-colors hover:bg-muted/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
+                      (selected || open) && 'bg-[color-mix(in_oklab,var(--primary)_6%,transparent)] hover:bg-[color-mix(in_oklab,var(--primary)_9%,transparent)]',
+                    )}
                     style={{ transform: `translateY(${vi.start}px)`, height: ROW_H }}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <div key={cell.id} role="gridcell" style={{ width: cell.column.getSize(), flex: cell.column.id === 'businessName' ? '1 0 auto' : undefined }} className="min-w-0 shrink-0 px-2">
+                      <div key={cell.id} role="gridcell" style={{ width: cell.column.getSize(), flex: cell.column.id === 'businessName' ? '1 0 auto' : undefined }} className={cn('min-w-0 shrink-0 px-3 first:pl-4', NUMERIC.has(cell.column.id) && 'text-right')}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </div>
                     ))}
@@ -346,7 +364,7 @@ export function LeadsPage() {
                 );
               })}
             </div>
-            {query.isFetchingNextPage && <Loading label="Loading more…" className="p-2" />}
+            {query.isFetchingNextPage && <SkeletonRows rows={3} />}
           </div>
         )}
       </div>
