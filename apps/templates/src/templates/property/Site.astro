@@ -1,0 +1,66 @@
+---
+/** professional: Hero, practice areas, credentials, case-style proof, contact form (+ hours+map). */
+import type { BuildInput } from '../../lib/input';
+import { pickImages } from '../../lib/input';
+import MockupLayout from '../../layouts/MockupLayout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
+import Hero from '../../components/Hero.astro';
+import Section from '../../components/Section.astro';
+import Services from '../../components/Services.astro';
+import About from '../../components/About.astro';
+import WhyUs from '../../components/WhyUs.astro';
+import HoursMap from '../../components/HoursMap.astro';
+import CtaBand from '../../components/CtaBand.astro';
+import Reviews from '../../components/Reviews.astro';
+import ContactForm from '../../components/ContactForm.astro';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief } = input;
+const { gallery } = pickImages(input);
+const nav = [
+  { href: '#practice', label: 'Practice areas' }, { href: '#credentials', label: 'Credentials' }, { href: '#proof', label: 'Client feedback' },
+  { href: '#visit', label: 'Office' }, { href: '#contact', label: 'Contact' },
+];
+---
+<MockupLayout input={input}>
+  <SiteHeader input={input} nav={nav} ctaHref="#contact" ctaLabel="Arrange a consultation" />
+  <main id="main">
+    <Hero input={input} ctaHref="#contact" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative office photo" />
+
+    <Section id="practice" eyebrow="Practice areas" heading="How we can help">
+      <Services copy={input.copy} layout="numbered" />
+    </Section>
+
+    <Section id="credentials" tone="surface" eyebrow="Credentials" heading="About the practice">
+      <About input={input} image={gallery[0]} imageLabel="Indicative meeting room photo" factsHeading="Verified details" />
+      <p class="muted credentials-note">Qualifications, memberships and accreditations will be listed here once confirmed by {brief.businessName}; this mockup shows none that have not been verified.</p>
+    </Section>
+
+    <Section id="why" eyebrow="Our approach" heading="Why clients choose us">
+      <WhyUs copy={input.copy} />
+    </Section>
+
+    <Section id="proof" tone="dark" eyebrow="Client feedback" heading="What clients say">
+      <Reviews input={input} />
+    </Section>
+
+    <Section id="visit" tone="surface" eyebrow="Office" heading="Visit the office">
+      <HoursMap input={input} />
+    </Section>
+
+    <CtaBand input={input} id="cta" href="#contact" tone="surface" eyebrow="Next step" />
+
+    <Section id="contact" eyebrow="Contact" heading="Get in touch" lead="Tell us briefly about your situation and we will respond with next steps.">
+      <ContactForm input={input} variant="contact" submitLabel="Send enquiry" />
+    </Section>
+  </main>
+</MockupLayout>
+
+<style is:global>
+  [data-template="property"] .hero { background: var(--hero-bg); }
+  [data-template="property"] .hero .img-frame { border-radius: 2px; }
+  [data-template="property"] .btn { border-radius: 2px; }
+  [data-template="property"] .card { border-radius: 2px; }
+  [data-template="property"] .credentials-note { margin: 1.5rem 0 0; font-size: 0.95rem; }
+  [data-template="property"] .wordmark { letter-spacing: 0.02em; }
+</style>

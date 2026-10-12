@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { CTAS, TONES, VERTICALS } from './enums';
+import { COLOUR_SCHEMES, CTAS, TEMPLATE_FAMILIES, TONES, TYPOGRAPHY_PAIRINGS, VERTICALS } from './enums';
 
 export const ClassificationSchema = z.object({
   vertical: z.enum(VERTICALS),
@@ -69,10 +69,10 @@ export const SiteImageSchema = z.object({
 export type SiteImage = z.infer<typeof SiteImageSchema>;
 
 export const SiteBuildInputSchema = z.object({
-  template: z.enum(['hospitality', 'appointment', 'trades', 'professional', 'retail', 'fitness']),
-  /** a|b|c are the template's fixed schemes; `brand` derives the palette from input.brand (falls back to a). */
-  colourScheme: z.enum(['a', 'b', 'c', 'brand']),
-  typography: z.enum(['a', 'b']),
+  template: z.enum(TEMPLATE_FAMILIES),
+  /** a|b|c are the template's fixed schemes; brand|brand2|brand3 derive the palette from input.brand (fall back to a). */
+  colourScheme: z.enum(COLOUR_SCHEMES),
+  typography: z.enum(TYPOGRAPHY_PAIRINGS),
   brief: ContentBriefSchema,
   copy: SiteCopySchema,
   images: z.array(SiteImageSchema),

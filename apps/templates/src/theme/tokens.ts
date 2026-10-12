@@ -1,8 +1,9 @@
 /**
  * Design tokens for the six template families (spec §9.2).
  *
- * Every family ships three colour schemes (a, b, c) and shares two typographic
- * pairings (a, b). All values are emitted as CSS custom properties on :root by
+ * Every family ships three fixed colour schemes (a, b, c), three palettes derived
+ * from the lead's own material (brand, brand2, brand3) and shares five typographic
+ * pairings (a–e). All values are emitted as CSS custom properties on :root by
  * `themeCss()`; components only ever reference the custom properties, never raw
  * colours, so a scheme swap is a pure token swap.
  *
@@ -11,10 +12,11 @@
  */
 import type { TemplateFamily } from '@sitewright/shared-types';
 
-export type ColourScheme = 'a' | 'b' | 'c' | 'brand';
+export type ColourScheme = 'a' | 'b' | 'c' | 'brand' | 'brand2' | 'brand3';
+export const BRAND_SCHEMES: readonly ColourScheme[] = ['brand', 'brand2', 'brand3'];
 export type FixedScheme = 'a' | 'b' | 'c';
 export interface BrandInput { primary: string; accent: string; heroBg?: string | undefined }
-export type Typography = 'a' | 'b';
+export type Typography = 'a' | 'b' | 'c' | 'd' | 'e';
 
 export interface Palette {
   /** Page background. */
@@ -42,31 +44,61 @@ export interface Palette {
 }
 
 export const PALETTES: Record<TemplateFamily, Record<FixedScheme, Palette>> = {
+  // Warm, food-led: terracotta / forest, navy / brick, olive / amber.
   hospitality: {
     a: { bg: '#fbf6ee', surface: '#ffffff', text: '#2a1f14', muted: '#64513f', primary: '#8a3b12', onPrimary: '#ffffff', accent: '#2f5d3a', onAccent: '#ffffff', heroBg: '#2a1f14', onHero: '#fbf6ee', border: '#e5d9c8' },
     b: { bg: '#f4f6f8', surface: '#ffffff', text: '#141a21', muted: '#4a5663', primary: '#1d3b5a', onPrimary: '#ffffff', accent: '#a9402a', onAccent: '#ffffff', heroBg: '#141a21', onHero: '#f4f6f8', border: '#d8dee5' },
     c: { bg: '#f6f7f1', surface: '#ffffff', text: '#1f2419', muted: '#4f5743', primary: '#4a5a2a', onPrimary: '#ffffff', accent: '#86541a', onAccent: '#ffffff', heroBg: '#2b3320', onHero: '#f6f7f1', border: '#dde1d0' },
   },
-  appointment: {
-    a: { bg: '#f3f8f8', surface: '#ffffff', text: '#10282b', muted: '#3f5c64', primary: '#0e6166', onPrimary: '#ffffff', accent: '#a8325a', onAccent: '#ffffff', heroBg: '#0e6166', onHero: '#ffffff', border: '#cfe0e2' },
-    b: { bg: '#fbf5f6', surface: '#ffffff', text: '#2b1a1f', muted: '#654a53', primary: '#8b2f4a', onPrimary: '#ffffff', accent: '#3a4e7a', onAccent: '#ffffff', heroBg: '#2b1a1f', onHero: '#fbf5f6', border: '#ead8dc' },
-    c: { bg: '#f4f7f3', surface: '#ffffff', text: '#1d2a1f', muted: '#4c5e4a', primary: '#2f5e45', onPrimary: '#ffffff', accent: '#764722', onAccent: '#ffffff', heroBg: '#1d2a1f', onHero: '#f4f7f3', border: '#d7e0d4' },
+  // Editorial, airy: blush / plum, sand / espresso, sage / charcoal.
+  beauty: {
+    a: { bg: '#faf5f3', surface: '#ffffff', text: '#2b1d1f', muted: '#6b5358', primary: '#8a3550', onPrimary: '#ffffff', accent: '#5b4a3f', onAccent: '#ffffff', heroBg: '#2b1d1f', onHero: '#faf5f3', border: '#ead9db' },
+    b: { bg: '#f7f3ec', surface: '#ffffff', text: '#231c16', muted: '#5f554b', primary: '#6b4a2b', onPrimary: '#ffffff', accent: '#2d3a4a', onAccent: '#ffffff', heroBg: '#231c16', onHero: '#f7f3ec', border: '#e4dccf' },
+    c: { bg: '#f3f6f3', surface: '#ffffff', text: '#1b2320', muted: '#51605a', primary: '#3c5a4b', onPrimary: '#ffffff', accent: '#8a4b2f', onAccent: '#ffffff', heroBg: '#1b2320', onHero: '#f3f6f3', border: '#d6e0da' },
   },
+  // Calm, clinical: teal / raspberry, sky / navy, mint / aubergine.
+  clinic: {
+    a: { bg: '#f3f8f8', surface: '#ffffff', text: '#10282b', muted: '#3f5c64', primary: '#0e6166', onPrimary: '#ffffff', accent: '#a8325a', onAccent: '#ffffff', heroBg: '#0e6166', onHero: '#ffffff', border: '#cfe0e2' },
+    b: { bg: '#f4f7fb', surface: '#ffffff', text: '#121c2b', muted: '#465468', primary: '#1f4e8c', onPrimary: '#ffffff', accent: '#1b7a6a', onAccent: '#ffffff', heroBg: '#121c2b', onHero: '#f4f7fb', border: '#d3dced' },
+    c: { bg: '#f4f8f5', surface: '#ffffff', text: '#1a2622', muted: '#4a5c55', primary: '#2a6b4f', onPrimary: '#ffffff', accent: '#5e3570', onAccent: '#ffffff', heroBg: '#1a2622', onHero: '#f4f8f5', border: '#d2e2d8' },
+  },
+  // Bold, utilitarian: cobalt / safety orange, green / rust, amber / charcoal.
   trades: {
     a: { bg: '#f5f6f8', surface: '#ffffff', text: '#12161d', muted: '#464f5e', primary: '#0b3d91', onPrimary: '#ffffff', accent: '#a65200', onAccent: '#ffffff', heroBg: '#12161d', onHero: '#f5f6f8', border: '#d6dbe3' },
     b: { bg: '#f5f7f4', surface: '#ffffff', text: '#141b14', muted: '#485648', primary: '#1f5a2d', onPrimary: '#ffffff', accent: '#9a3b1d', onAccent: '#ffffff', heroBg: '#1f5a2d', onHero: '#ffffff', border: '#d4ddd3' },
     c: { bg: '#f6f5f2', surface: '#ffffff', text: '#1a1a1a', muted: '#525252', primary: '#874800', onPrimary: '#ffffff', accent: '#1a1a1a', onAccent: '#ffc857', heroBg: '#1a1a1a', onHero: '#f6f5f2', border: '#ddd9d0' },
   },
+  // Industrial, dark bands: graphite / red, steel / yellow, slate / electric blue.
+  automotive: {
+    a: { bg: '#f4f4f5', surface: '#ffffff', text: '#151618', muted: '#4b4e55', primary: '#b3121b', onPrimary: '#ffffff', accent: '#151618', onAccent: '#ffffff', heroBg: '#151618', onHero: '#f4f4f5', border: '#d9dadd' },
+    b: { bg: '#f3f4f6', surface: '#ffffff', text: '#14181e', muted: '#4a525c', primary: '#1e3a5f', onPrimary: '#ffffff', accent: '#8a5a00', onAccent: '#ffffff', heroBg: '#14181e', onHero: '#f3f4f6', border: '#d5dae1' },
+    c: { bg: '#f2f5f7', surface: '#ffffff', text: '#101b24', muted: '#44525e', primary: '#0f5c8f', onPrimary: '#ffffff', accent: '#2a2f36', onAccent: '#ffffff', heroBg: '#101b24', onHero: '#f2f5f7', border: '#d0dae2' },
+  },
+  // Conservative: navy / brass, forest / oxblood, burgundy / steel.
   professional: {
     a: { bg: '#f7f8fa', surface: '#ffffff', text: '#121a2b', muted: '#475163', primary: '#1b2f5b', onPrimary: '#ffffff', accent: '#7d5f16', onAccent: '#ffffff', heroBg: '#121a2b', onHero: '#f7f8fa', border: '#d9dde5' },
     b: { bg: '#f6f6f4', surface: '#ffffff', text: '#1c1c1a', muted: '#54544e', primary: '#2e4a3f', onPrimary: '#ffffff', accent: '#6a3a2a', onAccent: '#ffffff', heroBg: '#1c1c1a', onHero: '#f6f6f4', border: '#dcdcd5' },
     c: { bg: '#faf7f5', surface: '#ffffff', text: '#241418', muted: '#5e4b55', primary: '#6e1f33', onPrimary: '#ffffff', accent: '#2a4a6a', onAccent: '#ffffff', heroBg: '#6e1f33', onHero: '#ffffff', border: '#e6d9dc' },
   },
+  // Clean, photographic: ink / copper, deep green / stone, midnight / gold.
+  property: {
+    a: { bg: '#f7f7f5', surface: '#ffffff', text: '#171a1c', muted: '#4d5357', primary: '#1f2a33', onPrimary: '#ffffff', accent: '#9a5a2a', onAccent: '#ffffff', heroBg: '#1f2a33', onHero: '#f7f7f5', border: '#dadcd9' },
+    b: { bg: '#f5f7f4', surface: '#ffffff', text: '#162019', muted: '#4a5a4f', primary: '#1f4d3a', onPrimary: '#ffffff', accent: '#6b5a44', onAccent: '#ffffff', heroBg: '#162019', onHero: '#f5f7f4', border: '#d5ded7' },
+    c: { bg: '#f5f6fa', surface: '#ffffff', text: '#141628', muted: '#4c4f66', primary: '#2b2f6b', onPrimary: '#ffffff', accent: '#8a6a12', onAccent: '#ffffff', heroBg: '#141628', onHero: '#f5f6fa', border: '#d8daea' },
+  },
+  // Friendly, rounded: indigo / marigold, teal / coral, plum / leaf.
+  education: {
+    a: { bg: '#f6f6fb', surface: '#ffffff', text: '#1a1b3a', muted: '#4f5170', primary: '#3b3f9e', onPrimary: '#ffffff', accent: '#8a5a00', onAccent: '#ffffff', heroBg: '#1a1b3a', onHero: '#f6f6fb', border: '#dcdcf0' },
+    b: { bg: '#f3f8f8', surface: '#ffffff', text: '#12282a', muted: '#415d60', primary: '#0f6b70', onPrimary: '#ffffff', accent: '#b33a2b', onAccent: '#ffffff', heroBg: '#12282a', onHero: '#f3f8f8', border: '#cfe2e3' },
+    c: { bg: '#faf5fa', surface: '#ffffff', text: '#2a1830', muted: '#62506a', primary: '#6a2d7a', onPrimary: '#ffffff', accent: '#2f6b3a', onAccent: '#ffffff', heroBg: '#2a1830', onHero: '#faf5fa', border: '#e8d8ea' },
+  },
+  // Shop-like: plum / cherry, rust / teal, green / charcoal.
   retail: {
     a: { bg: '#faf6fb', surface: '#ffffff', text: '#22162a', muted: '#5c4b66', primary: '#5b2a86', onPrimary: '#ffffff', accent: '#a82e36', onAccent: '#ffffff', heroBg: '#22162a', onHero: '#faf6fb', border: '#e3d7e8' },
     b: { bg: '#fffaf0', surface: '#ffffff', text: '#2a2416', muted: '#645a41', primary: '#9a421c', onPrimary: '#ffffff', accent: '#1f5f6a', onAccent: '#ffffff', heroBg: '#2a2416', onHero: '#fffaf0', border: '#ecdfc6' },
     c: { bg: '#f3f8f6', surface: '#ffffff', text: '#152420', muted: '#485d55', primary: '#146450', onPrimary: '#ffffff', accent: '#2b2b2b', onAccent: '#ffffff', heroBg: '#152420', onHero: '#f3f8f6', border: '#d2e0db' },
   },
+  // High energy: crimson / lime-on-black, blue / orange, olive / rust.
   fitness: {
     a: { bg: '#f4f5f7', surface: '#ffffff', text: '#111318', muted: '#474d5c', primary: '#a8112a', onPrimary: '#ffffff', accent: '#111318', onAccent: '#d9ff3f', heroBg: '#111318', onHero: '#f4f5f7', border: '#d7dae0' },
     b: { bg: '#f3f7fa', surface: '#ffffff', text: '#0f1f2b', muted: '#415466', primary: '#0b5c8e', onPrimary: '#ffffff', accent: '#a8440a', onAccent: '#ffffff', heroBg: '#0b5c8e', onHero: '#ffffff', border: '#d3dfe8' },
@@ -109,6 +141,36 @@ export const TYPOGRAPHY: Record<Typography, TypePairing> = {
     displayTransform: 'none',
     labelTransform: 'uppercase',
   },
+  c: {
+    name: 'Geometric',
+    display: "'Avenir Next Rounded', 'Avenir Next', Futura, 'Century Gothic', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif",
+    body: "'Avenir Next', 'Segoe UI', 'Trebuchet MS', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif",
+    label: "'Avenir Next', 'Segoe UI', 'Trebuchet MS', system-ui, sans-serif",
+    displayWeight: 700,
+    displayTracking: '-0.02em',
+    displayTransform: 'none',
+    labelTransform: 'none',
+  },
+  d: {
+    name: 'Classic',
+    display: "'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, 'Times New Roman', serif",
+    body: "Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, 'Times New Roman', serif",
+    label: "Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif",
+    displayWeight: 600,
+    displayTracking: '0',
+    displayTransform: 'none',
+    labelTransform: 'uppercase',
+  },
+  e: {
+    name: 'Technical',
+    display: "'Helvetica Neue', 'Arial Narrow', 'Roboto Condensed', Impact, 'Segoe UI', Arial, system-ui, sans-serif",
+    body: "'Helvetica Neue', Helvetica, Arial, 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif",
+    label: "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace",
+    displayWeight: 800,
+    displayTracking: '-0.02em',
+    displayTransform: 'uppercase',
+    labelTransform: 'uppercase',
+  },
 };
 
 /** Text/background pairs that must meet WCAG AA (4.5:1) in every palette. */
@@ -122,13 +184,18 @@ export const CONTRAST_PAIRS: ReadonlyArray<[fg: keyof Palette, bg: keyof Palette
 ];
 
 /**
- * Palette for a family/scheme. `brand` derives the palette from the lead's own colours (spec change:
- * colours come from the business's Google listing photos), adjusted until every contrast pair meets AA.
+ * Palette for a family/scheme. The brand schemes derive the palette from the lead's own colours (listing
+ * photos / logo), adjusted until every contrast pair meets AA:
+ *   brand  — light page, their primary and accent on the family's neutral background;
+ *   brand2 — dark hero and footer from their darkest tone, their accent on it, deeper primary;
+ *   brand3 — the whole page tinted with their primary (background and surfaces carry a wash of it).
  */
 export function resolvePalette(family: TemplateFamily, scheme: ColourScheme, brand?: BrandInput | null): Palette {
-  if (scheme !== 'brand') return PALETTES[family][scheme];
+  if (scheme === 'a' || scheme === 'b' || scheme === 'c') return PALETTES[family][scheme];
   const base = PALETTES[family].a;
   if (!brand) return base;
+  if (scheme === 'brand2') return deriveDarkPalette(base, brand);
+  if (scheme === 'brand3') return deriveTintedPalette(base, brand);
   return derivePalette(base, brand);
 }
 
@@ -147,6 +214,42 @@ export function derivePalette(base: Palette, brand: BrandInput): Palette {
     border: mix(primary, base.bg, 0.8),
   };
   return p;
+}
+
+/** brand2: hero/footer in their darkest tone (or a deep shade of the primary), accent kept vivid, primary deepened for text. */
+export function deriveDarkPalette(base: Palette, brand: BrandInput): Palette {
+  const light = derivePalette(base, brand);
+  const heroSeed = brand.heroBg ?? darken(brand.primary, 0.7);
+  const heroBg = ensureContrastOn(mix(heroSeed, '#000000', 0.35), '#ffffff', 7);
+  const primary = ensureContrastOn(darken(brand.primary, 0.15), base.bg, 4.5);
+  return {
+    ...light,
+    primary,
+    onPrimary: contrastRatio('#ffffff', primary) >= 4.5 ? '#ffffff' : '#111111',
+    heroBg,
+    onHero: '#ffffff',
+    border: mix(primary, base.bg, 0.78),
+  };
+}
+
+/** brand3: background and surfaces washed with their primary; text tones pulled towards the same hue. */
+export function deriveTintedPalette(base: Palette, brand: BrandInput): Palette {
+  const bg = mix(brand.primary, '#ffffff', 0.92);
+  const surface = mix(brand.primary, '#ffffff', 0.97);
+  const text = ensureContrastOn(mix(brand.primary, '#111111', 0.8), bg, 7);
+  const muted = ensureContrastOn(mix(brand.primary, '#444444', 0.65), bg, 4.5);
+  const primary = ensureContrastOn(brand.primary, bg, 4.5);
+  const accent = ensureContrastOn(brand.accent, bg, 4.5);
+  const heroBg = ensureContrastOn(brand.heroBg ?? darken(brand.primary, 0.6), '#ffffff', 4.5);
+  return {
+    bg, surface, text, muted, primary,
+    onPrimary: contrastRatio('#ffffff', primary) >= 4.5 ? '#ffffff' : '#111111',
+    accent,
+    onAccent: contrastRatio('#ffffff', accent) >= 4.5 ? '#ffffff' : '#111111',
+    heroBg,
+    onHero: contrastRatio(bg, heroBg) >= 4.5 ? bg : '#ffffff',
+    border: mix(primary, bg, 0.75),
+  };
 }
 
 /** Darken (or, for very dark inputs, lighten) a colour until it reads on `bg` at the requested ratio. */

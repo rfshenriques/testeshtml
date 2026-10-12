@@ -6,14 +6,18 @@
  */
 import { loadBuildInput } from '../lib/input';
 import Hospitality from '../templates/hospitality/Site.astro';
-import Appointment from '../templates/appointment/Site.astro';
+import Beauty from '../templates/beauty/Site.astro';
+import Clinic from '../templates/clinic/Site.astro';
 import Trades from '../templates/trades/Site.astro';
+import Automotive from '../templates/automotive/Site.astro';
 import Professional from '../templates/professional/Site.astro';
+import Property from '../templates/property/Site.astro';
+import Education from '../templates/education/Site.astro';
 import Retail from '../templates/retail/Site.astro';
 import Fitness from '../templates/fitness/Site.astro';
 
 const input = loadBuildInput();
-const templates = { hospitality: Hospitality, appointment: Appointment, trades: Trades, professional: Professional, retail: Retail, fitness: Fitness } as const;
+const templates = { hospitality: Hospitality, beauty: Beauty, clinic: Clinic, trades: Trades, automotive: Automotive, professional: Professional, property: Property, education: Education, retail: Retail, fitness: Fitness } as const;
 const Site = input ? templates[input.template] : null;
 ---
 {input && Site ? (

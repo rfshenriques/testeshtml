@@ -11,24 +11,49 @@ export type Tone = (typeof TONES)[number];
 export const CTAS = ['call', 'book', 'visit', 'quote', 'order', 'enquire'] as const;
 export type PrimaryCta = (typeof CTAS)[number];
 
-export const TEMPLATE_FAMILIES = ['hospitality', 'appointment', 'trades', 'professional', 'retail', 'fitness'] as const;
+/**
+ * Template families. Each family is a distinct site design (layout, blocks, shapes) built for how that
+ * kind of business sells: a restaurant leads with its menu and room, a clinic with reassurance and booking,
+ * a tradesperson with the phone number and a quote form, a law firm with practice areas and credentials.
+ */
+export const TEMPLATE_FAMILIES = ['hospitality', 'beauty', 'clinic', 'trades', 'automotive', 'professional', 'property', 'education', 'retail', 'fitness'] as const;
 export type TemplateFamily = (typeof TEMPLATE_FAMILIES)[number];
 
-/** Vertical -> template family (spec §9.2). */
-export const VERTICAL_TEMPLATE: Record<Vertical, TemplateFamily> = {
-  restaurant: 'hospitality', cafe: 'hospitality', bar: 'hospitality', bakery: 'hospitality', hospitality: 'hospitality',
-  salon: 'appointment', spa: 'appointment', dental: 'appointment', medical: 'appointment', veterinary: 'appointment',
-  trades: 'trades', automotive: 'trades',
-  legal: 'professional', accounting: 'professional', realestate: 'professional', professional_services: 'professional',
-  education: 'professional', events: 'hospitality',
-  retail: 'retail',
-  gym: 'fitness',
-  other: 'professional',
+export const TEMPLATE_FAMILY_LABEL: Record<TemplateFamily, string> = {
+  hospitality: 'Hospitality', beauty: 'Beauty & barbers', clinic: 'Clinic & practice', trades: 'Trades', automotive: 'Automotive',
+  professional: 'Professional services', property: 'Property', education: 'Education', retail: 'Retail', fitness: 'Fitness',
 };
 
-export const COLOUR_SCHEMES = ['a', 'b', 'c', 'brand'] as const;
+/** Vertical -> template family (spec §9.2, extended: one family per kind of business rather than six). */
+export const VERTICAL_TEMPLATE: Record<Vertical, TemplateFamily> = {
+  restaurant: 'hospitality', cafe: 'hospitality', bar: 'hospitality', bakery: 'hospitality', hospitality: 'hospitality', events: 'hospitality',
+  salon: 'beauty', spa: 'beauty',
+  dental: 'clinic', medical: 'clinic', veterinary: 'clinic',
+  trades: 'trades',
+  automotive: 'automotive',
+  legal: 'professional', accounting: 'professional', professional_services: 'professional', other: 'professional',
+  realestate: 'property',
+  education: 'education',
+  retail: 'retail',
+  gym: 'fitness',
+};
+
+/**
+ * Colour schemes. a|b|c are the family's fixed palettes; the `brand*` schemes are derived from the lead's own
+ * material (listing photos / logo): `brand` light with their primary, `brand2` dark hero and footer from their
+ * darkest tone, `brand3` the whole page tinted with their primary.
+ */
+export const COLOUR_SCHEMES = ['a', 'b', 'c', 'brand', 'brand2', 'brand3'] as const;
 export type ColourSchemeId = (typeof COLOUR_SCHEMES)[number];
-export const TYPOGRAPHY_PAIRINGS = ['a', 'b'] as const;
+export const BRAND_SCHEMES: readonly ColourSchemeId[] = ['brand', 'brand2', 'brand3'];
+export const COLOUR_SCHEME_LABEL: Record<ColourSchemeId, string> = {
+  a: 'Scheme A', b: 'Scheme B', c: 'Scheme C', brand: 'Their colours', brand2: 'Their colours · dark', brand3: 'Their colours · tinted',
+};
+
+/** Typographic pairings (system font stacks only; see apps/templates/src/theme/tokens.ts). */
+export const TYPOGRAPHY_PAIRINGS = ['a', 'b', 'c', 'd', 'e'] as const;
+export type TypographyId = (typeof TYPOGRAPHY_PAIRINGS)[number];
+export const TYPOGRAPHY_LABEL: Record<TypographyId, string> = { a: 'Editorial', b: 'Modern', c: 'Geometric', d: 'Classic', e: 'Technical' };
 
 /** High-value Google place types (spec §5.3), weighted by willingness to pay and likelihood of lacking a website. */
 export const PLACE_TYPE_TIERS = {

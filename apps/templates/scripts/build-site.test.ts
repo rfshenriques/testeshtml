@@ -18,7 +18,7 @@ const built = new Map<string, Built>();
 let work = '';
 
 function variantInput(): SiteBuildInput {
-  const input = sampleInput('appointment', 'c', 'b');
+  const input = sampleInput('clinic', 'c', 'b');
   input.brief.phone = null;
   input.brief.internationalPhone = null;
   input.brief.reviewExcerpts = [];

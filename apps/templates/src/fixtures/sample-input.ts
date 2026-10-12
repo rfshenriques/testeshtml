@@ -74,8 +74,8 @@ const hospitality: SiteBuildInput = {
   mockup: mockup('The Copper Kettle', 'sample-hospitality-0001'),
 };
 
-const appointment: SiteBuildInput = {
-  template: 'appointment', colourScheme: 'a', typography: 'b',
+const clinic: SiteBuildInput = {
+  template: 'clinic', colourScheme: 'a', typography: 'b',
   brief: brief({
     businessName: 'Harbour Dental Care',
     classification: { vertical: 'dental', subVertical: 'General dental practice', servicesOffered: ['Check-ups', 'Hygiene', 'Fillings', 'Whitening'], differentiators: ['Evening appointments'], toneOfVoice: 'clinical', primaryCTA: 'book', languageCode: 'en', confidence: 0.95, insufficientData: false },
@@ -104,7 +104,7 @@ const appointment: SiteBuildInput = {
     placeholdersUsed: [],
   },
   images: [],
-  mockup: mockup('Harbour Dental Care', 'sample-appointment-001'),
+  mockup: mockup('Harbour Dental Care', 'sample-clinic-000001'),
 };
 
 const trades: SiteBuildInput = {
@@ -239,7 +239,143 @@ const fitness: SiteBuildInput = {
   mockup: mockup('Ironworks Strength Club', 'sample-fitness-00000001'),
 };
 
-export const SAMPLE_INPUTS: Record<TemplateFamily, SiteBuildInput> = { hospitality, appointment, trades, professional, retail, fitness };
+
+const beauty: SiteBuildInput = {
+  template: 'beauty', colourScheme: 'a', typography: 'a',
+  brief: brief({
+    businessName: 'Atelier Rowe',
+    classification: { vertical: 'salon', subVertical: 'Hair salon and barbers', servicesOffered: ['Cuts', 'Colour', 'Blow-dry', 'Beard trims'], differentiators: ['Walk-ins on Saturdays', 'Late opening Thursdays'], toneOfVoice: 'premium', primaryCTA: 'book', languageCode: 'en', confidence: 0.93, insufficientData: false },
+    address: '22 Church Street, Leeds LS2 7DJ', city: 'Leeds', countryCode: 'GB', phone: '0113 496 0789', internationalPhone: '+44 113 496 0789',
+    openingHours: hours('10:00 AM – 7:00 PM', '9:00 AM – 5:00 PM', 'Closed'), priceLevel: 2, rating: 4.8, reviewCount: 156,
+    reviewExcerpts: ['Best cut I have had in years; they actually listened to what I wanted.', 'Relaxed atmosphere and the colour came out exactly as discussed.', 'Walked in on a Saturday and was seen within twenty minutes.'],
+    editorialSummary: 'Hair salon and barbers offering cuts, colour and styling.', googleTypes: ['hair_salon', 'barber_shop', 'beauty_salon'],
+    lat: 53.7997, lng: -1.5492, verifiedFacts: ['Walk-ins welcome on Saturdays', 'Open until 7 pm on weekdays', 'Card and contactless accepted'],
+  }),
+  copy: {
+    meta: { title: 'Atelier Rowe — Hair Salon & Barbers in Leeds', description: 'Cuts, colour and styling on Church Street, Leeds. Walk-ins on Saturdays and late opening on weekdays.' },
+    hero: { headline: 'Hair that looks like you, only better', subhead: 'A relaxed salon and barbers where every appointment starts with a proper conversation about what you want.', ctaLabel: 'Book a chair' },
+    about: { heading: 'A salon on Church Street', body: 'Atelier Rowe is a small salon and barbers in the centre of Leeds. The team cuts, colours and styles for everyone, from a quick tidy-up to a full change. Appointments are unhurried, consultations are honest and the coffee is decent. Walk in on a Saturday or book ahead for weekday evenings.' },
+    services: [
+      { name: 'Cut and finish', description: 'A consultation, precision cut and finish tailored to your hair and how you wear it day to day.' },
+      { name: 'Colour', description: 'Full colour, balayage, highlights and toners, with a patch test for new clients.' },
+      { name: 'Barbering', description: 'Scissor and clipper cuts, skin fades and hot-towel beard trims.' },
+      { name: 'Blow-dry and styling', description: 'Event styling and blow-dries that last; bring a photo or let us suggest something.' },
+    ],
+    whyUs: [
+      { title: 'A proper consultation', body: 'Every appointment starts with a conversation about your hair, your routine and what you want.' },
+      { title: 'Late opening', body: 'Open until seven on weekdays so you can come straight from work.' },
+      { title: 'Walk-ins welcome', body: 'No appointment on a Saturday? Walk in and we will fit you in as soon as a chair is free.' },
+    ],
+    cta: { heading: 'Book your next appointment', body: 'Choose a service and a time; the salon will confirm by text or email.', buttonLabel: 'Book a chair' },
+    placeholdersUsed: [],
+  },
+  images: [],
+  mockup: mockup('Atelier Rowe', 'sample-beauty-000001'),
+};
+
+const automotive: SiteBuildInput = {
+  template: 'automotive', colourScheme: 'a', typography: 'e',
+  brief: brief({
+    businessName: 'Kestrel Motors',
+    classification: { vertical: 'automotive', subVertical: 'Independent garage', servicesOffered: ['Servicing', 'MOT', 'Diagnostics', 'Tyres', 'Brakes'], differentiators: ['Courtesy car', 'While-you-wait MOT'], toneOfVoice: 'professional', primaryCTA: 'book', languageCode: 'en', confidence: 0.94, insufficientData: false },
+    address: 'Unit 4, Foundry Lane, Sheffield S3 8JD', city: 'Sheffield', countryCode: 'GB', phone: '0114 496 0321', internationalPhone: '+44 114 496 0321',
+    openingHours: hours('8:00 AM – 5:30 PM', '8:30 AM – 1:00 PM', 'Closed'), priceLevel: null, rating: 4.7, reviewCount: 203,
+    reviewExcerpts: ['Honest garage. They showed me the worn part and explained the options before doing anything.', 'MOT done while I waited, with a coffee. Fair price and no upselling.', 'Fixed an intermittent fault two other places could not find.'],
+    editorialSummary: 'Independent garage offering servicing, MOT testing and repairs.', googleTypes: ['car_repair', 'auto_parts_store'],
+    lat: 53.3886, lng: -1.4716, verifiedFacts: ['MOT testing on site', 'Courtesy car available on request', 'All makes and models'],
+  }),
+  copy: {
+    meta: { title: 'Kestrel Motors — Garage, MOT & Servicing in Sheffield', description: 'Independent garage on Foundry Lane, Sheffield. Servicing, MOT, diagnostics, tyres and brakes for all makes and models.' },
+    hero: { headline: 'Straight answers, properly fixed cars', subhead: 'Servicing, MOT and repairs for all makes and models, explained in plain English before any work starts.', ctaLabel: 'Book a service' },
+    about: { heading: 'An independent garage on Foundry Lane', body: 'Kestrel Motors is an independent garage serving Sheffield drivers. The workshop handles routine servicing, MOT testing, diagnostics and repairs on all makes and models. You will get a clear explanation and a price before anything is done, and a courtesy car can be arranged if the job takes longer than a day.' },
+    services: [
+      { name: 'Servicing', description: 'Interim and full services to manufacturer schedules, with the service book stamped.' },
+      { name: 'MOT testing', description: 'MOT tests on site, often while you wait; retests included where applicable.' },
+      { name: 'Diagnostics', description: 'Warning lights, intermittent faults and electrical problems traced with proper diagnostic tools.' },
+      { name: 'Tyres and brakes', description: 'Tyres fitted and balanced; brake pads, discs and fluid checked and replaced.' },
+      { name: 'Clutch and gearbox', description: 'Clutch replacements and gearbox repairs with a clear quote first.' },
+      { name: 'Air conditioning', description: 'Re-gas and leak checks so the cabin stays cool in summer.' },
+    ],
+    whyUs: [
+      { title: 'Price before work', body: 'Nothing is done until you have agreed a clear quote.' },
+      { title: 'Courtesy car', body: 'Keep moving while your car is in the workshop; ask when you book.' },
+      { title: 'All makes and models', body: 'Petrol, diesel, hybrid and electric, from small hatchbacks to vans.' },
+    ],
+    cta: { heading: 'Book your car in', body: 'Tell us the registration and what you need; the workshop will confirm a slot.', buttonLabel: 'Book a service' },
+    placeholdersUsed: [],
+  },
+  images: [],
+  mockup: mockup('Kestrel Motors', 'sample-automotive-0001'),
+};
+
+const property: SiteBuildInput = {
+  template: 'property', colourScheme: 'a', typography: 'b',
+  brief: brief({
+    businessName: 'Marlow & Finch',
+    classification: { vertical: 'realestate', subVertical: 'Estate and letting agents', servicesOffered: ['Sales', 'Lettings', 'Valuations', 'Property management'], differentiators: ['Local office', 'Accompanied viewings'], toneOfVoice: 'professional', primaryCTA: 'enquire', languageCode: 'en', confidence: 0.92, insufficientData: false },
+    address: '8 Market Square, Cambridge CB2 3QJ', city: 'Cambridge', countryCode: 'GB', phone: '01223 496 0654', internationalPhone: '+44 1223 496 0654',
+    openingHours: hours('9:00 AM – 6:00 PM', '9:00 AM – 4:00 PM', 'Closed'), priceLevel: null, rating: 4.6, reviewCount: 74,
+    reviewExcerpts: ['Sold our house within a month and kept us informed at every stage.', 'As tenants we found them responsive and fair.', 'Honest valuation rather than an inflated one to win the instruction.'],
+    editorialSummary: 'Estate and letting agents covering Cambridge and surrounding villages.', googleTypes: ['real_estate_agency'],
+    lat: 52.2053, lng: 0.1218, verifiedFacts: ['Sales and lettings from one office', 'Accompanied viewings', 'Covering Cambridge and surrounding villages'],
+  }),
+  copy: {
+    meta: { title: 'Marlow & Finch — Estate & Letting Agents in Cambridge', description: 'Sales, lettings, valuations and property management from Market Square, Cambridge. Accompanied viewings and honest advice.' },
+    hero: { headline: 'Moving in Cambridge, made simple', subhead: 'Sales, lettings and honest valuations from an office on Market Square that knows every street.', ctaLabel: 'Request a valuation' },
+    about: { heading: 'An agency on Market Square', body: 'Marlow & Finch handles sales, lettings and property management across Cambridge and the surrounding villages. Sellers get a realistic valuation and a plan to market the property well; landlords get vetted tenants and a managed service; buyers and tenants get accompanied viewings and straight answers. One office, one team, start to finish.' },
+    services: [
+      { name: 'Selling', description: 'Valuation, photography, listing, viewings and negotiation through to completion.' },
+      { name: 'Lettings', description: 'Tenant referencing, agreements and move-in, with optional full management.' },
+      { name: 'Valuations', description: 'A realistic market appraisal of your home with no obligation.' },
+      { name: 'Property management', description: 'Rent collection, maintenance and inspections handled on the landlord’s behalf.' },
+    ],
+    whyUs: [
+      { title: 'Local knowledge', body: 'An office on Market Square and a team that lives in the area.' },
+      { title: 'Accompanied viewings', body: 'A member of the team at every viewing to answer questions on the spot.' },
+      { title: 'Realistic advice', body: 'Valuations based on what sells, not on what wins the instruction.' },
+    ],
+    cta: { heading: 'Thinking of selling or letting?', body: 'Request a free valuation and the team will arrange a visit at a time that suits you.', buttonLabel: 'Request a valuation' },
+    placeholdersUsed: [],
+  },
+  images: [],
+  mockup: mockup('Marlow & Finch', 'sample-property-000001'),
+};
+
+const education: SiteBuildInput = {
+  template: 'education', colourScheme: 'a', typography: 'c',
+  brief: brief({
+    businessName: 'Bright Path Tutoring',
+    classification: { vertical: 'education', subVertical: 'Tutoring centre', servicesOffered: ['Maths', 'English', 'Science', 'Exam preparation'], differentiators: ['Small groups', 'Weekend sessions'], toneOfVoice: 'warm', primaryCTA: 'enquire', languageCode: 'en', confidence: 0.9, insufficientData: false },
+    address: '41 Station Road, Reading RG1 1LG', city: 'Reading', countryCode: 'GB', phone: '0118 496 0987', internationalPhone: '+44 118 496 0987',
+    openingHours: hours('3:30 PM – 8:00 PM', '9:00 AM – 4:00 PM', '10:00 AM – 2:00 PM'), priceLevel: null, rating: 4.9, reviewCount: 52,
+    reviewExcerpts: ['My daughter went from dreading maths to looking forward to Tuesdays.', 'Small groups and tutors who explain things patiently.', 'Great exam preparation; the practice papers made all the difference.'],
+    editorialSummary: 'Tutoring centre offering small-group and one-to-one lessons.', googleTypes: ['tutoring_service', 'school'],
+    lat: 51.4587, lng: -0.9713, verifiedFacts: ['Small groups of up to six', 'One-to-one sessions available', 'Weekend sessions'],
+  }),
+  copy: {
+    meta: { title: 'Bright Path Tutoring — Maths, English & Science in Reading', description: 'Small-group and one-to-one tutoring on Station Road, Reading. Maths, English, science and exam preparation for all ages.' },
+    hero: { headline: 'Confident learners, one lesson at a time', subhead: 'Small groups, patient tutors and lessons shaped around each student in the centre of Reading.', ctaLabel: 'Book a free assessment' },
+    about: { heading: 'A tutoring centre on Station Road', body: 'Bright Path Tutoring runs small-group and one-to-one sessions in maths, English and science for primary and secondary students. Every student starts with a free assessment so the tutor knows where to focus. Sessions run after school and at weekends, and parents receive a short progress note after each half term.' },
+    services: [
+      { name: 'Maths', description: 'From number confidence in primary years to GCSE and A level problem solving.' },
+      { name: 'English', description: 'Reading, writing and comprehension, with a focus on structure and clear expression.' },
+      { name: 'Science', description: 'Biology, chemistry and physics support with practical examples and past-paper practice.' },
+      { name: 'Exam preparation', description: 'Structured revision, timed practice and feedback in the run-up to exams.' },
+      { name: 'One-to-one sessions', description: 'Individual lessons for students who need a tailored pace or specific catch-up.' },
+    ],
+    whyUs: [
+      { title: 'Small groups', body: 'Groups of up to six so every student gets attention in every session.' },
+      { title: 'Free assessment', body: 'A short assessment before the first lesson so we start in the right place.' },
+      { title: 'Progress you can see', body: 'A written note each half term on what has improved and what is next.' },
+    ],
+    cta: { heading: 'Start with a free assessment', body: 'Tell us about your child and the subjects you have in mind; we will suggest the right group.', buttonLabel: 'Book a free assessment' },
+    placeholdersUsed: [],
+  },
+  images: [],
+  mockup: mockup('Bright Path Tutoring', 'sample-education-00001'),
+};
+
+export const SAMPLE_INPUTS: Record<TemplateFamily, SiteBuildInput> = { hospitality, beauty, clinic, trades, automotive, professional, property, education, retail, fitness };
 
 export { TEMPLATE_FAMILIES };
 
