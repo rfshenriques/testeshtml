@@ -70,14 +70,15 @@ export function MeetingsPage() {
             ) : (
               <Table>
                 <THead>
-                  <TR><TH>When</TH><TH>Who</TH><TH>Business</TH><TH>Status</TH><TH>Source</TH><TH>Reminders</TH><TH className="text-right">Actions</TH></TR>
+                  <TR><TH>When</TH><TH>Who</TH><TH>Business</TH><TH>Status</TH><TH className="text-right">Actions</TH></TR>
                 </THead>
                 <TBody>
                   {calls.map((m) => (
                     <TR key={m.id}>
-                      <TD>
+                      <TD className="whitespace-nowrap">
                         <div className="font-medium tabular-nums">{whenInZone(m.startAt, tz)}</div>
                         <CellSub>{relTime(m.startAt)}{m.timezone !== tz ? ` · booked in ${m.timezone}` : ''}</CellSub>
+                        <CellSub>{m.remindersSent.length === 0 ? 'no reminders sent yet' : m.remindersSent.map((r) => `${r.kind === 'confirm' ? 'confirm request' : 'reminder'} ${r.hoursBefore} h before`).join(' · ')}</CellSub>
                       </TD>
                       <TD>
                         <div>{m.name}</div>
@@ -85,12 +86,8 @@ export function MeetingsPage() {
                         {m.notes && <CellSub className="italic">“{m.notes}”</CellSub>}
                       </TD>
                       <TD>{m.lead ? <Link className="text-primary hover:underline" to={`/leads/${m.lead.id}`}>{m.lead.businessName}</Link> : '—'}{m.lead?.city && <CellSub>{m.lead.city}</CellSub>}</TD>
-                      <TD><MeetingStatusLabel status={m.status} />{m.cancelReason && <CellSub>{m.cancelReason}</CellSub>}</TD>
-                      <TD className="capitalize">{m.source}</TD>
-                      <TD>
-                        {m.remindersSent.length === 0 ? <span className="text-muted-fg">none yet</span> : m.remindersSent.map((r, i) => <CellSub key={i}>{r.kind === 'confirm' ? 'confirm request' : 'reminder'} · {r.hoursBefore} h before</CellSub>)}
-                      </TD>
-                      <TD className="text-right">
+                      <TD className="whitespace-nowrap"><MeetingStatusLabel status={m.status} /><CellSub className="capitalize">via {m.source}</CellSub>{m.cancelReason && <CellSub>{m.cancelReason}</CellSub>}</TD>
+                      <TD className="text-right whitespace-nowrap">
                         <div className="flex justify-end gap-1">
                           {(m.status === 'scheduled' || m.status === 'confirmed') && (
                             <>
