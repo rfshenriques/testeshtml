@@ -96,3 +96,5 @@ export const WARMUP_SCHEDULE = [5, 10, 20, 30, 40, 50] as const;
 export const WARMUP_REAL_SHARE = [0, 0.2, 0.5, 0.8, 1, 1] as const;
 export const MAILBOX_DAILY_CEILING = 50;
 export const MAX_TOUCHES_PER_BUSINESS = 4;
+/** The operator approves the first N outreach sends by hand (spec M8). */
+export const HAND_APPROVAL_COUNT = 20;

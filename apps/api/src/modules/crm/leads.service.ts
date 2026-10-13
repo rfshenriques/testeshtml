@@ -12,10 +12,12 @@ import { SequenceService } from '../outreach/sequence.service';
 
 export interface LeadFilter {
   campaignId?: string; stage?: LeadStage; legalGate?: LegalGate; countryCode?: string; vertical?: string; websiteStatus?: WebsiteStatus; minScore?: number; q?: string; fallbackChannel?: string;
+  /** Prospect tier: a = email + photos, b = photos without email, c = no photos. */
+  tier?: 'a' | 'b' | 'c'; hasEmail?: boolean; hasPhone?: boolean; minPhotos?: number;
   sort?: 'score' | 'createdAt' | 'lastTouchAt' | 'priority'; dir?: 'asc' | 'desc'; take?: number; cursor?: string;
 }
 
-export type LeadAction = 'requalify' | 'enrich' | 'verify' | 'profile' | 'generate' | 'publish' | 'quote' | 'enqueue_outreach' | 'stop_sequence' | 'suppress' | 'mark_lost' | 'mark_won' | 'set_priority';
+export type LeadAction = 'requalify' | 'enrich' | 'verify' | 'profile' | 'generate' | 'publish' | 'quote' | 'engage' | 'enqueue_outreach' | 'stop_sequence' | 'suppress' | 'mark_lost' | 'mark_won' | 'set_priority';
 
 /** Lead pipeline views and manual actions (spec §13.1 Leads screen). */
 @Injectable()
@@ -37,6 +39,10 @@ export class LeadsService {
       ...(f.countryCode ? { countryCode: f.countryCode.toUpperCase() } : {}), ...(f.vertical ? { vertical: f.vertical } : {}), ...(f.websiteStatus ? { websiteStatus: f.websiteStatus } : {}),
       ...(f.minScore != null ? { score: { gte: f.minScore } } : {}), ...(f.fallbackChannel ? { fallbackChannel: f.fallbackChannel as any } : {}),
       ...(f.q ? { OR: [{ businessName: { contains: f.q, mode: 'insensitive' } }, { city: { contains: f.q, mode: 'insensitive' } }, { contacts: { some: { email: { contains: f.q, mode: 'insensitive' } } } }] } : {}),
+      ...(f.tier === 'a' ? { photoCount: { gt: 0 }, contacts: { some: { isPrimary: true } } } : f.tier === 'b' ? { photoCount: { gt: 0 }, contacts: { none: {} } } : f.tier === 'c' ? { photoCount: 0 } : {}),
+      ...(f.hasEmail === true ? { contacts: { some: { isPrimary: true } } } : f.hasEmail === false ? { contacts: { none: {} } } : {}),
+      ...(f.hasPhone === true ? { phone: { not: null } } : f.hasPhone === false ? { phone: null } : {}),
+      ...(f.minPhotos != null ? { photoCount: { gte: f.minPhotos } } : {}),
     };
     const take = Math.min(200, Math.max(1, f.take ?? 50));
     const sort = f.sort ?? 'score';
@@ -47,6 +53,44 @@ export class LeadsService {
     ]);
     const items = rows.slice(0, take).map((r) => toLeadSummary(r));
     return { items, total, nextCursor: rows.length > take ? rows[take - 1].id : null };
+  }
+
+  /**
+   * Businesses without a website, per country, bucketed by what we have on them: email + photos (quote first,
+   * easiest cash flow), photos but no email (cold call with a mockup), nothing (later, with references).
+   */
+  async prospects() {
+    const rows = await this.prisma.$queryRaw<{ countryCode: string; total: number; tierA: number; tierB: number; tierC: number; withEmail: number; withPhone: number; withPhotos: number; generated: number; quoted: number }[]>`
+      SELECT l."countryCode" AS "countryCode", count(*)::int AS total,
+        count(*) FILTER (WHERE l."photoCount" > 0 AND c.n > 0)::int AS "tierA",
+        count(*) FILTER (WHERE l."photoCount" > 0 AND COALESCE(c.n, 0) = 0)::int AS "tierB",
+        count(*) FILTER (WHERE l."photoCount" = 0)::int AS "tierC",
+        count(*) FILTER (WHERE c.n > 0)::int AS "withEmail",
+        count(*) FILTER (WHERE l.phone IS NOT NULL)::int AS "withPhone",
+        count(*) FILTER (WHERE l."photoCount" > 0)::int AS "withPhotos",
+        count(*) FILTER (WHERE s."leadId" IS NOT NULL)::int AS generated,
+        count(*) FILTER (WHERE q."leadId" IS NOT NULL)::int AS quoted
+      FROM "Lead" l
+      LEFT JOIN (SELECT "leadId", count(*)::int AS n FROM "Contact" WHERE "isPrimary" GROUP BY "leadId") c ON c."leadId" = l.id
+      LEFT JOIN "GeneratedSite" s ON s."leadId" = l.id
+      LEFT JOIN "Quote" q ON q."leadId" = l.id
+      WHERE l.stage NOT IN ('excluded', 'suppressed', 'lost')
+      GROUP BY l."countryCode" ORDER BY total DESC`;
+    return { countries: rows };
+  }
+
+  /** Push a lead into generation → publish → quote from wherever it stopped, including leads without an email (phone bucket). */
+  async engage(id: string, actor: string) {
+    const lead = await this.prisma.lead.findUniqueOrThrow({ where: { id }, select: { stage: true, classification: true, site: { select: { publishedAt: true, takenDownAt: true } }, quote: { select: { id: true } }, contacts: { where: { isPrimary: true }, take: 1 } } });
+    if (lead.stage === 'suppressed' || lead.stage === 'excluded') throw new Error(`lead is ${lead.stage}`);
+    if (lead.stage === 'discovered' || lead.stage === 'qualified') {
+      await this.leadEvents.advance(id, 'enriched', { actor, note: lead.contacts.length ? 'engaged by operator' : 'engaged without email: phone outreach' });
+    }
+    if (!lead.classification) { await this.pipeline.enqueue('profilingClassify', 'classify', id, { reason: 'engage' }, { force: true }); return 'profile'; }
+    if (!lead.site) { await this.pipeline.enqueue('generatorBuild', 'build', id, { reason: 'engage' }, { force: true }); return 'generate'; }
+    if (!lead.site.publishedAt || lead.site.takenDownAt) { await this.pipeline.enqueue('previewPublish', 'publish', id, {}, { force: true }); return 'publish'; }
+    if (!lead.quote) { await this.quoting.createQuote(id, { actor }); return 'quote'; }
+    return 'already engaged';
   }
 
   async detail(id: string) {
@@ -87,6 +131,7 @@ export class LeadsService {
         case 'generate': await this.pipeline.enqueue('generatorBuild', 'build', id, { regenerateCopy: !!payload.regenerateCopy, reason: 'operator' }, { force: true }); break;
         case 'publish': await this.pipeline.enqueue('previewPublish', 'publish', id, {}, { force: true }); break;
         case 'quote': await this.quoting.createQuote(id, { tier: payload.tier, addOns: payload.addOns, actor }); break;
+        case 'engage': await this.engage(id, actor); break;
         case 'enqueue_outreach': await this.sequence.start(id, actor); break;
         case 'stop_sequence': await this.sequence.stop(id, payload.reason ?? 'operator', actor); break;
         case 'suppress': await this.suppression.suppressLead(id, (payload.reason as SuppressionReason) ?? 'operator', { actor, note: payload.note }); break;

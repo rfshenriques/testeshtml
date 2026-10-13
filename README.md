@@ -5,7 +5,8 @@ contact email, generate a tailored concept-mockup website, and send a compliant 
 containing that preview plus a priced quote. Built against `docs/SPEC.md`.
 
 **Status:** all build phases M0–M11 implemented and tested. Decisions the spec left to the operator
-are listed with the defaults taken in `docs/DECISIONS.md`; read it before go-live.
+are listed with the defaults taken in `docs/DECISIONS.md`; read it before go-live. `docs/GO-LIVE.md` is the
+step-by-step runbook (keys, identity, a sending domain that does not land in spam, first campaign).
 
 ## Layout
 
@@ -21,7 +22,7 @@ packages/
   enrichment-adapters/   registry / directory / data-provider / pattern-guess adapters + verifiers
   email-adapters/        SES, Smartlead, fake providers; IMAP inbound; reply-text extraction
 prisma/                  schema, migrations, seed (jurisdictions, pricing, sequence)
-docs/                    SPEC.md, API.md (admin/public API contract), PACKAGES.md, DECISIONS.md
+docs/                    SPEC.md, API.md (admin/public API contract), PACKAGES.md, DECISIONS.md, GO-LIVE.md
 ```
 
 ## Quick start

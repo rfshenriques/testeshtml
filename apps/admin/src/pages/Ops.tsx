@@ -10,6 +10,8 @@ import { cn, fmtNum, fmtUsd } from '@/lib/utils';
 import { PageHeader, QueryState, Section, Button, Progress, Table, THead, TBody, TR, TH, TD, CellSub, EmptyState, Checkbox, ConfirmDialog, Note, StatusLabel } from '@/components/ui';
 import { C, axisProps, tooltipStyle, ChartBox } from '@/components/charts/common';
 import { AlertList, EconomicsTiles } from './Dashboard';
+import type { ReadinessItem } from '@/lib/types';
+import { DotLabel } from '@/components/ui';
 
 const NAME_TO_KEY: Record<string, string> = Object.fromEntries(Object.entries(QUEUES).map(([k, v]) => [v.name, k]));
 
@@ -35,7 +37,8 @@ export function OpsPage() {
 
   return (
     <>
-      <PageHeader title="Ops" description="Cost ledger, queue depths, API quotas and alerts. Refreshes every 15 seconds. The kill switch lives in the top bar." />
+      <PageHeader title="Ops" description="Go-live checklist, cost ledger, queue depths, API quotas and alerts. Refreshes every 15 seconds. The kill switch lives in the top bar." />
+      <ReadinessPanel />
       <QueryState query={q}>
         {(o) => {
           const totalCost = o.costs.byCategory.reduce((s, c) => s + c.usd, 0);
@@ -210,5 +213,61 @@ export function OpsPage() {
         }}
       </QueryState>
     </>
+  );
+}
+
+
+const READINESS_TONE: Record<ReadinessItem['status'], 'good' | 'warning' | 'blocked'> = { ok: 'good', warn: 'warning', blocker: 'blocked' };
+
+/** Everything the pipeline needs to run for real, checked live, with the fix for each gap. */
+export function ReadinessPanel() {
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: [...keys.ops, 'readiness'], queryFn: api.ops.readiness, refetchInterval: 60_000, staleTime: 30_000 });
+  const [confirmPurge, setConfirmPurge] = React.useState(false);
+  const purge = useMutation({
+    mutationFn: () => api.ops.purgeDemo(),
+    onSuccess: (r) => {
+      toast.success('Demo data removed', `${r.campaigns} campaign(s), ${r.leads} lead(s), ${r.mailboxes} mailbox(es), ${r.domains} domain(s).`);
+      setConfirmPurge(false);
+      void qc.invalidateQueries();
+    },
+  });
+  const r = q.data;
+  const title = !r ? 'Go-live checklist' : r.ready ? 'Ready to run' : `${r.blockers} blocker${r.blockers === 1 ? '' : 's'} before outreach can run`;
+  return (
+    <Section
+      className="mb-6"
+      title={title}
+      description={r ? `${r.items.filter((i) => i.status === 'ok').length} of ${r.items.length} checks pass · ${r.warnings} warning(s) · checked ${new Date(r.checkedAt).toLocaleTimeString()}` : 'Checking keys, providers, DNS and mailboxes…'}
+      actions={<Button size="sm" variant="outline" loading={q.isFetching} onClick={() => q.refetch()}>Re-check</Button>}
+    >
+      {q.isError ? (
+        <Note tone="critical">Could not run the checks: {q.error instanceof Error ? q.error.message : 'error'}</Note>
+      ) : !r ? null : (
+        <ul className="divide-y">
+          {r.items.map((i) => (
+            <li key={i.key} className="grid gap-1 py-3 first:pt-0 sm:grid-cols-[200px_1fr] sm:gap-4">
+              <div><DotLabel tone={READINESS_TONE[i.status]}>{i.label}</DotLabel></div>
+              <div className="min-w-0 text-sm">
+                <div>{i.detail}</div>
+                {i.fix && <div className={cn('mt-1', i.status === 'blocker' ? 'text-bad-fg' : 'text-muted-fg')}><span className="font-medium">Fix:</span> {i.fix}</div>}
+                {i.action === 'purge-demo' && (
+                  <div className="mt-2"><Button size="sm" variant="outline" onClick={() => setConfirmPurge(true)}>Remove demo data</Button></div>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      <ConfirmDialog
+        open={confirmPurge}
+        onClose={() => setConfirmPurge(false)}
+        onConfirm={async () => { await purge.mutateAsync(); }}
+        title="Remove all demo data?"
+        confirmLabel="Remove demo data"
+        destructive
+        blastRadius={<>Deletes the demo campaign with its leads, sites, quotes, messages and events, the demo sending domain and mailboxes, and resets the hand-approval counter. Real campaigns and domains are untouched. This cannot be undone.</>}
+      />
+    </Section>
   );
 }

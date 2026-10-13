@@ -7,6 +7,7 @@ import { ENV, Env } from '../../shared/config/config.module';
 import { REDIS } from '../../shared/redis/redis.module';
 import { QueueRegistry } from '../../shared/queues/queue-registry.service';
 import { LeadEventsService } from '../crm/lead-events.service';
+import { HAND_APPROVAL_COUNT } from '@sitewright/shared-types';
 import { AuditService } from '../compliance/audit.service';
 import { LinkTokenService } from '../compliance/link-token.service';
 import { GateService } from '../compliance/gate.service';
@@ -17,7 +18,7 @@ import { stepCopy } from './copy';
 import { QuotingService } from '../quoting/quoting.service';
 import { PreviewService } from '../preview/preview.service';
 
-export const HAND_APPROVAL_COUNT = 20;
+export { HAND_APPROVAL_COUNT };
 const APPROVED_SENDS_KEY = 'outreach.approvedSends';
 
 /**

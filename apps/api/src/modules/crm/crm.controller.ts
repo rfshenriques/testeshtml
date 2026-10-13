@@ -12,8 +12,11 @@ export class CrmController {
 
   @Get('leads')
   list(@Query() q: Record<string, string>) {
-    return this.leads.list({ ...q, minScore: q.minScore ? Number(q.minScore) : undefined, take: q.take ? Number(q.take) : undefined } as any);
+    const bool = (v: string | undefined) => (v === '1' || v === 'true' ? true : v === '0' || v === 'false' ? false : undefined);
+    return this.leads.list({ ...q, minScore: q.minScore ? Number(q.minScore) : undefined, take: q.take ? Number(q.take) : undefined, hasEmail: bool(q.hasEmail), hasPhone: bool(q.hasPhone), minPhotos: q.minPhotos ? Number(q.minPhotos) : undefined } as any);
   }
+  /** Prospect counts per country by tier (email + photos / photos only / no photos). */
+  @Get('leads/prospects') prospects() { return this.leads.prospects(); }
   @Get('leads/:id') detail(@Param('id') id: string) { return this.leads.detail(id); }
   @Patch('leads/:id') patch(@Param('id') id: string, @Body() body: any, @Req() req: any) { return this.leads.patch(id, body, req.actor); }
   @Post('leads/bulk') bulk(@Body() body: { ids: string[]; action: LeadAction; payload?: Record<string, any> }, @Req() req: any) { return this.leads.bulk(body.ids ?? [], body.action, body.payload ?? {}, req.actor); }

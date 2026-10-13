@@ -211,6 +211,8 @@ model Lead {
   reviewCount     Int?
   priceLevel      Int?
   businessStatus  String?
+  /** Photos on the Google listing (set from place details). Drives the prospect tiers: photos + email first, photos only (call), no photos. */
+  photoCount      Int             @default(0)
   lat             Float?
   lng             Float?
   score           Float?

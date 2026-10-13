@@ -10,7 +10,7 @@ import type {
   LeadAction, LeadDetail, LeadSummary, LeadsQuery, Mailbox, MailboxWithReputation, MessagePreview, OpsCosts, OpsOverview,
   OutreachMessage, Paginated, PlaceTypeTiers, PricingConfig, Provisioning, Quote, QuoteComputation, ReplyIntent,
   ReputationSeries, RetentionStatus, ReviewQueueItem, ScheduleRow, SequenceStep, SiteCopy, Suppression, TemplateInfo,
-  TierName, CrmTask, Classification, SiteVariants, SiteVariantParams, Meeting,
+  TierName, CrmTask, Classification, SiteVariants, SiteVariantParams, Meeting, Readiness, ProspectCountry,
 } from './types';
 import type { Availability } from '@sitewright/shared-types';
 import { auth } from './auth';
@@ -93,6 +93,8 @@ export const api = {
     costs: (campaignId?: string) => get<OpsCosts>('/admin/ops/costs', { campaignId }),
     alerts: (all?: boolean) => get<Alert[]>('/admin/ops/alerts', all ? { all: 1 } : undefined),
     ackAlert: (id: string) => post<void>(`/admin/ops/alerts/${encodeURIComponent(id)}/ack`),
+    readiness: () => get<Readiness>('/admin/ops/readiness'),
+    purgeDemo: () => post<{ campaigns: number; leads: number; mailboxes: number; domains: number }>('/admin/ops/purge-demo'),
   },
   dashboard: {
     get: () => get<Dashboard>('/admin/dashboard'),
@@ -125,6 +127,7 @@ export const api = {
   },
   leads: {
     list: (q: LeadsQuery) => get<Paginated<LeadSummary>>('/admin/leads', q as Query),
+    prospects: () => get<{ countries: ProspectCountry[] }>('/admin/leads/prospects'),
     get: (id: string) => get<LeadDetail>(`/admin/leads/${encodeURIComponent(id)}`),
     update: (id: string, body: { notes?: string; priority?: number; fallbackChannel?: string }) => patch<LeadDetail['lead']>(`/admin/leads/${encodeURIComponent(id)}`, body),
     action: (id: string, action: LeadAction, payload?: Record<string, unknown>) => post<ActionResult>(`/admin/leads/${encodeURIComponent(id)}/actions/${action}`, payload),

@@ -51,7 +51,12 @@ export interface LeadSummary {
   legalGateReason: string | null; fallbackChannel: FallbackChannel; priority: number;
   lastTouchAt: string | null; createdAt: string; primaryContact: { email: string; verification: string; source: string } | null;
   previewUrl: string | null; quoteUrl: string | null;
+  /** Photos on the Google listing. */
+  photoCount: number;
+  /** a = email + photos (quote first), b = photos but no email (call), c = no photos. */
+  tier: 'a' | 'b' | 'c';
 }
+export interface ProspectCountry { countryCode: string; total: number; tierA: number; tierB: number; tierC: number; withEmail: number; withPhone: number; withPhotos: number; generated: number; quoted: number }
 export interface Paginated<T> { items: T[]; total: number; nextCursor: string | null }
 
 // ---- Ops / health
@@ -67,6 +72,9 @@ export interface Health {
 }
 export interface CostByCategory { category: string; usd: number; units: number }
 export interface CostByCampaign { campaignId: string; usd: number; name?: string }
+export type ReadinessStatus = 'ok' | 'warn' | 'blocker';
+export interface ReadinessItem { key: string; label: string; status: ReadinessStatus; detail: string; fix?: string; action?: 'purge-demo' }
+export interface Readiness { ready: boolean; blockers: number; warnings: number; items: ReadinessItem[]; checkedAt: string }
 export interface OpsOverview {
   killSwitch: boolean; queues: QueueDepth[];
   costs: { byCategory: CostByCategory[]; byCampaign: CostByCampaign[] };
@@ -183,12 +191,14 @@ export interface LeadDetail {
   provisioning: Provisioning | null;
 }
 export type LeadAction =
+  | 'engage'
   | 'requalify' | 'enrich' | 'verify' | 'profile' | 'generate' | 'publish' | 'quote' | 'enqueue_outreach'
   | 'stop_sequence' | 'suppress' | 'mark_lost' | 'mark_won' | 'set_priority';
 export interface ActionResult { ok: true; enqueued?: number; results?: { id: string; ok: boolean; error?: string }[] }
 export interface LeadsQuery {
   campaignId?: string; stage?: string; legalGate?: string; countryCode?: string; vertical?: string; websiteStatus?: string;
   minScore?: number; q?: string; fallbackChannel?: string; sort?: 'score' | 'createdAt' | 'lastTouchAt' | 'priority'; dir?: 'asc' | 'desc';
+  tier?: 'a' | 'b' | 'c'; hasEmail?: '1' | '0'; hasPhone?: '1' | '0'; minPhotos?: number;
   take?: number; cursor?: string;
 }
 

@@ -197,3 +197,10 @@ Admin:
 - Lead detail (`GET /admin/leads/:id`) includes `meetings`.
 
 Reminders run on the `meeting.reminder` queue as delayed jobs (`mr-<meetingId>-<n>`); a reminder flagged `confirm` asks for a one-click confirmation until the attendee confirms, then later ones are plain reminders. Cancelling removes the jobs.
+
+## Prospects and go-live
+
+- `GET /admin/leads` accepts `tier=a|b|c` (a = primary email + listing photos, b = photos but no email, c = no photos), `hasEmail=1|0`, `hasPhone=1|0`, `minPhotos=N`. Every lead summary carries `photoCount` and `tier`.
+- `GET /admin/leads/prospects` → `{ countries: [{ countryCode, total, tierA, tierB, tierC, withEmail, withPhone, withPhotos, generated, quoted }] }` over leads that are not excluded, suppressed or lost.
+- `POST /admin/leads/:id/actions/engage` (also as a bulk action) pushes a lead on from wherever it stopped: a lead without an email is moved to `enriched` in the phone bucket, then profiling → generation → publish → quote run as usual (no email sequence starts without a verified address).
+- `GET /admin/ops/readiness` → go-live checklist `{ ready, blockers, warnings, items: [{ key, label, status: ok|warn|blocker, detail, fix?, action? }] }` (keys, providers, identity, live DNS of sending domains, mailboxes, approvals, demo data). `POST /admin/ops/purge-demo` removes the demo campaign, domain and mailboxes.

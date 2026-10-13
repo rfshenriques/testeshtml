@@ -32,6 +32,7 @@ export class DetailsService {
           rating: d.rating ?? lead.rating,
           reviewCount: d.userRatingCount ?? lead.reviewCount,
           businessStatus: d.businessStatus ?? lead.businessStatus,
+          photoCount: d.photos?.length ?? lead.photoCount,
           websiteUrl: lead.websiteUrl ?? d.websiteUri ?? null,
           city: lead.city ?? cityFromComponents(d.addressComponents),
         },

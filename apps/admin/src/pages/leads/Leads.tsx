@@ -9,7 +9,7 @@ import { api } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
 import { cn, fmtNum, relTime } from '@/lib/utils';
-import { Button, PageHeader, Input, Select, StageLabel, GateLabel, ConfirmDialog, Field, Textarea, ErrorState, SkeletonRows, EmptyState, Checkbox } from '@/components/ui';
+import { Button, PageHeader, Input, Select, StageLabel, GateLabel, ConfirmDialog, Field, Textarea, ErrorState, SkeletonRows, EmptyState, Checkbox, DotLabel } from '@/components/ui';
 import type { LeadAction, LeadSummary, LeadsQuery } from '@/lib/types';
 import { LEAD_STAGES, WEBSITE_STATUSES } from '@/lib/types';
 import { LeadDrawer } from './LeadDrawer';
@@ -18,6 +18,7 @@ const col = createColumnHelper<LeadSummary>();
 const ROW_H = 44;
 
 const BULK: { action: LeadAction; label: string; confirm?: boolean; destructive?: boolean }[] = [
+  { action: 'engage', label: 'Engage (site → preview → quote)' },
   { action: 'requalify', label: 'Requalify' },
   { action: 'enrich', label: 'Enrich' },
   { action: 'profile', label: 'Profile' },
@@ -26,6 +27,54 @@ const BULK: { action: LeadAction; label: string; confirm?: boolean; destructive?
   { action: 'enqueue_outreach', label: 'Enqueue outreach', confirm: true },
   { action: 'suppress', label: 'Suppress', confirm: true, destructive: true },
 ];
+
+const TIER: Record<'a' | 'b' | 'c', { label: string; tone: 'good' | 'warning' | 'neutral'; title: string }> = {
+  a: { label: 'A · email + photos', tone: 'good', title: 'Has an email and listing photos: generate, quote and email first.' },
+  b: { label: 'B · photos, call', tone: 'warning', title: 'Photos but no email: generate the mockup and cold-call with it.' },
+  c: { label: 'C · no photos', tone: 'neutral', title: 'No listing photos: approach later with references from other clients.' },
+};
+export function TierLabel({ tier }: { tier: 'a' | 'b' | 'c' }) {
+  const t = TIER[tier] ?? TIER.c;
+  return <DotLabel tone={t.tone} title={t.title}>{t.label}</DotLabel>;
+}
+
+/** Businesses without a website per country, bucketed by what we hold on them. Click a cell to filter the table. */
+export function ProspectsStrip({ onPick, active }: { onPick: (countryCode: string, tier: 'a' | 'b' | 'c' | '') => void; active: { countryCode: string; tier: string } }) {
+  const q = useQuery({ queryKey: ['leads', 'prospects'], queryFn: api.leads.prospects, refetchInterval: 60_000, meta: { silent: true } });
+  const rows = q.data?.countries ?? [];
+  if (!rows.length) return null;
+  const cell = (cc: string, tier: 'a' | 'b' | 'c' | '', n: number, label: string) => (
+    <button
+      type="button"
+      onClick={() => onPick(cc, tier)}
+      className={cn('flex min-w-[5.5rem] flex-col items-start rounded-md border px-2.5 py-1.5 text-left hover:bg-muted/60', active.countryCode === cc && active.tier === tier ? 'border-primary bg-primary/5' : 'border-border')}
+      aria-pressed={active.countryCode === cc && active.tier === tier}
+    >
+      <span className="text-base font-semibold tabular-nums">{n}</span>
+      <span className="text-xs text-muted-fg">{label}</span>
+    </button>
+  );
+  return (
+    <div className="mb-4 rounded-lg border bg-card p-3">
+      <div className="mb-2 flex items-baseline justify-between gap-3">
+        <div className="text-sm font-medium">Prospects by country</div>
+        <div className="text-xs text-muted-fg">A = email + photos → quote first · B = photos, no email → call with the mockup · C = no photos → later, with references</div>
+      </div>
+      <div className="space-y-2">
+        {rows.map((r) => (
+          <div key={r.countryCode} className="flex flex-wrap items-center gap-2">
+            <span className="w-10 font-mono text-sm font-semibold">{r.countryCode}</span>
+            {cell(r.countryCode, '', r.total, 'no website')}
+            {cell(r.countryCode, 'a', r.tierA, 'A · email + photos')}
+            {cell(r.countryCode, 'b', r.tierB, 'B · photos only')}
+            {cell(r.countryCode, 'c', r.tierC, 'C · no photos')}
+            <span className="ml-2 text-xs text-muted-fg">{r.withEmail} with email · {r.withPhone} with phone · {r.generated} sites built · {r.quoted} quoted</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /** Copies `value` to the clipboard without opening the row's drawer. */
 function CopyButton({ value, label }: { value: string; label: string }) {
@@ -67,6 +116,7 @@ export function LeadsPage() {
     websiteStatus: sp.get('websiteStatus') || undefined,
     minScore: sp.get('minScore') ? Number(sp.get('minScore')) : undefined,
     q: sp.get('q') || undefined,
+    tier: (sp.get('tier') as LeadsQuery['tier']) || undefined,
     sort: (sp.get('sort') as LeadsQuery['sort']) || 'score',
     dir: (sp.get('dir') as LeadsQuery['dir']) || 'desc',
   };
@@ -131,32 +181,39 @@ export function LeadsPage() {
       col.accessor('countryCode', { header: 'CC', size: 48 }),
       col.accessor((r) => r.primaryContact, {
         id: 'contact',
-        header: 'Primary contact',
-        size: 260,
+        header: 'Email',
+        size: 230,
         cell: (c) => {
           const v = c.getValue();
-          const phone = c.row.original.phone;
-          if (!v && !phone) return <span className="text-muted-fg">none</span>;
+          if (!v) return <span className="text-muted-fg">—</span>;
           return (
             <div className="group min-w-0">
-              {v ? (
-                <div className="flex items-center gap-1">
-                  <span className="truncate" title={v.email}>
-                    {v.email}
-                  </span>
-                  <CopyButton value={v.email} label={`Copy ${v.email}`} />
-                </div>
-              ) : (
-                <div className="text-muted-fg">no email</div>
-              )}
-              <div className="truncate text-sm text-muted-fg" title={v ? `${v.verification} · ${v.source}` : undefined}>
-                {phone && <span className="tabular-nums">{phone}</span>}
-                {phone && v && ' · '}
-                {v && <>{v.verification}</>}
+              <div className="flex items-center gap-1">
+                <span className="truncate" title={v.email}>{v.email}</span>
+                <CopyButton value={v.email} label={`Copy ${v.email}`} />
               </div>
+              <div className="truncate text-sm text-muted-fg" title={v.source}>{v.verification}</div>
             </div>
           );
         },
+      }),
+      col.accessor('phone', {
+        id: 'phone',
+        header: 'Phone',
+        size: 140,
+        cell: (c) => (c.getValue() ? <span className="group inline-flex items-center gap-1 tabular-nums">{c.getValue()}<CopyButton value={c.getValue()!} label={`Copy ${c.getValue()}`} /></span> : <span className="text-muted-fg">—</span>),
+      }),
+      col.accessor('photoCount', {
+        id: 'photos',
+        header: 'Photos',
+        size: 70,
+        cell: (c) => <span className={cn('tabular-nums', c.getValue() === 0 && 'text-muted-fg')}>{c.getValue()}</span>,
+      }),
+      col.accessor('tier', {
+        id: 'tier',
+        header: 'Tier',
+        size: 150,
+        cell: (c) => <TierLabel tier={c.getValue()} />,
       }),
       col.accessor('priority', { id: 'priority', header: 'Prio', size: 64, enableSorting: true, cell: (c) => <span className="tabular-nums">{c.getValue()}</span> }),
       col.accessor('lastTouchAt', { id: 'lastTouchAt', header: 'Last touch', size: 100, enableSorting: true, cell: (c) => <span className="text-sm text-muted-fg">{relTime(c.getValue())}</span> }),
@@ -218,11 +275,12 @@ export function LeadsPage() {
     setSp(new URLSearchParams(), { replace: true });
     setSearch('');
   };
-  const activeFilters = ['campaignId', 'stage', 'legalGate', 'countryCode', 'vertical', 'websiteStatus', 'minScore', 'q'].filter((k) => sp.get(k));
+  const activeFilters = ['campaignId', 'stage', 'legalGate', 'countryCode', 'vertical', 'websiteStatus', 'minScore', 'q', 'tier'].filter((k) => sp.get(k));
 
   return (
     <div className="flex h-[calc(100vh-7.5rem)] flex-col">
       <PageHeader title="Leads" description={`${fmtNum(total)} matching · ${fmtNum(rows.length)} loaded`} className="mb-4" />
+      <ProspectsStrip active={{ countryCode: filters.countryCode ?? '', tier: filters.tier ?? '' }} onPick={(cc, tier) => { const n = new URLSearchParams(sp); n.set('countryCode', cc); if (tier) n.set('tier', tier); else n.delete('tier'); n.delete('cursor'); setSp(n); }} />
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="relative">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-fg" aria-hidden />
@@ -249,6 +307,12 @@ export function LeadsPage() {
           <option value="pending">pending</option>
           <option value="clear">clear</option>
           <option value="blocked">blocked</option>
+        </Select>
+        <Select aria-label="Prospect tier" className="w-56" value={filters.tier ?? ''} onChange={(e) => setFilter('tier', e.target.value)}>
+          <option value="">All tiers</option>
+          <option value="a">A · email + photos (quote first)</option>
+          <option value="b">B · photos, no email (call)</option>
+          <option value="c">C · no photos (later)</option>
         </Select>
         <Select aria-label="Website status" className="w-36" value={filters.websiteStatus ?? ''} onChange={(e) => setFilter('websiteStatus', e.target.value)}>
           <option value="">Any website</option>

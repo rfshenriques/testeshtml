@@ -5,6 +5,7 @@ import { KillSwitchService } from './kill-switch.service';
 import { CostLedgerService } from './cost-ledger.service';
 import { QuotaService } from './quota.service';
 import { AlertService } from './alert.service';
+import { ReadinessService } from './readiness.service';
 import { QueueRegistry } from '../../shared/queues/queue-registry.service';
 import { QUEUES, QueueKey } from '@sitewright/shared-types';
 
@@ -26,7 +27,12 @@ export class OpsController {
     private readonly quotas: QuotaService,
     private readonly alerts: AlertService,
     private readonly queues: QueueRegistry,
+    private readonly readiness: ReadinessService,
   ) {}
+
+  /** Go-live checklist: keys, providers, identity, sending domains (live DNS), mailboxes, demo data. */
+  @Get('readiness') readinessCheck() { return this.readiness.check(); }
+  @Post('purge-demo') purgeDemo() { return this.readiness.purgeDemo(); }
 
   @Get('overview')
   async overview() {
