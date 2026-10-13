@@ -99,9 +99,10 @@ export function GeneratorPage() {
                         {b.takenDownAt ? (
                           <StatusLabel status="taken_down" />
                         ) : b.previewUrl ? (
-                          <a className="text-primary hover:underline" href={b.previewUrl} target="_blank" rel="noreferrer noopener">
-                            Open preview
-                          </a>
+                          <span className="inline-flex gap-3">
+                            <Link className="text-primary hover:underline" to={`/leads/${b.leadId}/studio`}>Studio</Link>
+                            <a className="text-primary hover:underline" href={b.previewUrl} target="_blank" rel="noreferrer noopener">Published</a>
+                          </span>
                         ) : (
                           <StatusLabel status="unpublished" />
                         )}
@@ -229,9 +230,12 @@ export function CopyEditor({ leadId, templates }: { leadId: string; templates: T
           <span>
             {s.templateId} · build {s.buildHash.slice(0, 8)} · {s.views} views · expires {fmtDate(s.expiresAt)}
           </span>
+          <Link className="text-primary hover:underline" to={`/leads/${leadId}/studio`}>
+            Open in design studio
+          </Link>
           {s.previewUrl && (
             <a className="text-primary hover:underline" href={s.previewUrl} target="_blank" rel="noreferrer noopener">
-              Open preview
+              Published preview
             </a>
           )}
         </div>

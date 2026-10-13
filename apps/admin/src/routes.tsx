@@ -11,8 +11,10 @@ import { InboxPage } from '@/pages/Inbox';
 import { PricingPage } from '@/pages/Pricing';
 import { CompliancePage } from '@/pages/Compliance';
 import { OpsPage } from '@/pages/Ops';
+import { StudioPage } from '@/pages/leads/Studio';
 
 export const routes: RouteObject[] = [
+  { path: '/leads/:id/studio', element: <StudioPage /> },
   {
     path: '/',
     element: <AppShell />,

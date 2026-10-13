@@ -6,14 +6,14 @@ import { auth } from '@/lib/auth';
 import type { SiteVariants } from '@/lib/types';
 import { StylesGrid } from './StylesTab';
 
-const FAMILIES = ['hospitality', 'appointment', 'trades', 'professional', 'retail', 'fitness'];
+const FAMILIES = ['hospitality', 'beauty', 'clinic', 'trades', 'automotive', 'professional', 'property', 'education', 'retail', 'fitness'];
 const variants: SiteVariants = {
-  current: { templateId: 'appointment', colourScheme: 'b', typography: 'a' },
+  current: { templateId: 'clinic', colourScheme: 'b', typography: 'a' },
   brand: null,
   images: [{ url: 'https://img.example/1.jpg', alt: 'Shopfront', credit: 'Photo: J. Doe via Google', source: 'google_places' }],
   templates: FAMILIES.map((id) => ({ id, verticals: ['dental'], sections: ['hero', 'services'] })),
-  colourSchemes: ['a', 'b', 'c', 'brand'],
-  typography: ['a', 'b'],
+  colourSchemes: ['a', 'b', 'c', 'brand', 'brand2', 'brand3'],
+  typography: ['a', 'b', 'c', 'd', 'e'],
 };
 
 /** IntersectionObserver stub: records observed elements; `fire()` marks them all visible. */
@@ -56,12 +56,12 @@ describe('StylesGrid', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders one card per template family × colour scheme (24) and highlights the current combination', () => {
+  it('renders one card per template family × colour scheme (60) and highlights the current combination', () => {
     mount(variants);
     const cards = screen.getAllByTestId('style-card');
-    expect(cards).toHaveLength(24);
-    expect(cards.filter((c) => c.dataset.scheme === 'brand')).toHaveLength(6);
-    const current = cards.find((c) => c.dataset.template === 'appointment' && c.dataset.scheme === 'b')!;
+    expect(cards).toHaveLength(60);
+    expect(cards.filter((c) => c.dataset.scheme === 'brand')).toHaveLength(10);
+    const current = cards.find((c) => c.dataset.template === 'clinic' && c.dataset.scheme === 'b')!;
     expect(within(current).getByText('Current')).toBeTruthy();
     const use = within(current).getByRole('button', { name: /use this style/i }) as HTMLButtonElement;
     expect(use.textContent).toBe('In use');
@@ -71,7 +71,7 @@ describe('StylesGrid', () => {
 
   it("disables the 'From their photos' cards when the lead has no brand palette", () => {
     mount(variants);
-    const brandCards = screen.getAllByTestId('style-card').filter((c) => c.dataset.scheme === 'brand');
+    const brandCards = screen.getAllByTestId('style-card').filter((c) => c.dataset.scheme?.startsWith('brand'));
     for (const card of brandCards) {
       expect(card.dataset.disabled).toBe('true');
       expect(card.getAttribute('aria-disabled')).toBe('true');
@@ -106,7 +106,7 @@ describe('StylesGrid', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('/admin/leads/lead1/site/variant?template=hospitality&colourScheme=a&typography=a');
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer tok');
-    const frame = (await screen.findByTitle(/hospitality · Scheme A · Editorial thumbnail/)) as HTMLIFrameElement;
+    const frame = (await screen.findByTitle(/Hospitality · Scheme A · Editorial thumbnail/)) as HTMLIFrameElement;
     expect(frame.getAttribute('srcdoc')).toContain('site/variant');
     expect(frame.style.transform).toBe('scale(0.25)'); // 320px card / 1280px page
   });

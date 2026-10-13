@@ -80,8 +80,9 @@ describe('Style gallery, listing photos and brand palette (integration)', () => 
   it('exposes every style variant per lead, cached after the first build, and rejects unprofiled leads', async () => {
     const lead = await profiledLead();
     const v = await request(app.getHttpServer()).get(`/admin/leads/${lead.id}/site/variants`).set(AUTH).expect(200);
-    expect(v.body.templates).toHaveLength(6);
-    expect(v.body.colourSchemes).toEqual(['a', 'b', 'c', 'brand']);
+    expect(v.body.templates).toHaveLength(10);
+    expect(v.body.colourSchemes).toEqual(['a', 'b', 'c', 'brand', 'brand2', 'brand3']);
+    expect(v.body.typography).toEqual(['a', 'b', 'c', 'd', 'e']);
     expect(v.body.brand.source).toBe('photos');
     expect(v.body.images).toHaveLength(2);
     expect(v.body.current).toBeNull();

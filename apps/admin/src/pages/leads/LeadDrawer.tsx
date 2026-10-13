@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { ExternalLink, Star } from 'lucide-react';
+import { ExternalLink, SlidersHorizontal, Star } from 'lucide-react';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
@@ -130,7 +130,7 @@ function Overview({ d }: { d: LeadDetail }) {
               ['Campaign', <Link key="c" className="font-mono text-xs text-primary hover:underline" to={`/campaigns/${lead.campaignId}`}>{lead.campaignId}</Link>],
               ['Fallback channel', lead.fallbackChannel.replace(/_/g, ' ')],
               ['Priority', lead.priority],
-              ['Preview', lead.previewUrl ? <ExtLink key="pv" href={lead.previewUrl} /> : '—'],
+              ['Preview', <span key="pv" className="inline-flex flex-wrap items-center gap-3"><Link className="text-primary hover:underline" to={`/leads/${lead.id}/studio`}>Design studio</Link>{lead.previewUrl ? <ExtLink href={lead.previewUrl} /> : <span className="text-muted-fg">not published</span>}</span>],
               ['Quote', lead.quoteUrl ? <ExtLink key="qu" href={lead.quoteUrl} /> : '—'],
               ['Created', fmtDate(lead.createdAt)],
               ['Last touch', fmtDate(lead.lastTouchAt)],
@@ -307,7 +307,14 @@ function SiteQuote({ d, refresh }: { d: LeadDetail; refresh: () => void }) {
       <SubSection
         title="Generated preview"
         description={site ? `${site.templateId} · scheme ${site.colourScheme} · type ${site.typography} · ${site.views} views · expires ${fmtDate(site.expiresAt)}${site.takenDownAt ? ` · taken down ${fmtDate(site.takenDownAt)}` : ''}` : 'No site generated yet.'}
-        actions={site && <Link className="text-sm text-primary hover:underline" to={`/generator?leadId=${d.lead.id}`}>Edit copy & rebuild</Link>}
+        actions={
+          <span className="flex flex-wrap items-center gap-3 text-sm">
+            <Link className="inline-flex items-center gap-1 font-medium text-primary hover:underline" to={`/leads/${d.lead.id}/studio`}>
+              <SlidersHorizontal className="size-3.5" aria-hidden /> Open in design studio
+            </Link>
+            {site && <Link className="text-primary hover:underline" to={`/generator?leadId=${d.lead.id}`}>Edit copy & rebuild</Link>}
+          </span>
+        }
       >
         {site?.previewUrl ? (
           <iframe title="Generated site preview" src={site.previewUrl} className="h-[480px] w-full rounded-lg border bg-white" sandbox="allow-same-origin allow-scripts" loading="lazy" />

@@ -64,7 +64,7 @@ describe('Generator + preview hosting (integration)', () => {
     const r = await generator.generate(lead.id);
     expect(r.skipped).toBe(false);
     if (r.skipped) return;
-    expect(r.site.templateId).toBe('appointment');
+    expect(r.site.templateId).toBe('clinic');
     expect(r.site.previewSlug).toMatch(/^[0-9A-Za-z]{22}$/);
     expect(r.site.previewSlug.toLowerCase()).not.toContain('valletta');
     const copy = r.site.copy as any;
@@ -201,8 +201,8 @@ describe('Generator + preview hosting (integration)', () => {
 
   it('admin: templates list, site record, copy edit with guard + rebuild enqueue, local files', async () => {
     const t = await request(app.getHttpServer()).get('/admin/generator/templates').set(AUTH).expect(200);
-    expect(t.body).toHaveLength(6);
-    expect(t.body.find((x: any) => x.id === 'appointment').verticals).toContain('dental');
+    expect(t.body).toHaveLength(10);
+    expect(t.body.find((x: any) => x.id === 'clinic').verticals).toContain('dental');
     const site = (await prisma.generatedSite.findFirst({ where: { takenDownAt: null, buildPath: { not: null } } }))!;
     await request(app.getHttpServer()).get(`/admin/leads/${site.leadId}/site`).set(AUTH).expect(200);
     const edit = await request(app.getHttpServer()).put(`/admin/leads/${site.leadId}/site/copy`).set(AUTH).send({ copy: { ...GOOD_COPY, hero: { ...GOOD_COPY.hero, headline: 'Voted best dentist' } } }).expect(200);

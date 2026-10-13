@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@sitewright/db';
-import { Brand, COLOUR_SCHEMES, ColourSchemeId, ContentBrief, SiteBuildInput, SiteCopy, SiteCopySchema, SiteImage, TEMPLATE_FAMILIES, TemplateFamily, TYPOGRAPHY_PAIRINGS, VERTICAL_TEMPLATE, Vertical } from '@sitewright/shared-types';
+import { Brand, COLOUR_SCHEMES, ColourSchemeId, ContentBrief, SiteBuildInput, SiteCopy, SiteCopySchema, SiteImage, TEMPLATE_FAMILIES, TEMPLATE_FAMILY_LABEL, TemplateFamily, TYPOGRAPHY_PAIRINGS, TypographyId, VERTICAL_TEMPLATE, Vertical } from '@sitewright/shared-types';
 import { createHash } from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import { PlacePhotosService } from './place-photos.service';
@@ -24,13 +24,32 @@ import { ImageSource, seededIndex, selectImages, UnsplashSource } from './images
 /** 22-char, URL-safe, unguessable; never derived from the business name (spec §9.5). */
 export const newSlug = customAlphabet('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 22);
 
+/** Blocks per family, in page order (mirrors apps/templates/src/templates/index.ts). Also tells the copywriter what the page needs. */
 export const TEMPLATE_SECTIONS: Record<TemplateFamily, string[]> = {
-  hospitality: ['hero', 'menu highlights', 'gallery', 'hours+map', 'reservations CTA', 'reviews'],
-  appointment: ['hero', 'services + indicative pricing', 'team', 'booking CTA', 'hours+map', 'reviews'],
-  trades: ['hero with phone CTA', 'services grid', 'service area map', 'why us', 'quote form', 'reviews'],
-  professional: ['hero', 'practice areas', 'credentials', 'case-style proof', 'contact form'],
-  retail: ['hero', 'categories', 'featured products', 'store info', 'hours+map'],
-  fitness: ['hero', 'classes/timetable', 'membership tiers', 'trial CTA', 'gallery'],
+  hospitality: ['full-bleed hero', 'today strip (hours, rating, price level)', 'menu highlights', 'about', 'photo mosaic', 'hours+map', 'reservations band', 'reviews', 'reservation form'],
+  beauty: ['editorial hero', 'service menu (price list)', 'what to expect (steps)', 'portrait gallery', 'about', 'reviews', 'booking panel + hours', 'booking form'],
+  clinic: ['split hero with appointment card', 'reassurance checklist', 'treatments and services', 'first visit (steps)', 'about the practice', 'FAQ', 'reviews', 'hours+map', 'booking form'],
+  trades: ['call bar', 'hero with inline quote form', 'service tiles', 'trust strip', 'service area + map', 'why us', 'reviews', 'quote form'],
+  automotive: ['dark hero', 'book-a-service strip', 'services', 'how it works (steps)', 'workshop gallery', 'why us', 'reviews', 'hours+map', 'booking form'],
+  professional: ['text hero', 'practice areas', 'how we work (steps)', 'credentials panel', 'client feedback (pull quote)', 'office + hours', 'consultation form'],
+  property: ['photo hero with enquiry card', 'featured listings (placeholders)', 'services', 'area guide + map', 'about the agency', 'reviews', 'valuation form'],
+  education: ['hero with two CTAs', 'programmes', 'how it works (steps)', 'why families choose us', 'about', 'FAQ', 'hours+map', 'reviews', 'enquiry form'],
+  retail: ['info bar', 'split hero', 'category tiles', 'featured products', 'promo band', 'store info (hours + map)', 'reviews', 'contact form'],
+  fitness: ['oversized hero', 'classes', 'weekly timetable (opening times)', 'membership', 'trial band', 'gallery', 'about', 'reviews', 'trial form'],
+};
+
+/** One line per family on how the design sells that kind of business (shown in the console's design studio). */
+export const TEMPLATE_CONCEPT: Record<TemplateFamily, string> = {
+  hospitality: 'Full-bleed photography, the menu up front, a visit strip with hours and price level, reservations.',
+  beauty: 'Editorial, airy layout with large type, a price-list style service menu and a booking panel.',
+  clinic: 'Trust first: reassurance checklist, an appointment card with phone and today’s hours, first-visit steps, FAQ.',
+  trades: 'Phone-first: call bar, a quote form inside the hero, service tiles, service area, trust badges.',
+  automotive: 'Dark workshop bands, a book-a-service strip, service cards, how it works, wide gallery.',
+  professional: 'Conservative and text-led: no hero image, narrow measure, numbered practice areas, credentials, a pull quote.',
+  property: 'Photographic hero with an enquiry card, placeholder listings, area guide with map, valuation form.',
+  education: 'Friendly, rounded shapes: programmes as cards, how it works, FAQ, term hours, enquiry form.',
+  retail: 'Shop-like: info bar, split hero on a tinted panel, category tiles, featured products, promo band.',
+  fitness: 'High energy: oversized uppercase hero with a diagonal cut, classes, timetable, membership columns, trial form.',
 };
 
 /**
@@ -63,7 +82,7 @@ export class GeneratorService {
 
   templates() {
     return TEMPLATE_FAMILIES.map((id) => ({
-      id, sections: TEMPLATE_SECTIONS[id], colourSchemes: [...COLOUR_SCHEMES], typography: [...TYPOGRAPHY_PAIRINGS],
+      id, label: TEMPLATE_FAMILY_LABEL[id], concept: TEMPLATE_CONCEPT[id], sections: TEMPLATE_SECTIONS[id], colourSchemes: [...COLOUR_SCHEMES], typography: [...TYPOGRAPHY_PAIRINGS],
       verticals: (Object.keys(VERTICAL_TEMPLATE) as Vertical[]).filter((v) => VERTICAL_TEMPLATE[v] === id),
     }));
   }
@@ -72,7 +91,7 @@ export class GeneratorService {
    * Everything a build needs for a lead, in one place. Copy is generated once and reused; listing
    * photos + the derived brand palette are fetched once and stored on the site record.
    */
-  async assembleInput(leadId: string, opts: { templateId?: TemplateFamily; colourScheme?: ColourSchemeId; typography?: 'a' | 'b'; regenerateCopy?: boolean } = {}) {
+  async assembleInput(leadId: string, opts: { templateId?: TemplateFamily; colourScheme?: ColourSchemeId; typography?: TypographyId; regenerateCopy?: boolean } = {}) {
     const lead = await this.prisma.lead.findUniqueOrThrow({ where: { id: leadId }, include: { site: true } });
     if (lead.stage === 'suppressed' || lead.stage === 'excluded') throw new Error(`lead ${leadId} is ${lead.stage}`);
     const brief = await this.profiling.brief(leadId);
@@ -94,7 +113,7 @@ export class GeneratorService {
     }
     const template = opts.templateId ?? (lead.site?.templateId as TemplateFamily | undefined) ?? VERTICAL_TEMPLATE[vertical] ?? 'professional';
     const colourScheme: ColourSchemeId = opts.colourScheme ?? (lead.site?.colourScheme as ColourSchemeId | undefined) ?? (brand ? 'brand' : COLOUR_SCHEMES[seededIndex(lead.placeId, 3, 'cs')]);
-    const typography = opts.typography ?? (lead.site?.typography as 'a' | 'b' | undefined) ?? TYPOGRAPHY_PAIRINGS[seededIndex(lead.placeId, TYPOGRAPHY_PAIRINGS.length, 'ty')];
+    const typography = opts.typography ?? (lead.site?.typography as TypographyId | undefined) ?? TYPOGRAPHY_PAIRINGS[seededIndex(lead.placeId, TYPOGRAPHY_PAIRINGS.length, 'ty')];
 
     let copy: SiteCopy;
     let violations: Violation[] = [];
@@ -123,7 +142,7 @@ export class GeneratorService {
     return { lead, input, slug, expiresAt, violations, brief };
   }
 
-  async generate(leadId: string, opts: { templateId?: TemplateFamily; colourScheme?: ColourSchemeId; typography?: 'a' | 'b'; regenerateCopy?: boolean; advance?: boolean; reason?: string } = {}) {
+  async generate(leadId: string, opts: { templateId?: TemplateFamily; colourScheme?: ColourSchemeId; typography?: TypographyId; regenerateCopy?: boolean; advance?: boolean; reason?: string } = {}) {
     // Gate runs before generation (spec §8). A blocked lead gets no mockup (no cost, no legal exposure).
     const g = await this.gate.evaluate(leadId, { context: 'pre-generation' });
     if (g.result !== 'clear') {
@@ -152,7 +171,7 @@ export class GeneratorService {
   }
 
   /** Style gallery: every family × scheme × typography for a lead, built on demand and cached by input hash. */
-  async variantHtml(leadId: string, template: TemplateFamily, colourScheme: ColourSchemeId, typography: 'a' | 'b'): Promise<string> {
+  async variantHtml(leadId: string, template: TemplateFamily, colourScheme: ColourSchemeId, typography: TypographyId): Promise<string> {
     if (!TEMPLATE_FAMILIES.includes(template) || !COLOUR_SCHEMES.includes(colourScheme) || !TYPOGRAPHY_PAIRINGS.includes(typography)) throw new Error('unknown variant');
     const { input } = await this.assembleInput(leadId, { templateId: template, colourScheme, typography });
     const key = `${template}-${colourScheme}-${typography}`;
@@ -186,7 +205,7 @@ export class GeneratorService {
     return {
       current: site ? { templateId: site.templateId, colourScheme: site.colourScheme, typography: site.typography } : null,
       brand, images,
-      templates: this.templates().map((t) => ({ id: t.id, verticals: t.verticals, sections: t.sections })),
+      templates: this.templates().map((t) => ({ id: t.id, label: t.label, concept: t.concept, verticals: t.verticals, sections: t.sections })),
       colourSchemes: [...COLOUR_SCHEMES], typography: [...TYPOGRAPHY_PAIRINGS],
     };
   }

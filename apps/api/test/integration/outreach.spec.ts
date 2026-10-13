@@ -53,7 +53,7 @@ describe('Outreach (integration)', () => {
   async function readyLead(name = 'Valletta Dental Clinic Ltd') {
     const lead = await makeLead(prisma, { businessName: name, reviewCount: 80 });
     const slug = `slug${lead.id.slice(-18)}`;
-    await prisma.generatedSite.create({ data: { leadId: lead.id, templateId: 'appointment', contentBrief: {}, copy: {}, buildHash: 'h', previewSlug: slug, previewUrl: `http://localhost:3000/p/${slug}`, objectPrefix: `previews/${slug}/`, publishedAt: new Date(), expiresAt: new Date(Date.now() + 30 * 86400_000) } });
+    await prisma.generatedSite.create({ data: { leadId: lead.id, templateId: 'clinic', contentBrief: {}, copy: {}, buildHash: 'h', previewSlug: slug, previewUrl: `http://localhost:3000/p/${slug}`, objectPrefix: `previews/${slug}/`, publishedAt: new Date(), expiresAt: new Date(Date.now() + 30 * 86400_000) } });
     await prisma.quote.create({ data: { leadId: lead.id, slug: `q${lead.id.slice(-10)}`, currency: 'EUR', buildFee: 1450, monthlyFee: 99, tier: 'business', lineItems: [], allTiers: {}, validUntil: new Date(Date.now() + 14 * 86400_000) } });
     await prisma.lead.update({ where: { id: lead.id }, data: { stage: 'quoted', scoreBreakdown: { inputs: { competitivePressureShare: 0.7, sameTypeInTile: 9 } }, score: 0.8, city: 'Valletta', vertical: 'dental' } });
     return prisma.lead.findUniqueOrThrow({ where: { id: lead.id }, include: { contacts: true } });

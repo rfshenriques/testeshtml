@@ -14,7 +14,10 @@ import type {
   TemplateFamily,
   TierName,
   ReplyIntentValue,
+  ColourSchemeId,
+  TypographyId,
 } from '@sitewright/shared-types';
+import { COLOUR_SCHEMES, TYPOGRAPHY_PAIRINGS } from '@sitewright/shared-types';
 
 export type { Classification, ScoreBreakdown, SiteCopy, ContentBrief, PricingConfig, SequenceStep, JurisdictionPolicy, CampaignGeometry, TemplateFamily, TierName };
 
@@ -113,11 +116,11 @@ export interface Contact {
   id: string; leadId: string; email: string; emailType: EmailType; source: string; sourceUrl: string | null; sourceLicence?: string | null;
   confidence: number; verification: VerifyState; verifiedAt: string | null; verifier?: string | null; isPrimary: boolean; createdAt: string;
 }
-/** a|b|c are a template's fixed palettes; `brand` derives the palette from the lead's own Google photos (falls back to a when there is no brand). */
-export type ColourScheme = 'a' | 'b' | 'c' | 'brand';
-export const COLOUR_SCHEME_IDS: ColourScheme[] = ['a', 'b', 'c', 'brand'];
-export type Typography = 'a' | 'b';
-export const TYPOGRAPHY_IDS: Typography[] = ['a', 'b'];
+/** a|b|c are a template's fixed palettes; brand|brand2|brand3 derive the palette from the lead's own Google photos (fall back to a when there is no brand). */
+export type ColourScheme = ColourSchemeId;
+export const COLOUR_SCHEME_IDS: ColourScheme[] = [...COLOUR_SCHEMES];
+export type Typography = TypographyId;
+export const TYPOGRAPHY_IDS: Typography[] = [...TYPOGRAPHY_PAIRINGS];
 /** Palette extracted from the business's own material. Hex colours. */
 export interface Brand { source: 'photos' | 'operator'; primary: string; accent: string; heroBg?: string; swatches: string[] }
 /** Photo used on the mockup; `credit` is the attribution text shown with it. */
@@ -134,7 +137,7 @@ export interface SiteVariants {
   current: { templateId: string; colourScheme: ColourScheme; typography: Typography } | null;
   brand: Brand | null;
   images: SiteImage[];
-  templates: { id: TemplateFamily | string; verticals: string[]; sections: string[] }[];
+  templates: { id: TemplateFamily | string; label?: string; concept?: string; verticals: string[]; sections: string[] }[];
   colourSchemes: ColourScheme[];
   typography: Typography[];
 }
@@ -183,7 +186,7 @@ export interface LeadsQuery {
 }
 
 // ---- Generator
-export interface TemplateInfo { id: TemplateFamily; verticals: string[]; sections: string[]; colourSchemes: string[]; typography: string[] }
+export interface TemplateInfo { id: TemplateFamily; label?: string; concept?: string; verticals: string[]; sections: string[]; colourSchemes: string[]; typography: string[] }
 
 // ---- Outreach
 export interface Mailbox {

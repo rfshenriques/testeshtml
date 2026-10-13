@@ -5,7 +5,9 @@
  */
 import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ExternalLink, Maximize2, Monitor, Smartphone } from 'lucide-react';
+import { Link } from 'react-router';
+import { ExternalLink, Maximize2, Monitor, Smartphone, SlidersHorizontal } from 'lucide-react';
+import { COLOUR_SCHEME_LABEL, TEMPLATE_FAMILY_LABEL, TYPOGRAPHY_LABEL as TYPO_LABEL, type TemplateFamily } from '@sitewright/shared-types';
 import { api, ApiError } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { toast } from '@/lib/toast';
@@ -13,17 +15,17 @@ import { cn } from '@/lib/utils';
 import { Badge, Button, ConfirmDialog, Dialog, EmptyState, ErrorState, Loading, Note, SubSection, Divider, Skeleton, SegmentedControl } from '@/components/ui';
 import type { Brand, ColourScheme, GeneratedSite, LeadDetail, SiteImage, SiteVariants, Typography } from '@/lib/types';
 
-export interface StyleCombo { templateId: string; colourScheme: ColourScheme; typography: Typography }
+import { describeCombo as describe, sameCombo, useVariantHtml, type StyleCombo } from './useVariant';
+export type { StyleCombo } from './useVariant';
 
-export const SCHEME_LABEL: Record<ColourScheme, string> = { a: 'Scheme A', b: 'Scheme B', c: 'Scheme C', brand: 'From their photos' };
-export const TYPOGRAPHY_LABEL: Record<Typography, string> = { a: 'Editorial', b: 'Modern' };
+export const SCHEME_LABEL: Record<ColourScheme, string> = COLOUR_SCHEME_LABEL;
+export const TYPOGRAPHY_LABEL: Record<Typography, string> = TYPO_LABEL;
+const familyLabel = (id: string) => TEMPLATE_FAMILY_LABEL[id as TemplateFamily] ?? id;
 const PAGE_W = 1280;
 const PAGE_H = 800;
 const POLL_MS = 2500;
 const POLL_TIMEOUT_MS = 3 * 60_000;
 
-const sameCombo = (a: StyleCombo | null | undefined, b: StyleCombo | null | undefined) => !!a && !!b && a.templateId === b.templateId && a.colourScheme === b.colourScheme && a.typography === b.typography;
-const describe = (c: StyleCombo) => `${c.templateId} / ${c.colourScheme} / ${c.typography}`;
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Tab
@@ -106,8 +108,15 @@ export function StylesTab({ d, refresh }: { d: LeadDetail; refresh: () => void }
       )}
       <SubSection
         title="Style gallery"
-        description="Every template family × colour scheme, built with this lead's real copy and photos. Thumbnails render as you scroll."
-        actions={<TypographyToggle value={typo} options={v.typography} onChange={setTypography} />}
+        description="Every template family × colour palette, built with this lead's real copy and photos. Thumbnails render as you scroll. Open the design studio to change template, palette, typography and device width on a full-size preview."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <TypographyToggle value={typo} options={v.typography} onChange={setTypography} />
+            <Link to={`/leads/${id}/studio`} className="inline-flex h-8 items-center gap-1.5 rounded-md border bg-card px-3 text-sm font-medium hover:bg-muted/60">
+              <SlidersHorizontal className="size-3.5" aria-hidden /> Design studio
+            </Link>
+          </div>
+        }
       >
         <StylesGrid leadId={id} businessName={d.lead.businessName} variants={v} typography={typo} adopting={adopting?.combo ?? null} onAdopt={(combo) => rebuild.mutateAsync(combo)} />
       </SubSection>
@@ -232,18 +241,6 @@ export function StylesGrid({ leadId, businessName, variants, typography, adoptin
   );
 }
 
-function useVariantHtml(leadId: string, combo: StyleCombo, enabled: boolean) {
-  return useQuery({
-    queryKey: keys.siteVariant(leadId, combo.templateId, combo.colourScheme, combo.typography),
-    queryFn: ({ signal }) => api.leads.siteVariantHtml(leadId, { template: combo.templateId, colourScheme: combo.colourScheme, typography: combo.typography }, signal),
-    enabled,
-    staleTime: Infinity,
-    gcTime: 15 * 60_000,
-    retry: 1,
-    meta: { silent: true },
-  });
-}
-
 /** True once the element has scrolled into (or near) view. Without IntersectionObserver (old browsers) everything counts as visible. */
 function useInView<T extends Element>(ref: React.RefObject<T | null>, rootMargin = '240px') {
   const [inView, setInView] = React.useState(false);
@@ -308,10 +305,10 @@ function ScaledPage({ html, title }: { html: string; title: string }) {
 
 function VariantCard({ leadId, combo, brandAvailable, current, adopting, onOpen, onUse }: { leadId: string; combo: StyleCombo; brandAvailable: boolean; current: boolean; adopting: boolean; onOpen: () => void; onUse: () => void }) {
   const ref = React.useRef<HTMLDivElement>(null);
-  const disabled = combo.colourScheme === 'brand' && !brandAvailable;
+  const disabled = combo.colourScheme.startsWith('brand') && !brandAvailable;
   const inView = useInView(ref);
   const q = useVariantHtml(leadId, combo, inView && !disabled);
-  const label = `${combo.templateId} · ${SCHEME_LABEL[combo.colourScheme]} · ${TYPOGRAPHY_LABEL[combo.typography]}`;
+  const label = `${familyLabel(combo.templateId)} · ${SCHEME_LABEL[combo.colourScheme]} · ${TYPOGRAPHY_LABEL[combo.typography]}`;
   return (
     <div
       ref={ref}
@@ -325,7 +322,7 @@ function VariantCard({ leadId, combo, brandAvailable, current, adopting, onOpen,
     >
       <div className="flex items-center justify-between gap-2 px-4 py-3">
         <div className="min-w-0">
-          <div className="truncate text-base font-medium">{combo.templateId}</div>
+          <div className="truncate text-base font-medium">{familyLabel(combo.templateId)}</div>
           <div className="truncate text-sm text-muted-fg">{SCHEME_LABEL[combo.colourScheme]}</div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -374,7 +371,7 @@ function VariantModal({ leadId, combo, current, onClose, onUse }: { leadId: stri
 
 function VariantModalBody({ leadId, combo, current, device, setDevice, onClose, onUse }: { leadId: string; combo: StyleCombo; current: boolean; device: 'desktop' | 'mobile'; setDevice: (d: 'desktop' | 'mobile') => void; onClose: () => void; onUse: () => void }) {
   const q = useVariantHtml(leadId, combo, true);
-  const label = `${combo.templateId} · ${SCHEME_LABEL[combo.colourScheme]} · ${TYPOGRAPHY_LABEL[combo.typography]}`;
+  const label = `${familyLabel(combo.templateId)} · ${SCHEME_LABEL[combo.colourScheme]} · ${TYPOGRAPHY_LABEL[combo.typography]}`;
   return (
     <Dialog
       open

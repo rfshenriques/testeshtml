@@ -91,6 +91,9 @@ function ReplyPanel({ r }: { r: InboxItem }) {
             <span>
               {lead.city} {lead.countryCode} · {lead.vertical ?? lead.primaryType ?? '—'} · score {lead.score?.toFixed(2) ?? '—'}
             </span>
+            <Link to={`/leads/${lead.id}/studio`} className="text-primary hover:underline">
+              Studio
+            </Link>
             {lead.previewUrl && (
               <a href={lead.previewUrl} target="_blank" rel="noreferrer noopener" className="text-primary hover:underline">
                 Preview
