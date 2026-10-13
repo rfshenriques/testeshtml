@@ -10,8 +10,9 @@ import type {
   LeadAction, LeadDetail, LeadSummary, LeadsQuery, Mailbox, MailboxWithReputation, MessagePreview, OpsCosts, OpsOverview,
   OutreachMessage, Paginated, PlaceTypeTiers, PricingConfig, Provisioning, Quote, QuoteComputation, ReplyIntent,
   ReputationSeries, RetentionStatus, ReviewQueueItem, ScheduleRow, SequenceStep, SiteCopy, Suppression, TemplateInfo,
-  TierName, CrmTask, Classification, SiteVariants, SiteVariantParams,
+  TierName, CrmTask, Classification, SiteVariants, SiteVariantParams, Meeting,
 } from './types';
+import type { Availability } from '@sitewright/shared-types';
 import { auth } from './auth';
 
 export class ApiError extends Error {
@@ -144,6 +145,18 @@ export const api = {
   tasks: {
     list: (open?: boolean) => get<CrmTask[]>('/admin/tasks', open ? { open: 1 } : undefined),
     done: (id: string) => post<unknown>(`/admin/tasks/${encodeURIComponent(id)}/done`),
+  },
+  scheduling: {
+    availability: () => get<Availability>('/admin/scheduling/availability'),
+    saveAvailability: (availability: Availability) => put<Availability>('/admin/scheduling/availability', { availability }),
+    slots: (days = 14) => get<{ timezone: string; slots: string[] }>('/admin/scheduling/slots', { days }),
+  },
+  meetings: {
+    list: (upcoming?: boolean) => get<Meeting[]>('/admin/meetings', upcoming ? { upcoming: 1 } : undefined),
+    cancel: (id: string, reason?: string) => post<Meeting>(`/admin/meetings/${encodeURIComponent(id)}/cancel`, { reason }),
+    complete: (id: string) => post<Meeting>(`/admin/meetings/${encodeURIComponent(id)}/complete`),
+    noShow: (id: string) => post<Meeting>(`/admin/meetings/${encodeURIComponent(id)}/no-show`),
+    resend: (id: string) => post<{ ok: boolean }>(`/admin/meetings/${encodeURIComponent(id)}/resend`),
   },
   review: {
     list: (params?: { type?: string; status?: string }) => get<ReviewQueueItem[]>('/admin/review', { status: 'open', ...params }),

@@ -12,6 +12,8 @@ import { PricingPage } from '@/pages/Pricing';
 import { CompliancePage } from '@/pages/Compliance';
 import { OpsPage } from '@/pages/Ops';
 import { StudioPage } from '@/pages/leads/Studio';
+import { MeetingsPage } from '@/pages/Meetings';
+import { SchedulingPage } from '@/pages/Scheduling';
 
 export const routes: RouteObject[] = [
   { path: '/leads/:id/studio', element: <StudioPage /> },
@@ -29,6 +31,8 @@ export const routes: RouteObject[] = [
       { path: 'generator', element: <GeneratorPage /> },
       { path: 'outreach', element: <OutreachPage /> },
       { path: 'inbox', element: <InboxPage /> },
+      { path: 'meetings', element: <MeetingsPage /> },
+      { path: 'scheduling', element: <SchedulingPage /> },
       { path: 'pricing', element: <PricingPage /> },
       { path: 'compliance', element: <CompliancePage /> },
       { path: 'ops', element: <OpsPage /> },

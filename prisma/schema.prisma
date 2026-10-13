@@ -238,6 +238,7 @@ model Lead {
   reviewItems     ReviewItem[]
   provisioning    Provisioning?
   tasks           CrmTask[]
+  meetings        Meeting[]
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   campaign        Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -297,6 +298,7 @@ model GeneratedSite {
   lead         Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
   previewViews PreviewView[]
   formSubmissions FormSubmission[]
+  meetings        Meeting[]
 }
 
 model PreviewView {
@@ -608,6 +610,38 @@ model CrmTask {
   lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@index([leadId, doneAt])
+}
+
+/**
+ * A booked time slot. `agency_call`: a lead (or anyone holding a booking link) booked a call with the operator;
+ * `mockup_demo`: a visitor used the booking flow on a concept mockup (simulation of the business's own calendar).
+ */
+model Meeting {
+  id            String         @id @default(cuid())
+  leadId        String?
+  siteId        String?
+  kind          String // agency_call | mockup_demo
+  source        String // outreach | proposal | mockup | manual
+  startAt       DateTime
+  endAt         DateTime
+  timezone      String // the booker's zone, for display
+  name          String
+  email         String
+  phone         String?
+  notes         String?
+  status        String         @default("scheduled") // scheduled | confirmed | cancelled | completed | no_show
+  confirmedAt   DateTime?
+  cancelledAt   DateTime?
+  cancelReason  String?
+  remindersSent Json           @default("[]")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  lead          Lead?          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  site          GeneratedSite? @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([startAt, status])
+  @@index([leadId])
+  @@index([siteId])
 }
 
 model Setting {

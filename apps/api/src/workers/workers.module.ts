@@ -17,10 +17,12 @@ import { MaintenancePurgeWorker } from './maintenance.purge.worker';
 import { OutreachModule } from '../modules/outreach/outreach.module';
 import { OutreachSendWorker } from './outreach.send.worker';
 import { OutreachIngestWorker } from './outreach.ingest.worker';
+import { SchedulingModule } from '../modules/scheduling/scheduling.module';
+import { MeetingReminderWorker } from './meeting.reminder.worker';
 
 /** One processor per queue (spec §2.2 workers/). Imported by AppModule unless WORKERS=off. */
 @Module({
-  imports: [DiscoveryModule, QualificationModule, EnrichmentModule, ProfilingModule, GeneratorModule, PreviewModule, OutreachModule],
-  providers: [DiscoveryTileWorker, DiscoveryDetailsWorker, QualificationProbeWorker, EnrichmentEmailWorker, EnrichmentVerifyWorker, ProfilingClassifyWorker, GeneratorBuildWorker, PreviewPublishWorker, MaintenancePurgeWorker, OutreachSendWorker, OutreachIngestWorker],
+  imports: [DiscoveryModule, QualificationModule, EnrichmentModule, ProfilingModule, GeneratorModule, PreviewModule, OutreachModule, SchedulingModule],
+  providers: [DiscoveryTileWorker, DiscoveryDetailsWorker, QualificationProbeWorker, EnrichmentEmailWorker, EnrichmentVerifyWorker, ProfilingClassifyWorker, GeneratorBuildWorker, PreviewPublishWorker, MaintenancePurgeWorker, OutreachSendWorker, OutreachIngestWorker, MeetingReminderWorker],
 })
 export class WorkersModule {}

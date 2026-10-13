@@ -31,3 +31,17 @@ export const DEFAULT_SEQUENCE = [
   { step: 3, delayDays: 8, kind: 'quote', notes: 'Quote link, framed as no obligation. Only if no reply.' },
   { step: 4, delayDays: 14, kind: 'closeout', notes: 'One-line close-out; mockup comes down on {date}. Final.' },
 ];
+
+/** Operator availability for bookable calls (spec addendum: scheduling). Weekly hours in `timezone`; edit in the console. */
+export const DEFAULT_AVAILABILITY = {
+  timezone: 'Europe/Lisbon',
+  slotMinutes: 30,
+  bufferMinutes: 0,
+  minNoticeHours: 4,
+  horizonDays: 14,
+  hours: { mon: [['09:00', '12:30'], ['14:00', '18:00']], tue: [['09:00', '12:30'], ['14:00', '18:00']], wed: [['09:00', '12:30'], ['14:00', '18:00']], thu: [['09:00', '12:30'], ['14:00', '18:00']], fri: [['09:00', '12:30'], ['14:00', '17:00']], sat: [], sun: [] },
+  busyFeedUrl: null,
+  notifyEmail: null,
+  meetingTitle: '15-minute call about your website',
+  reminders: [{ hoursBefore: 72, confirm: false }, { hoursBefore: 24, confirm: true }, { hoursBefore: 2, confirm: false }],
+};

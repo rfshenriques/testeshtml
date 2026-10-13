@@ -34,7 +34,7 @@ const aboutImage = gallery[3];
       <nav class="bt-nav" aria-label="Sections">
         <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
       </nav>
-      <a class="btn btn-primary bt-pill" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+      <a class="btn btn-primary bt-pill" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
     </div>
   </header>
 
@@ -51,7 +51,7 @@ const aboutImage = gallery[3];
         <div class="bt-hero__aside">
           <p class="bt-hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
           <div class="bt-hero__actions">
-            <a class="btn btn-primary btn-lg bt-pill" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            <a class="btn btn-primary btn-lg bt-pill" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
             {tel && <a class="btn btn-outline btn-lg bt-pill" href={tel}>Call {phoneLabel}</a>}
           </div>
           {brief.verifiedFacts.length > 0 && (
@@ -162,7 +162,7 @@ const aboutImage = gallery[3];
             <h2 id="visit-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
             <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
             <div class="bt-panel__actions">
-              <a class="btn btn-primary btn-lg bt-pill" href="#book"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+              <a class="btn btn-primary btn-lg bt-pill" href={mockup.bookingUrl}><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
               {tel && <a class="btn btn-outline btn-lg bt-pill" href={tel}>Call {phoneLabel}</a>}
             </div>
             {brief.address ? <p class="bt-panel__addr">{brief.address}</p> : <p class="ph">Address to be confirmed by the business</p>}

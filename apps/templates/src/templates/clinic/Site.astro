@@ -35,7 +35,7 @@ const nav = [
       </nav>
       <div class="cl-header__cta">
         {tel && <a class="cl-header__phone" href={tel}>{phoneLabel}</a>}
-        <a class="btn btn-primary" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+        <a class="btn btn-primary" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
       </div>
     </div>
   </header>
@@ -51,7 +51,7 @@ const nav = [
             {checklist.map((f) => <li>{f}</li>)}
           </ul>
           <div class="cl-hero__actions">
-            <a class="btn btn-primary btn-lg" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            <a class="btn btn-primary btn-lg" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
             <a class="btn btn-outline btn-lg" href="#services">Treatments</a>
           </div>
         </div>
@@ -76,7 +76,7 @@ const nav = [
             <li class="cl-tile">
               <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
               <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
-              <a class="cl-tile__link" href="#book">Book this</a>
+              <a class="cl-tile__link" href={mockup.bookingUrl}>Book this</a>
             </li>
           ))}
         </ul>
@@ -127,7 +127,7 @@ const nav = [
         <div class="cl-faq__list">
           <details class="cl-faq__item">
             <summary>How do I book an appointment?</summary>
-            <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /> <a href="#book">Request an appointment online</a>{tel ? <> or call <a href={tel}>{phoneLabel}</a>.</> : '.'}</p>
+            <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /> <a href={mockup.bookingUrl}>Request an appointment online</a>{tel ? <> or call <a href={tel}>{phoneLabel}</a>.</> : '.'}</p>
           </details>
           <details class="cl-faq__item">
             <summary><Copy copy={copy} path="about.heading" value={copy.about.heading} /></summary>
@@ -232,7 +232,7 @@ const nav = [
 
   <div class="cl-callbar" aria-label="Quick actions">
     {tel && <a class="btn btn-outline" href={tel}>Call</a>}
-    <a class="btn btn-primary" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+    <a class="btn btn-primary" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
   </div>
 </MockupLayout>
 

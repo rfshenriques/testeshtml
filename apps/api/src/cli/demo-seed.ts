@@ -119,6 +119,19 @@ export async function demoSeed(app: INestApplicationContext) {
   await prisma.reply.create({ data: { leadId: physio, messageId: sent.id, fromEmail: contact.email, receivedAt: new Date(Date.now() - 86400_000), subject: 'Re: physiotherapist in sliema without a website', raw: 'Hi, this looks interesting. Could we talk on Thursday afternoon? Anna', intent: 'interested', confidence: 0.92, classifiedBy: 'llm', suggestedDraft: 'Hi Anna,\n\nThanks for getting back to me. Thursday afternoon works; would 15:00 suit? I will walk you through the mockup and the options, no obligation.\n', handled: false } });
   await prisma.lead.update({ where: { id: physio }, data: { stage: 'replied', sequenceStartedAt: new Date(Date.now() - 2 * 86400_000), sequenceStoppedAt: new Date(Date.now() - 86400_000), sequenceStopReason: 'reply: interested' } });
   await prisma.reviewItem.create({ data: { leadId: physio, type: 'reply_draft', payload: { intent: 'interested' } } });
+  // Anna booked a call from the proposal page: scheduled for the next working day at 15:00 (operator zone), confirm request already sent.
+  {
+    const { SchedulingService } = await import('../modules/scheduling/scheduling.service');
+    const scheduling = app.get(SchedulingService);
+    const avail = await scheduling.availability();
+    const slots = await scheduling.agencySlots(new Date(), 7);
+    const pick = slots.slots.find((d) => new Intl.DateTimeFormat('en-GB', { timeZone: avail.timezone, hour: '2-digit', hourCycle: 'h23' }).format(d) === '15') ?? slots.slots[0];
+    if (pick) {
+      const m = await prisma.meeting.create({ data: { leadId: physio, kind: 'agency_call', source: 'proposal', startAt: pick, endAt: new Date(pick.getTime() + avail.slotMinutes * 60_000), timezone: 'Europe/Malta', name: 'Anna Camilleri', email: contact.email, phone: '+356 2122 4455', notes: 'Thursday afternoons are best for me.', status: 'confirmed', confirmedAt: new Date(), remindersSent: [{ index: 1, at: new Date().toISOString(), kind: 'confirm', hoursBefore: 24 }] } });
+      await prisma.crmTask.create({ data: { leadId: physio, title: `Call with Anna Camilleri (proposal) — ${pick.toISOString().slice(0, 16).replace('T', ' ')} UTC`, dueAt: pick } });
+      await prisma.leadEvent.createMany({ data: [{ leadId: physio, type: 'meeting.booked', payload: { meetingId: m.id, startAt: pick.toISOString(), source: 'proposal' } }, { leadId: physio, type: 'meeting.confirmed', payload: { meetingId: m.id } }] });
+    }
+  }
   // Valletta Dental: sequence running, step 1 sent, step 2 queued awaiting approval
   const dental = leads['Valletta Dental Clinic Ltd'];
   await prisma.lead.update({ where: { id: dental }, data: { sequenceStartedAt: new Date(Date.now() - 3 * 86400_000) } });

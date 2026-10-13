@@ -16,6 +16,7 @@ import ContactForm from '../../components/ContactForm.astro';
 import Faq from './Faq.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
+const { mockup } = input;
 const { brief, copy } = input;
 const { hero, gallery } = pickImages(input);
 const tel = telHref(brief.phone, brief.internationalPhone);
@@ -34,7 +35,7 @@ const nav = [
       <nav class="edu-nav" aria-label="Sections"><ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul></nav>
       <div class="edu-header__cta">
         {tel && <a class="btn btn-outline" href={tel}>Call us</a>}
-        <a class="btn btn-primary" href="#enquire"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+        <a class="btn btn-primary" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
       </div>
     </div>
   </header>
@@ -48,7 +49,7 @@ const nav = [
           <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
           <p class="edu-hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
           <div class="edu-hero__actions">
-            <a class="btn btn-primary btn-lg" href="#enquire"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            <a class="btn btn-primary btn-lg" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
             <a class="btn btn-outline btn-lg" href="#visit">Visit us</a>
           </div>
           {brief.rating !== null && (
@@ -78,7 +79,7 @@ const nav = [
               </div>
               <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
               <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
-              <a class="edu-card__link" href="#enquire">Ask about this <span aria-hidden="true">→</span></a>
+              <a class="edu-card__link" href={mockup.bookingUrl}>Ask about this <span aria-hidden="true">→</span></a>
             </li>
           ))}
         </ul>
@@ -148,7 +149,7 @@ const nav = [
         <div class="edu-faq__intro">
           <span class="eyebrow">Questions</span>
           <h2 id="faq-heading">Things parents ask</h2>
-          <p class="lead">Can't find the answer? <a href="#enquire">Send us a note</a>{tel ? <> or call <a href={tel}>{phone}</a></> : null}.</p>
+          <p class="lead">Can't find the answer? <a href={mockup.bookingUrl}>Send us a note</a>{tel ? <> or call <a href={tel}>{phone}</a></> : null}.</p>
         </div>
         <Faq input={input} />
       </div>

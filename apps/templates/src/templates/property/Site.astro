@@ -18,6 +18,7 @@ import AreaGuide from './AreaGuide.astro';
 import ValuationForm from './ValuationForm.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
+const { mockup } = input;
 const { brief, copy } = input;
 const { hero, gallery } = pickImages(input);
 const tel = telHref(brief.phone, brief.internationalPhone);
@@ -34,7 +35,7 @@ const nav = [
       <nav class="prop-nav" aria-label="Sections"><ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul></nav>
       <div class="prop-header__cta">
         {tel && <a class="prop-header__phone" href={tel}>{phone}</a>}
-        <a class="btn btn-primary" href="#valuation"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+        <a class="btn btn-primary" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
       </div>
     </div>
   </header>
@@ -66,7 +67,7 @@ const nav = [
             <span class="eyebrow">Featured properties</span>
             <h2 id="listings-heading">Homes for sale and to let{brief.city ? ` in ${brief.city}` : ''}</h2>
           </div>
-          <a class="prop-link" href="#valuation">Thinking of selling? <span aria-hidden="true">→</span></a>
+          <a class="prop-link" href={mockup.bookingUrl}>Thinking of selling? <span aria-hidden="true">→</span></a>
         </div>
         <Listings businessName={brief.businessName} city={brief.city} />
       </div>
@@ -84,7 +85,7 @@ const nav = [
               <span class="prop-tile__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
               <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
               <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
-              <a class="prop-link" href="#valuation">Enquire <span aria-hidden="true">→</span></a>
+              <a class="prop-link" href={mockup.bookingUrl}>Enquire <span aria-hidden="true">→</span></a>
             </li>
           ))}
         </ul>

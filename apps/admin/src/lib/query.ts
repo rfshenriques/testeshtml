@@ -52,6 +52,8 @@ export const keys = {
   generator: ['generator'] as const,
   outreach: ['outreach'] as const,
   inbox: ['inbox'] as const,
+  meetings: ['meetings'] as const,
+  availability: ['scheduling', 'availability'] as const,
   pricing: ['pricing'] as const,
   compliance: ['compliance'] as const,
   tasks: ['tasks'] as const,

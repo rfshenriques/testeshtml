@@ -8,6 +8,7 @@ import { REDIS } from '../../shared/redis/redis.module';
 import { QueueRegistry } from '../../shared/queues/queue-registry.service';
 import { LeadEventsService } from '../crm/lead-events.service';
 import { AuditService } from '../compliance/audit.service';
+import { LinkTokenService } from '../compliance/link-token.service';
 import { GateService } from '../compliance/gate.service';
 import { SuppressionService } from '../compliance/suppression.service';
 import { MailboxService } from './mailbox.service';
@@ -40,6 +41,7 @@ export class SequenceService implements OnModuleInit {
     private readonly mailboxes: MailboxService,
     private readonly quoting: QuotingService,
     private readonly preview: PreviewService,
+    private readonly links: LinkTokenService,
   ) {}
 
   onModuleInit() {
@@ -100,6 +102,7 @@ export class SequenceService implements OnModuleInit {
       breakdown: (lead.scoreBreakdown as unknown as ScoreBreakdown) ?? null, websiteStatus: lead.websiteStatus, rating: lead.rating, reviewCount: lead.reviewCount,
       previewUrl: lead.site!.previewUrl!, quoteUrl: lead.quote ? this.quoting.quoteUrl(lead.quote.slug) : null, expiresAt: lead.site!.expiresAt,
       agencyName: this.env.AGENCY_NAME, senderName: this.env.AGENCY_NAME, languageCode: lead.campaign.languageCode ?? 'en',
+      bookingUrl: `${this.env.APP_BASE_URL}/book/${this.links.sign({ p: 'book', leadId })}`,
     });
     const subj = validateSubject(copy.subject);
     const subject = subj.ok ? copy.subject : fallbackSubject(step.kind);

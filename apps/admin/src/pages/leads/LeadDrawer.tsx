@@ -11,6 +11,7 @@ import { ScoreBreakdownView } from '@/components/ScoreBreakdown';
 import type { LeadDetail, LeadAction, TierName } from '@/lib/types';
 import { QuotePreviewTool } from '@/pages/Pricing';
 import { StylesTab } from './StylesTab';
+import { MeetingStatusLabel, whenInZone } from '@/pages/Meetings';
 
 const MANUAL_ACTIONS: { action: LeadAction; label: string; confirm?: 'send' | 'suppress' | 'publish'; destructive?: boolean }[] = [
   { action: 'requalify', label: 'Requalify' },
@@ -369,8 +370,25 @@ function SiteQuote({ d, refresh }: { d: LeadDetail; refresh: () => void }) {
 }
 
 function Outreach({ d }: { d: LeadDetail }) {
+  const meetings = d.meetings ?? [];
   return (
     <div className="space-y-8">
+      <SubSection title="Meetings" description="Calls booked through the booking link in emails and the proposal, plus demo bookings made on the mockup." actions={<Link className="text-sm text-primary hover:underline" to="/meetings">All meetings</Link>}>
+        {meetings.length === 0 ? (
+          <p className="text-sm text-muted-fg">No bookings yet.</p>
+        ) : (
+          <ul className="divide-y">
+            {meetings.map((m) => (
+              <li key={m.id} className="flex flex-wrap items-center justify-between gap-2 py-2 first:pt-0">
+                <span className="tabular-nums">{whenInZone(m.startAt, m.timezone)} <span className="text-muted-fg">({m.timezone})</span></span>
+                <span className="text-sm text-muted-fg">{m.kind === 'mockup_demo' ? 'demo booking on the mockup' : `${m.name} · ${m.source}`}</span>
+                <MeetingStatusLabel status={m.status} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </SubSection>
+      <Divider />
       <SubSection title="Messages" description={`${d.messages.length} of 4 max touches used.`}>
         {d.messages.length === 0 ? (
           <p className="text-sm text-muted-fg">No messages.</p>

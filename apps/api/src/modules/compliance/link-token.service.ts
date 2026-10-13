@@ -2,13 +2,14 @@ import { Inject, Injectable } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { ENV, Env } from '../../shared/config/config.module';
 
-export type LinkPurpose = 'unsubscribe' | 'takedown' | 'quote' | 'track' | 'preview';
+export type LinkPurpose = 'unsubscribe' | 'takedown' | 'quote' | 'track' | 'preview' | 'book' | 'meeting';
 
 export interface LinkPayload {
   p: LinkPurpose;
   leadId: string;
   contactId?: string;
   messageId?: string;
+  meetingId?: string;
   url?: string;
   exp?: number;
 }

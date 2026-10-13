@@ -18,6 +18,7 @@ import ContactForm from '../../components/ContactForm.astro';
 import Timetable from './Timetable.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
+const { mockup } = input;
 const { brief, copy } = input;
 const { hero, gallery } = pickImages(input);
 const tel = telHref(brief.phone, brief.internationalPhone);
@@ -38,7 +39,7 @@ const nav = [
       <nav class="hdr__nav" aria-label="Sections">
         <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
       </nav>
-      <a class="btn btn-on-hero hdr__cta" href="#trial"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+      <a class="btn btn-on-hero hdr__cta" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
     </div>
   </header>
 
@@ -52,7 +53,7 @@ const nav = [
         <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
         <p class="hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
         <div class="hero__actions">
-          <a class="btn btn-on-hero btn-lg" href="#trial"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+          <a class="btn btn-on-hero btn-lg" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
           <a class="btn btn-ghost-hero btn-lg" href="#classes">See the classes</a>
         </div>
         {hero?.credit && <p class="hero__credit">Photo: {hero.credit}</p>}
@@ -77,7 +78,7 @@ const nav = [
               <span class="cls__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
               <h3 class="cls__name"><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
               <p class="cls__desc"><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
-              <a class="cls__go" href="#trial">Try it<span class="arrow" aria-hidden="true">→</span></a>
+              <a class="cls__go" href={mockup.bookingUrl}>Try it<span class="arrow" aria-hidden="true">→</span></a>
             </li>
           ))}
         </ol>
@@ -111,7 +112,7 @@ const nav = [
               <h3 class="plan__name">{p ?? <span class="ph">Membership option to be supplied by the business</span>}</h3>
               <p class="plan__price">Pricing on request</p>
               <p class="plan__inc"><span class="ph">Inclusions to be supplied by the business</span></p>
-              <a class="btn btn-primary" href="#trial"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+              <a class="btn btn-primary" href={mockup.bookingUrl}><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
             </li>
           ))}
         </ul>
@@ -126,7 +127,7 @@ const nav = [
           <p class="band__lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
         </div>
         <div class="band__actions">
-          <a class="btn btn-on-hero btn-lg" href="#trial"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+          <a class="btn btn-on-hero btn-lg" href={mockup.bookingUrl}><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
           {tel && <a class="btn btn-ghost-hero btn-lg" href={tel}>Call {phone}</a>}
         </div>
       </div>

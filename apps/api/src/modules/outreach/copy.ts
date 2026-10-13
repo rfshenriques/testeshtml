@@ -4,6 +4,8 @@ export interface StepCopyInput {
   businessName: string; city: string | null; vertical: string | null; primaryType: string | null; countryCode: string;
   breakdown: ScoreBreakdown | null; websiteStatus: string; rating: number | null; reviewCount: number | null;
   previewUrl: string; quoteUrl: string | null; expiresAt: Date; agencyName: string; senderName: string; languageCode: string;
+  /** Hosted booking page for a short call with the operator (signed per lead). */
+  bookingUrl?: string | null;
 }
 export interface StepCopy { subject: string; text: string }
 
@@ -28,11 +30,12 @@ export function stepCopy(step: 'opener' | 'nudge' | 'quote' | 'closeout' | 'brid
   const quality = i.rating != null && (i.reviewCount ?? 0) >= 20 ? ` With ${i.rating} stars from ${i.reviewCount} Google reviews, the reputation is already there; it just isn't findable outside Google Maps.` : '';
   const expiry = i.expiresAt.toISOString().slice(0, 10);
   const sign = `\n\n${i.senderName}\n${i.agencyName}`;
+  const book = i.bookingUrl ? `\n\nIf a quick call is easier, pick a time that suits you (15 minutes, no obligation):\n${i.bookingUrl}` : '';
   switch (step) {
     case 'opener':
       return {
         subject: `${type} in ${area.toLowerCase()} without a website`.replace(/\s+/g, ' ').slice(0, 60),
-        text: `Hi,\n\n${hook}${quality}\n\nRather than describe what a site could look like, I built a concept mockup for ${i.businessName} (nothing is published or indexed; it's a private preview, and you can delete it with one click):\n${i.previewUrl}\n\nIf it's useful, I can send over what building and maintaining it would cost. If not, no reply needed and the mockup comes down on ${expiry}.${sign}`,
+        text: `Hi,\n\n${hook}${quality}\n\nRather than describe what a site could look like, I built a concept mockup for ${i.businessName} (nothing is published or indexed; it's a private preview, and you can delete it with one click):\n${i.previewUrl}\n\nIf it's useful, I can send over what building and maintaining it would cost. If not, no reply needed and the mockup comes down on ${expiry}.${book}${sign}`,
       };
     case 'nudge':
       return {
@@ -42,7 +45,7 @@ export function stepCopy(step: 'opener' | 'nudge' | 'quote' | 'closeout' | 'brid
     case 'quote':
       return {
         subject: `what the website would cost`,
-        text: `Hi,\n\nHere's what it would cost to build, host and maintain the site for ${i.businessName}, with no obligation:\n${i.quoteUrl ?? i.previewUrl}\n\nEverything is itemised (one-off build, monthly hosting and content updates), and you can accept online or book a call first.${sign}`,
+        text: `Hi,\n\nHere's what it would cost to build, host and maintain the site for ${i.businessName}, with no obligation:\n${i.quoteUrl ?? i.previewUrl}\n\nEverything is itemised (one-off build, monthly hosting and content updates), and you can accept online or book a call first.${book}${sign}`,
       };
     case 'closeout':
       return {
@@ -52,7 +55,7 @@ export function stepCopy(step: 'opener' | 'nudge' | 'quote' | 'closeout' | 'brid
     case 'bridge':
       return {
         subject: `saw you opened the mockup`,
-        text: `Hi,\n\nI saw the mockup for ${i.businessName} was opened, so I wanted to check: is there anything you'd change? The layout, colours and copy are all adjustable, and the photos are placeholders until we use yours.\n${i.previewUrl}${sign}`,
+        text: `Hi,\n\nI saw the mockup for ${i.businessName} was opened, so I wanted to check: is there anything you'd change? The layout, colours and copy are all adjustable, and the photos are placeholders until we use yours.\n${i.previewUrl}${book}${sign}`,
       };
   }
 }

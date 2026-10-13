@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Prisma } from '@sitewright/db';
 import { PricingConfig, PricingConfigSchema, TierName } from '@sitewright/shared-types';
 import { customAlphabet } from 'nanoid';
+import { LinkTokenService } from '../compliance/link-token.service';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ENV, Env } from '../../shared/config/config.module';
 import { JurisdictionService } from '../compliance/jurisdiction.service';
@@ -29,6 +30,7 @@ export class QuotingService implements OnModuleInit {
     private readonly leadEvents: LeadEventsService,
     private readonly preview: PreviewService,
     private readonly stripe: StripeService,
+    private readonly links: LinkTokenService,
   ) {}
 
   onModuleInit() {
@@ -95,15 +97,20 @@ export class QuotingService implements OnModuleInit {
     return q ? { ...q, buildFee: Number(q.buildFee), monthlyFee: Number(q.monthlyFee), url: this.quoteUrl(q.slug) } : null;
   }
 
+  /** Signed per-lead booking page (source recorded as `proposal`). */
+  bookingUrl(leadId: string): string {
+    return `${this.env.APP_BASE_URL}/book/${this.links.sign({ p: 'book', leadId })}?src=proposal`;
+  }
+
   /** Public proposal page (spec §10.2). */
   async proposalHtml(slug: string): Promise<{ status: number; html: string }> {
     const quote = await this.prisma.quote.findUnique({ where: { slug }, include: { lead: { include: { site: true } } } });
     if (!quote || quote.lead.stage === 'suppressed') return { status: 404, html: renderProposal.notFound() };
-    if (quote.validUntil < new Date() && !quote.acceptedAt) return { status: 410, html: renderProposal.expired(this.env.AGENCY_NAME, this.env.BOOKING_LINK_URL) };
+    if (quote.validUntil < new Date() && !quote.acceptedAt) return { status: 410, html: renderProposal.expired(this.env.AGENCY_NAME, this.bookingUrl(quote.leadId)) };
     const site = quote.lead.site;
     const previewUrl = site && !site.takenDownAt && site.expiresAt > new Date() ? site.previewUrl : null;
     const takedownUrl = `${this.env.APP_BASE_URL}/q/${slug}/decline`;
-    return { status: 200, html: renderProposal.page({ quote, lead: quote.lead, previewUrl, acceptUrl: `${this.env.APP_BASE_URL}/q/${slug}/accept`, bookingUrl: this.env.BOOKING_LINK_URL, declineUrl: takedownUrl, agency: { name: this.env.AGENCY_NAME, url: this.env.AGENCY_URL, legalName: this.env.LEGAL_ENTITY_NAME, address: this.env.LEGAL_ENTITY_ADDRESS } }) };
+    return { status: 200, html: renderProposal.page({ quote, lead: quote.lead, previewUrl, acceptUrl: `${this.env.APP_BASE_URL}/q/${slug}/accept`, bookingUrl: this.bookingUrl(quote.leadId), declineUrl: takedownUrl, agency: { name: this.env.AGENCY_NAME, url: this.env.AGENCY_URL, legalName: this.env.LEGAL_ENTITY_NAME, address: this.env.LEGAL_ENTITY_ADDRESS } }) };
   }
 
   /** Accept → Stripe Checkout session (one-off build fee + subscription). */

@@ -20,6 +20,7 @@ import { EnrichmentModule } from './modules/enrichment/enrichment.module';
 import { ProfilingModule } from './modules/profiling/profiling.module';
 import { ReviewModule } from './modules/review/review.module';
 import { GeneratorModule } from './modules/generator/generator.module';
+import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { PreviewModule } from './modules/preview/preview.module';
 import { QuotingModule } from './modules/quoting/quoting.module';
 import { OutreachModule } from './modules/outreach/outreach.module';
@@ -46,6 +47,7 @@ import { ConversionModule } from './modules/conversion/conversion.module';
     ProfilingModule,
     ReviewModule,
     GeneratorModule,
+    SchedulingModule,
     PreviewModule,
     QuotingModule,
     OutreachModule,

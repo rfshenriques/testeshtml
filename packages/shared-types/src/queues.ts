@@ -19,6 +19,7 @@ export const QUEUES = {
   outreachSend: { name: 'outreach.send', concurrency: 1, notes: 'serialised per mailbox via group lock' },
   outreachIngest: { name: 'outreach.ingest', concurrency: 2, notes: 'IMAP/webhook poll' },
   maintenancePurge: { name: 'maintenance.purge', concurrency: 1, notes: 'cron 03:00: snapshot expiry, retention' },
+  meetingReminder: { name: 'meeting.reminder', concurrency: 2, notes: 'delayed jobs: confirm request + reminders before a booked call' },
 } as const satisfies Record<string, QueueSpec>;
 
 export type QueueKey = keyof typeof QUEUES;

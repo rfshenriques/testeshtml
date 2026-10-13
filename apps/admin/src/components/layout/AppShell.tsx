@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
-import { LayoutDashboard, Map, Users, ClipboardCheck, LayoutTemplate, Send, Inbox, Tags, Scale, Activity, Bell, LogOut, Menu } from 'lucide-react';
+import { LayoutDashboard, Map, Users, ClipboardCheck, LayoutTemplate, Send, Inbox, CalendarCheck, CalendarClock, Tags, Scale, Activity, Bell, LogOut, Menu } from 'lucide-react';
 import { api } from '@/lib/api';
 import { keys } from '@/lib/query';
 import { auth } from '@/lib/auth';
@@ -17,7 +17,9 @@ export const NAV = [
   { to: '/generator', label: 'Generator', icon: LayoutTemplate, group: 'Pipeline' },
   { to: '/outreach', label: 'Outreach', icon: Send, group: 'Outreach' },
   { to: '/inbox', label: 'Inbox', icon: Inbox, group: 'Outreach' },
+  { to: '/meetings', label: 'Meetings', icon: CalendarCheck, group: 'Outreach' },
   { to: '/pricing', label: 'Pricing', icon: Tags, group: 'Settings' },
+  { to: '/scheduling', label: 'Scheduling', icon: CalendarClock, group: 'Settings' },
   { to: '/compliance', label: 'Compliance', icon: Scale, group: 'Settings' },
   { to: '/ops', label: 'Ops', icon: Activity, group: 'Settings' },
 ] as const;

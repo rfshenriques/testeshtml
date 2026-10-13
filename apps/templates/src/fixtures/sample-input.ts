@@ -28,6 +28,7 @@ function mockup(businessName: string, slug: string): SiteBuildInput['mockup'] {
     takedownUrl: `https://preview.example/t/${slug}?token=sample`,
     expiresAt: '2026-11-10T00:00:00.000Z',
     mapEmbedUrl: null,
+    bookingUrl: `https://preview.example/p/${slug}/book`,
   };
 }
 

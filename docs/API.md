@@ -182,3 +182,18 @@ interface Paginated<T> { items: T[]; total: number; nextCursor: string|null }
 - `POST /admin/leads/:id/site/rebuild` `{ templateId?, colourScheme?: 'a'|'b'|'c'|'brand'|'brand2'|'brand3', typography?: 'a'..'e' }` adopts a style and republishes at the same preview URL
 - `/p/:slug/photos/*` serves the listing photos as soon as they are stored (before publishing); pages still require publishing
 - Pricing: `tiers.<tier>.nfcTags`, `addOns.nfcTagExtra.perTag`; repeat `'nfcTagExtra'` in `addOns` for quantity
+
+## Scheduling (bookable calls and mockup bookings)
+
+Public (noindex, signed links):
+- `GET /book/:token[?src=proposal]` → booking page for a lead (token signed per lead; in every outreach step and on the proposal page). `GET /book/:token/slots` → `{ timezone, slotMinutes, horizonDays, slots: ISO[] }`. `POST /book/:token` `{ startAt, name, email, phone?, notes?, timezone?, source?, rescheduleOf? }` → `{ ok, meetingId, manageUrl, icsUrl }` (409 when the slot is gone; 400 on validation). Booking stops the outreach sequence, opens a CRM task, logs `meeting.booked`, emails the attendee a confirmation (manage link + calendar file) and the notify address, and queues the reminders configured in availability.
+- `GET /m/:token[?confirm=1]` → manage page (one-click confirm, calendar file, cancel). `POST /m/:token/confirm`, `POST /m/:token/cancel { reason? }`, `GET /m/:token/ics`.
+- `GET /p/:slug/book` → booking flow on a published mockup, themed with the site's palette and marked as a demonstration; slots follow the listing's opening hours (`GET /p/:slug/book/slots`). `POST /p/:slug/book` records a `mockup_demo` meeting + a form submission; nobody is emailed. The templates' "book" actions link here (`mockup.bookingUrl`).
+
+Admin:
+- `GET/PUT /admin/scheduling/availability` → `Availability` (timezone, slotMinutes, bufferMinutes, minNoticeHours, horizonDays, hours per weekday, busyFeedUrl (private iCal; events block slots), notifyEmail, meetingTitle, reminders `[{ hoursBefore, confirm }]`).
+- `GET /admin/scheduling/slots?days=` → free slots as a lead would see them.
+- `GET /admin/meetings?upcoming=1` → meetings with lead summary; `POST /admin/meetings/:id/{cancel,complete,no-show,resend}`.
+- Lead detail (`GET /admin/leads/:id`) includes `meetings`.
+
+Reminders run on the `meeting.reminder` queue as delayed jobs (`mr-<meetingId>-<n>`); a reminder flagged `confirm` asks for a one-click confirmation until the attendee confirms, then later ones are plain reminders. Cancelling removes the jobs.

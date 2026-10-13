@@ -161,6 +161,13 @@ export interface ReviewItem {
 }
 export interface ReviewQueueItem extends ReviewItem { lead: LeadSummary }
 export interface CrmTask { id: string; leadId: string; title: string; dueAt: string | null; doneAt: string | null; createdAt: string }
+export type MeetingStatus = 'scheduled' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+export interface Meeting {
+  id: string; leadId: string | null; siteId: string | null; kind: 'agency_call' | 'mockup_demo'; source: string; startAt: string; endAt: string; timezone: string;
+  name: string; email: string; phone: string | null; notes: string | null; status: MeetingStatus; confirmedAt: string | null; cancelledAt: string | null; cancelReason: string | null;
+  remindersSent: { index: number; at: string; kind: 'confirm' | 'reminder'; hoursBefore: number }[]; createdAt: string; updatedAt: string;
+  lead?: { id: string; businessName: string; city: string | null; countryCode: string; stage: string } | null;
+}
 export interface ProvisioningItem { key: string; label: string; done: boolean; doneAt: string | null; by: string | null; note: string | null }
 export interface Provisioning { leadId: string; checklist: ProvisioningItem[]; onboardingForm?: Record<string, unknown> | null; [k: string]: unknown }
 
@@ -172,7 +179,7 @@ export interface LeadDetail {
   };
   snapshot: { kind: 'details' | 'search'; raw: Record<string, unknown>; fetchedAt: string; expiresAt: string } | null;
   contacts: Contact[]; site: GeneratedSite | null; quote: Quote | null;
-  messages: OutreachMessage[]; replies: Reply[]; events: LeadEvent[]; reviewItems: ReviewItem[]; tasks: CrmTask[];
+  messages: OutreachMessage[]; replies: Reply[]; events: LeadEvent[]; reviewItems: ReviewItem[]; tasks: CrmTask[]; meetings?: Meeting[];
   provisioning: Provisioning | null;
 }
 export type LeadAction =

@@ -137,6 +137,7 @@ export class GeneratorService {
         agencyName: this.env.AGENCY_NAME, agencyUrl: this.env.AGENCY_URL, businessName: lead.businessName, previewSlug: slug,
         formEndpoint: `${this.env.APP_BASE_URL}/p/${slug}/form`, takedownUrl: this.links.takedownUrl(leadId), expiresAt: expiresAt.toISOString(),
         mapEmbedUrl: brief.lat != null && brief.lng != null ? `https://www.google.com/maps?q=${brief.lat},${brief.lng}&z=15&output=embed` : null,
+        bookingUrl: `${this.env.APP_BASE_URL}/p/${slug}/book`,
       },
     };
     return { lead, input, slug, expiresAt, violations, brief };

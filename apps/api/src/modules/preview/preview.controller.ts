@@ -1,5 +1,5 @@
-import { All, Body, Controller, Get, Header, HttpCode, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import { All, Body, Controller, Get, Header, HttpCode, Next, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import type { NextFunction, Request, Response } from 'express';
 import { PreviewService } from './preview.service';
 import { PREVIEW_HEADERS } from './storage';
 import { LinkTokenService } from '../compliance/link-token.service';
@@ -38,8 +38,11 @@ export class PreviewPublicController {
   }
 
   @All('p/:slug/*path')
-  async file(@Param('slug') slug: string, @Param('path') p: string[] | string, @Req() req: Request, @Res() res: Response) {
-    return this.send(slug, Array.isArray(p) ? p.join('/') : p, req, res);
+  async file(@Param('slug') slug: string, @Param('path') p: string[] | string, @Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+    const rel = Array.isArray(p) ? p.join('/') : p;
+    // `/p/:slug/book…` belongs to the scheduling module (mockup booking flow); let the later route handle it.
+    if (rel === 'book' || rel.startsWith('book/')) return next();
+    return this.send(slug, rel, req, res);
   }
 
   private async send(slug: string, filePath: string, req: Request, res: Response) {

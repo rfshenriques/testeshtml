@@ -62,6 +62,13 @@ lead's own listing photos) and a type pairing. The console's **design studio** (
 shows the real page for the lead inside a frame with those controls plus a device toggle; "Apply &
 republish" rebuilds it at the same preview URL.
 
+Every outreach email and proposal links to a hosted booking page where the lead picks a free slot
+(your weekly hours from the **Scheduling** screen, minus bookings and anything busy in a private
+iCal feed). Booking emails a confirmation with a calendar invite, opens a CRM task, stops the
+sequence and queues reminders, including a forced one-click confirmation the day before. The
+mockups' own "book" buttons open a themed booking page that simulates the business's calendar
+from its listed opening hours. Bookings appear under **Meetings**.
+
 ## Testing
 
 ```bash

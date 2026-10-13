@@ -19,6 +19,7 @@ import ContactForm from '../../components/ContactForm.astro';
 import BookStrip from './BookStrip.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
+const { mockup } = input;
 const { brief, copy } = input;
 const { hero, gallery } = pickImages(input);
 const tel = telHref(brief.phone, brief.internationalPhone);
@@ -40,7 +41,7 @@ const nav = [
       </nav>
       <div class="hdr__cta">
         {tel && <a class="hdr__phone" href={tel}><span class="hdr__phone-label">Workshop</span>{phone}</a>}
-        <a class="btn btn-primary" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+        <a class="btn btn-primary" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
       </div>
     </div>
   </header>
@@ -53,7 +54,7 @@ const nav = [
           <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
           <p class="hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
           <div class="hero__actions">
-            <a class="btn btn-primary btn-lg" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            <a class="btn btn-primary btn-lg" href={mockup.bookingUrl}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
             {tel && <a class="btn btn-ghost-hero btn-lg" href={tel}>Call {phone}</a>}
           </div>
           <ul class="hero__facts">
@@ -84,7 +85,7 @@ const nav = [
                 <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
                 <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
               </div>
-              <a class="svc__go" href="#book" aria-label={`Book: ${s.name}`}><span class="chev" aria-hidden="true"></span></a>
+              <a class="svc__go" href={mockup.bookingUrl} aria-label={`Book: ${s.name}`}><span class="chev" aria-hidden="true"></span></a>
             </li>
           ))}
         </ul>

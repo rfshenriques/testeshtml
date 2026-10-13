@@ -52,16 +52,16 @@ export class LeadsService {
   async detail(id: string) {
     const lead = await this.prisma.lead.findUnique({
       where: { id },
-      include: { contacts: { orderBy: { isPrimary: 'desc' } }, site: true, quote: true, messages: { orderBy: { createdAt: 'desc' } }, replies: { orderBy: { receivedAt: 'desc' } }, events: { orderBy: { createdAt: 'desc' }, take: 200 }, reviewItems: { orderBy: { createdAt: 'desc' } }, tasks: { orderBy: { createdAt: 'desc' } }, provisioning: true, campaign: { select: { name: true, status: true } } },
+      include: { contacts: { orderBy: { isPrimary: 'desc' } }, site: true, quote: true, messages: { orderBy: { createdAt: 'desc' } }, replies: { orderBy: { receivedAt: 'desc' } }, events: { orderBy: { createdAt: 'desc' }, take: 200 }, reviewItems: { orderBy: { createdAt: 'desc' } }, tasks: { orderBy: { createdAt: 'desc' } }, meetings: { orderBy: { startAt: 'desc' } }, provisioning: true, campaign: { select: { name: true, status: true } } },
     });
     if (!lead) throw new NotFoundException();
     const snapshot = await this.prisma.placeSnapshot.findFirst({ where: { placeId: lead.placeId, expiresAt: { gt: new Date() } }, orderBy: [{ kind: 'asc' }, { fetchedAt: 'desc' }] });
-    const { contacts, site, quote, messages, replies, events, reviewItems, tasks, provisioning, ...rest } = lead;
+    const { contacts, site, quote, messages, replies, events, reviewItems, tasks, meetings, provisioning, ...rest } = lead;
     const summary = toLeadSummary({ ...rest, contacts: contacts.filter((c) => c.isPrimary).map((c) => ({ email: c.email, verification: c.verification, source: c.source })), site: site ? { previewUrl: site.previewUrl, takenDownAt: site.takenDownAt, expiresAt: site.expiresAt } : null, quote: quote ? { slug: quote.slug } : null } as any);
     return {
       lead: { ...summary, scoreBreakdown: lead.scoreBreakdown, classification: lead.classification, websiteProbe: lead.websiteProbe, gateOverride: lead.gateOverride, notes: lead.notes, lat: lead.lat, lng: lead.lng, priceLevel: lead.priceLevel, businessStatus: lead.businessStatus, sequenceStartedAt: lead.sequenceStartedAt, sequenceStoppedAt: lead.sequenceStoppedAt, sequenceStopReason: lead.sequenceStopReason, campaign: lead.campaign },
       snapshot: snapshot ? { kind: snapshot.kind, raw: snapshot.raw, fetchedAt: snapshot.fetchedAt, expiresAt: snapshot.expiresAt } : null,
-      contacts, site, quote: quote ? { ...quote, buildFee: Number(quote.buildFee), monthlyFee: Number(quote.monthlyFee), url: this.quoting.quoteUrl(quote.slug) } : null, messages, replies, events, reviewItems, tasks, provisioning,
+      contacts, site, quote: quote ? { ...quote, buildFee: Number(quote.buildFee), monthlyFee: Number(quote.monthlyFee), url: this.quoting.quoteUrl(quote.slug) } : null, messages, replies, events, reviewItems, tasks, meetings, provisioning,
     };
   }
 

@@ -16,6 +16,7 @@ import MenuList from './MenuList.astro';
 import VisitBlock from './VisitBlock.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
+const { mockup } = input;
 const { brief, copy } = input;
 const { hero, gallery } = pickImages(input);
 const price = priceLevelLabel(brief.priceLevel);
@@ -36,7 +37,7 @@ const mosaic = Array.from({ length: 5 }, (_, i) => gallery[i + 1]);
       <nav class="hs-nav" aria-label="Sections">
         <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
       </nav>
-      <a class="btn btn-primary hs-header__cta" href="#reserve"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+      <a class="btn btn-primary hs-header__cta" href={mockup.bookingUrl}><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
     </div>
   </header>
 
@@ -49,7 +50,7 @@ const mosaic = Array.from({ length: 5 }, (_, i) => gallery[i + 1]);
         <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
         <p class="hs-hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
         <div class="hs-hero__actions">
-          <a class="btn btn-on-hero btn-lg" href="#reserve"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+          <a class="btn btn-on-hero btn-lg" href={mockup.bookingUrl}><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
           <a class="btn btn-ghost-hero btn-lg" href="#menu"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
         </div>
       </div>
@@ -147,7 +148,7 @@ const mosaic = Array.from({ length: 5 }, (_, i) => gallery[i + 1]);
           <p class="hs-band__lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
         </div>
         <div class="hs-band__actions">
-          <a class="btn btn-on-hero btn-lg" href="#reserve"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+          <a class="btn btn-on-hero btn-lg" href={mockup.bookingUrl}><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
           {tel && <a class="btn btn-ghost-hero btn-lg" href={tel}>Call {phoneLabel}</a>}
         </div>
       </div>

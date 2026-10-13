@@ -5,6 +5,7 @@ import { telHref } from '../../lib/input';
 import Copy from '../../components/Copy.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
+const { mockup } = input;
 const { brief, copy } = input;
 const tel = telHref(brief.phone, brief.internationalPhone);
 const open = brief.openingHours.filter((h) => !/closed/i.test(h.hours));
@@ -14,7 +15,7 @@ const open = brief.openingHours.filter((h) => !/closed/i.test(h.hours));
     <summary>How do we get started?</summary>
     <div class="faq__body">
       <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
-      <p>Use the <a href="#enquire">enquiry form</a>{tel ? <> or call <a href={tel}>{brief.phone ?? brief.internationalPhone}</a></> : null}.</p>
+      <p>Use the <a href={mockup.bookingUrl}>enquiry form</a>{tel ? <> or call <a href={tel}>{brief.phone ?? brief.internationalPhone}</a></> : null}.</p>
     </div>
   </details>
   <details class="faq__item">

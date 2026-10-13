@@ -86,6 +86,8 @@ export const SiteBuildInputSchema = z.object({
     takedownUrl: z.string(),
     expiresAt: z.string(),
     mapEmbedUrl: z.string().nullable(),
+    /** Hosted booking page for this mockup: the site's "book" actions link here instead of an enquiry form. */
+    bookingUrl: z.string(),
   }),
 });
 export type SiteBuildInput = z.infer<typeof SiteBuildInputSchema>;
@@ -154,3 +156,32 @@ export interface JurisdictionPolicy {
   defaultCurrency: string;
   notes: string;
 }
+
+// ---- Scheduling (bookable calls with the operator; simulated bookings on mockups)
+export const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+export type DayKey = (typeof DAY_KEYS)[number];
+const HHMM = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'HH:MM');
+export const TimeRangeSchema = z.tuple([HHMM, HHMM]);
+export const AvailabilitySchema = z.object({
+  /** IANA zone the weekly hours are expressed in. */
+  timezone: z.string().min(1),
+  slotMinutes: z.number().int().min(10).max(120),
+  bufferMinutes: z.number().int().min(0).max(120),
+  /** Earliest bookable slot is this many hours from now. */
+  minNoticeHours: z.number().min(0).max(168),
+  /** How far ahead the booking page offers slots. */
+  horizonDays: z.number().int().min(1).max(90),
+  hours: z.record(z.enum(DAY_KEYS), z.array(TimeRangeSchema)),
+  /** Private iCal feed (e.g. Google Calendar "secret address in iCal format"); its events block slots. */
+  busyFeedUrl: z.string().url().nullable(),
+  /** Where new bookings and cancellations are announced; also receives the calendar file. */
+  notifyEmail: z.string().email().nullable(),
+  meetingTitle: z.string().min(1).max(120),
+  /** Emails before the call: `confirm` ones ask the booker to confirm (one click) and count as the forced confirmation. */
+  reminders: z.array(z.object({ hoursBefore: z.number().positive().max(24 * 30), confirm: z.boolean() })).max(6),
+});
+export type Availability = z.infer<typeof AvailabilitySchema>;
+export const MEETING_STATUSES = ['scheduled', 'confirmed', 'cancelled', 'completed', 'no_show'] as const;
+export type MeetingStatus = (typeof MEETING_STATUSES)[number];
+export const MEETING_KINDS = ['agency_call', 'mockup_demo'] as const;
+export type MeetingKind = (typeof MEETING_KINDS)[number];
