@@ -1,0 +1,51 @@
+---
+/** property: the area guide for brief.city with the office hours table beside the map. */
+import type { BuildInput } from '../../lib/input';
+import { telHref } from '../../lib/input';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief, mockup } = input;
+const tel = telHref(brief.phone, brief.internationalPhone);
+const hasCoords = brief.lat !== null && brief.lng !== null;
+---
+<div class="area">
+  <div class="area__text">
+    {brief.editorialSummary ? <p class="area__lead">{brief.editorialSummary}</p> : null}
+    {brief.city && <p>Our office covers {brief.city} and the surrounding area, with viewings arranged from {brief.address ?? 'the office'}.</p>}
+    <p class="area__ph"><span class="ph">Area guide to be supplied by the business</span> — schools, transport and local amenities for {brief.city ?? 'the area'} will appear here.</p>
+    <h3>The office</h3>
+    {brief.address ? <p>{brief.address}</p> : <p class="ph">Address to be confirmed by the business</p>}
+    {tel && <p><a href={tel}>{brief.phone ?? brief.internationalPhone}</a></p>}
+    <h3>Opening hours</h3>
+    {brief.openingHours.length ? (
+      <table class="hours-table">
+        <caption class="visually-hidden">Opening hours for {brief.businessName}</caption>
+        <tbody>{brief.openingHours.map((h) => <tr><th scope="row">{h.day}</th><td>{h.hours}</td></tr>)}</tbody>
+      </table>
+    ) : (
+      <p class="ph">Opening hours to be confirmed by the business</p>
+    )}
+  </div>
+  <div class="area__map map" class:list={[!mockup.mapEmbedUrl && 'map--placeholder']}>
+    {mockup.mapEmbedUrl ? (
+      <iframe src={mockup.mapEmbedUrl} title={`Map showing the location of ${brief.businessName}`} loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen width="600" height="400"></iframe>
+    ) : (
+      <div>
+        <p><strong>Map placeholder</strong></p>
+        {brief.address && <p>{brief.address}</p>}
+        {hasCoords && <p class="muted">{brief.lat!.toFixed(5)}, {brief.lng!.toFixed(5)}</p>}
+        <p class="muted">An interactive map of the area will be embedded on the live site.</p>
+      </div>
+    )}
+  </div>
+</div>
+<style>
+  .area { display: grid; gap: 2.5rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: stretch; }
+  .area__lead { font-size: 1.15rem; }
+  .area__ph { font-size: 0.95rem; color: var(--muted); }
+  .area h3 { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; font-size: 0.78rem; font-weight: 600; color: var(--muted); margin: 1.75rem 0 0.6rem; }
+  .area__text p { margin-bottom: 0.5rem; }
+  .area__map { border-radius: 0; min-height: 22rem; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (max-width: 63.99rem) { .area { grid-template-columns: 1fr; } }
+</style>

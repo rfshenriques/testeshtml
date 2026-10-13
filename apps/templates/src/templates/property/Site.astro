@@ -1,66 +1,232 @@
 ---
-/** professional: Hero, practice areas, credentials, case-style proof, contact form (+ hours+map). */
+/**
+ * property: photographic. Full-bleed photo hero with an overlaid enquiry card (buy / rent /
+ * valuation), a facts strip, three placeholder listings, service tiles, an area guide with the
+ * office hours and map, about with a large photo, reviews and a valuation form.
+ */
 import type { BuildInput } from '../../lib/input';
-import { pickImages } from '../../lib/input';
+import { pickImages, telHref } from '../../lib/input';
 import MockupLayout from '../../layouts/MockupLayout.astro';
-import SiteHeader from '../../components/SiteHeader.astro';
-import Hero from '../../components/Hero.astro';
-import Section from '../../components/Section.astro';
-import Services from '../../components/Services.astro';
+import Wordmark from '../../components/Wordmark.astro';
+import Copy from '../../components/Copy.astro';
+import Img from '../../components/Img.astro';
 import About from '../../components/About.astro';
-import WhyUs from '../../components/WhyUs.astro';
-import HoursMap from '../../components/HoursMap.astro';
-import CtaBand from '../../components/CtaBand.astro';
 import Reviews from '../../components/Reviews.astro';
-import ContactForm from '../../components/ContactForm.astro';
+import EnquiryCard from './EnquiryCard.astro';
+import Listings from './Listings.astro';
+import AreaGuide from './AreaGuide.astro';
+import ValuationForm from './ValuationForm.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
-const { brief } = input;
-const { gallery } = pickImages(input);
+const { brief, copy } = input;
+const { hero, gallery } = pickImages(input);
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phone = brief.phone ?? brief.internationalPhone;
 const nav = [
-  { href: '#practice', label: 'Practice areas' }, { href: '#credentials', label: 'Credentials' }, { href: '#proof', label: 'Client feedback' },
-  { href: '#visit', label: 'Office' }, { href: '#contact', label: 'Contact' },
+  { href: '#listings', label: 'Properties' }, { href: '#services', label: 'Services' }, { href: '#area', label: brief.city ? `${brief.city} guide` : 'Area guide' },
+  { href: '#about', label: 'About' }, { href: '#reviews', label: 'Reviews' },
 ];
 ---
 <MockupLayout input={input}>
-  <SiteHeader input={input} nav={nav} ctaHref="#contact" ctaLabel="Arrange a consultation" />
+  <header class="prop-header" id="top">
+    <div class="container prop-header__row">
+      <Wordmark name={brief.businessName} />
+      <nav class="prop-nav" aria-label="Sections"><ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul></nav>
+      <div class="prop-header__cta">
+        {tel && <a class="prop-header__phone" href={tel}>{phone}</a>}
+        <a class="btn btn-primary" href="#valuation"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+      </div>
+    </div>
+  </header>
   <main id="main">
-    <Hero input={input} ctaHref="#contact" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative office photo" />
+    <section class="prop-hero" aria-labelledby="hero-heading">
+      <div class="prop-hero__text">
+        {brief.city && <p class="prop-hero__kicker">{brief.classification.subVertical} · {brief.city}</p>}
+        <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+        <p class="prop-hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+        {tel && <p class="prop-hero__call">Call <a href={tel}>{phone}</a></p>}
+      </div>
+      <div class="prop-hero__media">
+        <Img image={hero} label="Indicative property photo" width={1600} height={1000} eager showCredit={false} />
+        <div class="prop-hero__card"><EnquiryCard input={input} /></div>
+        {hero?.credit && <p class="prop-hero__credit">Photo: {hero.credit}</p>}
+      </div>
+    </section>
 
-    <Section id="practice" eyebrow="Practice areas" heading="How we can help">
-      <Services copy={input.copy} layout="numbered" />
-    </Section>
+    {brief.verifiedFacts.length > 0 && (
+      <div class="prop-strip" aria-label="At a glance">
+        <ul class="container">{brief.verifiedFacts.map((f) => <li>{f}</li>)}</ul>
+      </div>
+    )}
 
-    <Section id="credentials" tone="surface" eyebrow="Credentials" heading="About the practice">
-      <About input={input} image={gallery[0]} imageLabel="Indicative meeting room photo" factsHeading="Verified details" />
-      <p class="muted credentials-note">Qualifications, memberships and accreditations will be listed here once confirmed by {brief.businessName}; this mockup shows none that have not been verified.</p>
-    </Section>
+    <section id="listings" class="prop-section" aria-labelledby="listings-heading">
+      <div class="container">
+        <div class="prop-section__head prop-section__head--row">
+          <div>
+            <span class="eyebrow">Featured properties</span>
+            <h2 id="listings-heading">Homes for sale and to let{brief.city ? ` in ${brief.city}` : ''}</h2>
+          </div>
+          <a class="prop-link" href="#valuation">Thinking of selling? <span aria-hidden="true">→</span></a>
+        </div>
+        <Listings businessName={brief.businessName} city={brief.city} />
+      </div>
+    </section>
 
-    <Section id="why" eyebrow="Our approach" heading="Why clients choose us">
-      <WhyUs copy={input.copy} />
-    </Section>
+    <section id="services" class="prop-section prop-section--surface" aria-labelledby="services-heading">
+      <div class="container">
+        <div class="prop-section__head">
+          <span class="eyebrow">What we do</span>
+          <h2 id="services-heading">Sales, lettings and everything in between</h2>
+        </div>
+        <ul class="prop-tiles">
+          {copy.services.map((s, i) => (
+            <li class="prop-tile">
+              <span class="prop-tile__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+              <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+              <a class="prop-link" href="#valuation">Enquire <span aria-hidden="true">→</span></a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-    <Section id="proof" tone="dark" eyebrow="Client feedback" heading="What clients say">
-      <Reviews input={input} />
-    </Section>
+    <section id="area" class="prop-section" aria-labelledby="area-heading">
+      <div class="container">
+        <div class="prop-section__head">
+          <span class="eyebrow">Area guide</span>
+          <h2 id="area-heading">{brief.city ? `Living in ${brief.city}` : 'The local area'}</h2>
+        </div>
+        <AreaGuide input={input} />
+      </div>
+    </section>
 
-    <Section id="visit" tone="surface" eyebrow="Office" heading="Visit the office">
-      <HoursMap input={input} />
-    </Section>
+    <section id="about" class="prop-section prop-section--surface" aria-labelledby="about-heading">
+      <div class="container">
+        <div class="prop-section__head">
+          <span class="eyebrow">About the agency</span>
+          <h2 id="about-heading">The team behind the board</h2>
+        </div>
+        <About input={input} image={gallery[0]} imageLabel="Indicative office photo" showFacts={false} />
+        <ul class="prop-why">
+          {copy.whyUs.map((w, i) => (
+            <li>
+              <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+              <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-    <CtaBand input={input} id="cta" href="#contact" tone="surface" eyebrow="Next step" />
+    <section id="reviews" class="prop-section" aria-labelledby="reviews-heading">
+      <div class="container">
+        <div class="prop-section__head">
+          <span class="eyebrow">Reviews</span>
+          <h2 id="reviews-heading">What sellers, landlords and tenants say</h2>
+        </div>
+        <Reviews input={input} />
+      </div>
+    </section>
 
-    <Section id="contact" eyebrow="Contact" heading="Get in touch" lead="Tell us briefly about your situation and we will respond with next steps.">
-      <ContactForm input={input} variant="contact" submitLabel="Send enquiry" />
-    </Section>
+    <section id="valuation" class="prop-section prop-section--dark" aria-labelledby="valuation-heading">
+      <div class="container prop-valuation">
+        <div class="prop-valuation__intro">
+          <span class="eyebrow">Valuation</span>
+          <h2 id="valuation-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+          <p class="prop-valuation__lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+          {tel && <p class="prop-valuation__call">Prefer to talk? Call <a href={tel}>{phone}</a></p>}
+        </div>
+        <div class="prop-valuation__form">
+          <ValuationForm input={input} submitLabel={copy.cta.buttonLabel} />
+        </div>
+      </div>
+    </section>
   </main>
 </MockupLayout>
 
 <style is:global>
-  [data-template="property"] .hero { background: var(--hero-bg); }
-  [data-template="property"] .hero .img-frame { border-radius: 2px; }
-  [data-template="property"] .btn { border-radius: 2px; }
-  [data-template="property"] .card { border-radius: 2px; }
-  [data-template="property"] .credentials-note { margin: 1.5rem 0 0; font-size: 0.95rem; }
-  [data-template="property"] .wordmark { letter-spacing: 0.02em; }
+  [data-template="property"] .btn { border-radius: 0; }
+  [data-template="property"] .img-frame, [data-template="property"] .card, [data-template="property"] .review, [data-template="property"] .map { border-radius: 0; }
+  [data-template="property"] .eyebrow { margin-bottom: 0.6rem; }
+
+  /* Header */
+  [data-template="property"] .prop-header { background: var(--surface); border-bottom: 1px solid var(--border); }
+  [data-template="property"] .prop-header__row { display: flex; align-items: center; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; padding: 1rem 0; }
+  [data-template="property"] .prop-nav ul { display: flex; flex-wrap: wrap; gap: 0 1.5rem; }
+  [data-template="property"] .prop-nav a { display: inline-block; padding: 0.7rem 0; color: var(--text); text-decoration: none; font-weight: 500; font-size: 0.95rem; }
+  [data-template="property"] .prop-nav a:hover { color: var(--primary); }
+  [data-template="property"] .prop-header__cta { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+  [data-template="property"] .prop-header__phone { color: var(--text); text-decoration: none; font-weight: 600; padding: 0.7rem 0; }
+  @media (min-width: 64rem) { [data-template="property"] .prop-header__row { display: grid; grid-template-columns: auto 1fr auto; } [data-template="property"] .prop-nav ul { justify-content: center; } }
+  @media (max-width: 47.99rem) { [data-template="property"] .prop-nav { order: 3; width: 100%; } [data-template="property"] .prop-nav a { font-size: 0.88rem; } [data-template="property"] .prop-header__phone { display: none; } }
+
+  /* Hero: headline on a solid panel, photo bleeding to the right edge, card overlapping its bottom corner */
+  [data-template="property"] .prop-hero { display: grid; grid-template-columns: minmax(1rem, 1fr) minmax(0, 27rem) 3rem minmax(0, 42rem) minmax(1rem, 1fr); background: var(--hero-bg); color: var(--on-hero); }
+  [data-template="property"] .prop-hero__text { grid-column: 2; padding: clamp(3.5rem, 8vw, 6.5rem) 0 clamp(5rem, 10vw, 8rem); }
+  [data-template="property"] .prop-hero__media { grid-column: 4 / -1; position: relative; min-height: 34rem; display: flex; align-items: flex-end; justify-content: flex-end; padding: 0 clamp(1rem, 4vw, 3rem); }
+  [data-template="property"] .prop-hero__media .img-frame { position: absolute; inset: 0; border-radius: 0; }
+  [data-template="property"] .prop-hero__media img { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; }
+  [data-template="property"] .prop-hero__card { position: relative; z-index: 1; width: min(100%, 24rem); margin-bottom: -4rem; }
+  [data-template="property"] .prop-hero__kicker { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.12em; font-size: 0.8rem; opacity: 0.85; margin: 0 0 1.25rem; }
+  [data-template="property"] .prop-hero h1 { color: var(--on-hero); font-size: clamp(2.4rem, 5vw, 3.9rem); margin-bottom: 1rem; }
+  [data-template="property"] .prop-hero__lead { font-size: clamp(1.1rem, 2vw, 1.25rem); max-width: 30rem; margin: 0 0 1.5rem; opacity: 0.92; }
+  [data-template="property"] .prop-hero__call { margin: 0; font-size: 0.95rem; opacity: 0.9; }
+  [data-template="property"] .prop-hero__call a { color: var(--on-hero); font-weight: 600; }
+  [data-template="property"] .prop-hero__credit { position: absolute; left: 1rem; bottom: 0.5rem; margin: 0; font-size: 0.75rem; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+  [data-template="property"] .prop-hero__text .ph { color: var(--on-hero); border-bottom-color: var(--on-hero); }
+
+  /* Facts strip */
+  [data-template="property"] .prop-strip { background: var(--surface); border-bottom: 1px solid var(--border); padding: 5rem 0 1rem; }
+  [data-template="property"] .prop-strip ul { display: flex; flex-wrap: wrap; gap: 0.5rem 2.5rem; font-size: 0.95rem; color: var(--text); }
+  [data-template="property"] .prop-strip li { display: flex; align-items: center; gap: 0.6rem; min-height: 2.5rem; }
+  [data-template="property"] .prop-strip li::before { content: ''; width: 0.5rem; height: 0.5rem; background: var(--accent); flex: none; }
+
+  /* Sections */
+  [data-template="property"] .prop-section { padding: clamp(3.5rem, 7vw, 6rem) 0; }
+  [data-template="property"] .prop-section--surface { background: var(--surface); border-block: 1px solid var(--border); }
+  [data-template="property"] .prop-section--dark { background: var(--hero-bg); color: var(--on-hero); }
+  [data-template="property"] .prop-section__head { max-width: 44rem; margin-bottom: 2.5rem; }
+  [data-template="property"] .prop-section__head--row { max-width: none; display: flex; align-items: end; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; }
+  [data-template="property"] .prop-section h2 { margin-bottom: 0; }
+  [data-template="property"] .prop-link { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 2.75rem; color: var(--primary); font-weight: 600; text-decoration: none; }
+  [data-template="property"] .prop-link:hover { text-decoration: underline; }
+
+  /* Service tiles */
+  [data-template="property"] .prop-tiles { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
+  [data-template="property"] .prop-tile { background: var(--bg); padding: 2rem 1.75rem; display: grid; gap: 0.5rem; align-content: start; }
+  [data-template="property"] .prop-tile__n { font-family: var(--font-label); font-size: 0.8rem; letter-spacing: 0.1em; color: var(--accent); font-weight: 600; margin-bottom: 1.5rem; }
+  [data-template="property"] .prop-tile h3 { font-size: 1.3rem; margin-bottom: 0; }
+  [data-template="property"] .prop-tile p { margin: 0 0 0.5rem; color: var(--muted); }
+
+  /* About + why */
+  [data-template="property"] #about .split { align-items: center; }
+  [data-template="property"] #about .img-frame img { aspect-ratio: 5 / 4; }
+  [data-template="property"] .prop-why { display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+  [data-template="property"] .prop-why h3 { font-size: 1.1rem; margin-bottom: 0.4rem; }
+  [data-template="property"] .prop-why p { margin: 0; color: var(--muted); }
+
+  /* Reviews as plain quotes */
+  [data-template="property"] .review { background: transparent; border: 0; border-left: 2px solid var(--accent); padding: 0.25rem 0 0.25rem 1.5rem; }
+
+  /* Valuation */
+  [data-template="property"] .prop-valuation { display: grid; gap: 2.5rem 4rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); align-items: start; }
+  [data-template="property"] .prop-valuation .eyebrow { color: var(--on-hero); opacity: 0.85; }
+  [data-template="property"] .prop-valuation h2 { margin-bottom: 1rem; }
+  [data-template="property"] .prop-valuation__lead { font-size: 1.15rem; opacity: 0.92; }
+  [data-template="property"] .prop-valuation__call a { color: var(--on-hero); font-weight: 600; }
+  [data-template="property"] .prop-valuation__form { background: var(--surface); color: var(--text); padding: clamp(1.5rem, 3vw, 2.5rem); }
+  [data-template="property"] .prop-valuation__form .form input, [data-template="property"] .prop-valuation__form .form textarea, [data-template="property"] .prop-valuation__form .form select { border-radius: 0; }
+  [data-template="property"] .prop-valuation__form .form__note { border-radius: 0; }
+
+  @media (max-width: 63.99rem) {
+    [data-template="property"] .prop-hero { grid-template-columns: 1fr; }
+    [data-template="property"] .prop-hero__text { grid-column: 1; padding: clamp(3rem, 8vw, 5rem) 1rem 2.5rem; }
+    [data-template="property"] .prop-hero__media { grid-column: 1; min-height: 0; display: grid; padding: 0 1rem; }
+    [data-template="property"] .prop-hero__media .img-frame { position: relative; margin: 0 -1rem; }
+    [data-template="property"] .prop-hero__media img { aspect-ratio: 4 / 3; height: auto; }
+    [data-template="property"] .prop-hero__card { width: 100%; margin: -3rem auto -3rem; max-width: 28rem; }
+    [data-template="property"] .prop-strip { padding-top: 4rem; }
+    [data-template="property"] .prop-valuation { grid-template-columns: 1fr; }
+  }
 </style>

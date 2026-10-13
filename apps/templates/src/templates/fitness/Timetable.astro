@@ -1,0 +1,46 @@
+---
+/**
+ * Weekly opening-times table built from brief.openingHours. Rows on small
+ * screens, seven columns from 64rem up (CSS only). Class times are never
+ * invented: each day carries a labelled placeholder for them.
+ */
+import type { BuildInput } from '../../lib/input';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief } = input;
+const days = brief.openingHours;
+---
+{days.length ? (
+  <table class="hours-table tt" style={`--days:${days.length}`}>
+    <caption class="vh">Opening times for {brief.businessName}</caption>
+    <tbody>
+      {days.map((h) => (
+        <tr>
+          <th scope="row">{h.day}</th>
+          <td class="tt__hours">{h.hours}</td>
+          <td class="tt__classes"><span class="ph">Class times to be published by the business</span></td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+) : (
+  <p class="ph">Opening hours to be confirmed by the business</p>
+)}
+<style>
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .tt { width: 100%; max-width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 0.98rem; }
+  .tt td, .tt th { overflow-wrap: anywhere; }
+  .tt th, .tt td { text-align: left; vertical-align: top; padding: 0.6rem 0.75rem; border-bottom: 2px solid var(--border); }
+  .tt th { width: auto; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; font-size: 0.78rem; font-weight: 700; color: var(--text); border-left: 4px solid var(--primary); }
+  .tt__hours { font-weight: 700; }
+  .tt__classes { font-size: 0.85rem; }
+  .tt .ph { border-bottom: 0; }
+  @media (min-width: 64rem) {
+    .tt tbody { display: grid; grid-template-columns: repeat(var(--days), minmax(0, 1fr)); grid-template-rows: repeat(3, auto); grid-auto-flow: column; gap: 0 0.5rem; }
+    .tt tr { display: contents; }
+    .tt th { border-left: 0; border-top: 4px solid var(--primary); border-bottom: 0; padding: 0.75rem 0.5rem 0.25rem; }
+    .tt td { border-bottom: 0; padding: 0.2rem 0.5rem; }
+    .tt__hours { white-space: normal; font-size: 1.02rem; padding-bottom: 0.4rem; }
+    .tt__classes { border-top: 1px dashed var(--border); padding-top: 0.5rem; padding-bottom: 0.75rem; }
+  }
+</style>

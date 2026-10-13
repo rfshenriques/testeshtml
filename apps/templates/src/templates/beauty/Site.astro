@@ -1,71 +1,328 @@
 ---
-/** clinic: Hero, services + indicative pricing, team, booking CTA, hours+map, reviews (+ booking form). */
+/**
+ * beauty: magazine layout. Asymmetric hero with oversized type overlapping an offset portrait,
+ * hairlines and whitespace, a price-list service menu, three numbered steps, a 2:3 portrait
+ * gallery, editorial reviews, a booking panel beside the hours and a booking form. Pill buttons.
+ */
 import type { BuildInput } from '../../lib/input';
-import { pickImages, priceLevelLabel } from '../../lib/input';
+import { pickImages, telHref, starString } from '../../lib/input';
 import MockupLayout from '../../layouts/MockupLayout.astro';
-import SiteHeader from '../../components/SiteHeader.astro';
-import Hero from '../../components/Hero.astro';
-import Section from '../../components/Section.astro';
-import Services from '../../components/Services.astro';
-import About from '../../components/About.astro';
-import WhyUs from '../../components/WhyUs.astro';
+import Wordmark from '../../components/Wordmark.astro';
+import Copy from '../../components/Copy.astro';
 import Img from '../../components/Img.astro';
-import HoursMap from '../../components/HoursMap.astro';
-import CtaBand from '../../components/CtaBand.astro';
-import Reviews from '../../components/Reviews.astro';
 import ContactForm from '../../components/ContactForm.astro';
+import PriceList from './PriceList.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
-const { brief } = input;
-const { gallery } = pickImages(input);
-const price = priceLevelLabel(brief.priceLevel);
+const { brief, copy, mockup } = input;
+const { hero, gallery } = pickImages(input);
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phoneLabel = brief.phone ?? brief.internationalPhone;
+const kicker = [brief.classification.subVertical, brief.city].filter(Boolean).join(' · ');
+const hasCoords = brief.lat !== null && brief.lng !== null;
 const nav = [
-  { href: '#services', label: 'Services' }, { href: '#team', label: 'Team' }, { href: '#visit', label: 'Hours & map' },
-  { href: '#reviews', label: 'Reviews' }, { href: '#book', label: 'Book' },
+  { href: '#services', label: 'Services' }, { href: '#expect', label: 'What to expect' }, { href: '#gallery', label: 'Gallery' },
+  { href: '#about', label: 'About' }, { href: '#reviews', label: 'Reviews' }, { href: '#visit', label: 'Visit' },
 ];
+const portraits = Array.from({ length: 3 }, (_, i) => gallery[i]);
+const aboutImage = gallery[3];
 ---
 <MockupLayout input={input}>
-  <SiteHeader input={input} nav={nav} ctaHref="#book" ctaLabel="Book an appointment" />
+  <header class="bt-header" id="top">
+    <div class="container bt-header__row">
+      <Wordmark name={brief.businessName} />
+      <nav class="bt-nav" aria-label="Sections">
+        <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
+      </nav>
+      <a class="btn btn-primary bt-pill" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+    </div>
+  </header>
+
   <main id="main">
-    <Hero input={input} ctaHref="#book" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative treatment room photo" />
+    <section class="bt-hero" aria-labelledby="hero-heading">
+      <div class="container bt-hero__grid">
+        <div class="bt-hero__text">
+          {kicker && <p class="bt-kicker">{kicker}</p>}
+          <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+        </div>
+        <div class="bt-hero__media">
+          <Img image={hero} label="Indicative salon portrait" width={800} height={1200} ratio="2 / 3" eager />
+        </div>
+        <div class="bt-hero__aside">
+          <p class="bt-hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+          <div class="bt-hero__actions">
+            <a class="btn btn-primary btn-lg bt-pill" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            {tel && <a class="btn btn-outline btn-lg bt-pill" href={tel}>Call {phoneLabel}</a>}
+          </div>
+          {brief.verifiedFacts.length > 0 && (
+            <ul class="bt-hero__facts" aria-label="Good to know">
+              {brief.verifiedFacts.map((f) => <li>{f}</li>)}
+            </ul>
+          )}
+        </div>
+      </div>
+    </section>
 
-    <Section id="services" eyebrow="Services" heading="Treatments and services" lead={price ? `Indicative price level: ${price}. Exact pricing is confirmed when you book.` : 'Pricing is confirmed when you book.'}>
-      <Services copy={input.copy} layout="grid" priceLabel={price} priceNote="Pricing on request" />
-    </Section>
+    <section id="services" class="bt-section" aria-labelledby="services-heading">
+      <div class="container bt-cols">
+        <div class="bt-cols__head">
+          <span class="bt-eyebrow">Services</span>
+          <h2 id="services-heading">The menu</h2>
+          <p class="bt-cols__note">Prices are confirmed at your consultation. <span class="ph">Price list to be supplied by the business</span></p>
+        </div>
+        <div class="bt-cols__body">
+          <PriceList copy={copy} />
+        </div>
+      </div>
+    </section>
 
-    <Section id="team" tone="surface" eyebrow="Team" heading="Meet the team">
-      <About input={input} image={gallery[0]} imageLabel="Indicative team photo" factsHeading="Good to know" reverse />
-      <p class="muted team-note">Team photos, names and bios will be supplied by {brief.businessName}; none are shown in this mockup.</p>
-    </Section>
+    <section id="expect" class="bt-section bt-section--rule" aria-labelledby="expect-heading">
+      <div class="container">
+        <div class="bt-head">
+          <span class="bt-eyebrow">What to expect</span>
+          <h2 id="expect-heading">Your appointment</h2>
+        </div>
+        <ol class="bt-steps">
+          {copy.whyUs.map((w, i) => (
+            <li>
+              <span class="bt-steps__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+              <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
 
-    <Section id="why" eyebrow="Why choose us" heading="What to expect">
-      <WhyUs copy={input.copy} />
-    </Section>
+    <section id="gallery" class="bt-section" aria-labelledby="gallery-heading">
+      <div class="container">
+        <div class="bt-head bt-head--split">
+          <div>
+            <span class="bt-eyebrow">Gallery</span>
+            <h2 id="gallery-heading">Recent work</h2>
+          </div>
+          <p class="bt-head__aside">Indicative portraits, to be replaced with the salon's own photography.</p>
+        </div>
+        <ul class="bt-portraits">
+          {portraits.map((img, i) => (
+            <li><Img image={img} label={`Indicative portrait ${i + 1}`} width={800} height={1200} ratio="2 / 3" showCredit={false} /></li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-    <CtaBand input={input} id="cta" href="#book" eyebrow="Booking" />
+    <section id="about" class="bt-section bt-section--rule" aria-labelledby="about-heading">
+      <div class="container bt-about">
+        <div class="bt-about__text">
+          <span class="bt-eyebrow">About</span>
+          <h2 id="about-heading"><Copy copy={copy} path="about.heading" value={copy.about.heading} /></h2>
+          <p class="bt-about__body"><Copy copy={copy} path="about.body" value={copy.about.body} /></p>
+          {brief.editorialSummary && <p class="bt-about__summary">{brief.editorialSummary}</p>}
+        </div>
+        <div class="bt-about__media">
+          <Img image={aboutImage} label="Indicative salon interior" width={900} height={1100} ratio="4 / 5" />
+        </div>
+      </div>
+    </section>
 
-    <Section id="visit" tone="surface" eyebrow="Visit" heading="Hours and location">
-      <HoursMap input={input} />
-    </Section>
+    <section id="reviews" class="bt-section" aria-labelledby="reviews-heading">
+      <div class="container bt-cols">
+        <div class="bt-cols__head">
+          <span class="bt-eyebrow">Reviews</span>
+          <h2 id="reviews-heading">Kind words</h2>
+          {brief.rating !== null ? (
+            <div class="rating bt-rating" role="group" aria-label="Rating summary">
+              <span class="rating__value">{brief.rating.toFixed(1)}</span>
+              <span class="rating__stars" aria-hidden="true">{starString(brief.rating)}</span>
+              <span class="bt-rating__meta">out of 5{brief.reviewCount !== null ? ` from ${brief.reviewCount} ${brief.reviewCount === 1 ? 'review' : 'reviews'}` : ''} on Google</span>
+            </div>
+          ) : (
+            <p class="ph">Customer rating to be added by the business</p>
+          )}
+        </div>
+        <div class="bt-cols__body">
+          {brief.reviewExcerpts.length > 0 ? (
+            <ul class="bt-quotes">
+              {brief.reviewExcerpts.map((text) => (
+                <li><blockquote class="review bt-quote"><p>{text}</p><footer>Google review</footer></blockquote></li>
+              ))}
+            </ul>
+          ) : (
+            <p class="ph">Review excerpts to be added by the business</p>
+          )}
+        </div>
+      </div>
+    </section>
 
-    <Section id="reviews" eyebrow="Reviews" heading="What clients say">
-      <Reviews input={input} />
-    </Section>
+    <section id="visit" class="bt-section bt-section--rule" aria-labelledby="visit-heading">
+      <div class="container">
+        <div class="bt-visit">
+          <div class="bt-panel">
+            <span class="bt-eyebrow">Book</span>
+            <h2 id="visit-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+            <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+            <div class="bt-panel__actions">
+              <a class="btn btn-primary btn-lg bt-pill" href="#book"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+              {tel && <a class="btn btn-outline btn-lg bt-pill" href={tel}>Call {phoneLabel}</a>}
+            </div>
+            {brief.address ? <p class="bt-panel__addr">{brief.address}</p> : <p class="ph">Address to be confirmed by the business</p>}
+          </div>
+          <div class="bt-hours">
+            <h3>Opening hours</h3>
+            {brief.openingHours.length ? (
+              <table class="hours-table">
+                <caption class="bt-vh">Opening hours for {brief.businessName}</caption>
+                <tbody>
+                  {brief.openingHours.map((h) => (
+                    <tr><th scope="row">{h.day}</th><td>{h.hours}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p class="ph">Opening hours to be confirmed by the business</p>
+            )}
+          </div>
+          <div class="map bt-map" class:list={[!mockup.mapEmbedUrl && 'map--placeholder']}>
+            {mockup.mapEmbedUrl ? (
+              <iframe src={mockup.mapEmbedUrl} title={`Map showing the location of ${brief.businessName}`} loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen width="600" height="400"></iframe>
+            ) : (
+              <div>
+                <p><strong>Map placeholder</strong></p>
+                {brief.address && <p>{brief.address}</p>}
+                {hasCoords && <p class="muted">{brief.lat!.toFixed(5)}, {brief.lng!.toFixed(5)}</p>}
+                <p class="muted">An interactive map will be embedded on the live site.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <Section id="gallery" tone="surface" eyebrow="Gallery" heading="Inside the practice">
-      <ul class="grid">
-        {[0, 1, 2].map((i) => <li><Img image={gallery[i + 1]} label={`Indicative interior photo ${i + 1}`} width={800} height={600} /></li>)}
-      </ul>
-    </Section>
-
-    <Section id="book" eyebrow="Booking" heading="Request an appointment" lead={brief.phone ? `Call ${brief.phone} or send a booking request below.` : 'Send a booking request below.'}>
-      <ContactForm input={input} variant="booking" />
-    </Section>
+    <section id="book" class="bt-section" aria-labelledby="book-heading">
+      <div class="container bt-cols">
+        <div class="bt-cols__head">
+          <span class="bt-eyebrow">Booking</span>
+          <h2 id="book-heading">Request an appointment</h2>
+          <p class="bt-cols__note">Tell us what you would like and when suits you; the salon confirms every booking.</p>
+        </div>
+        <div class="bt-cols__body">
+          <ContactForm input={input} variant="booking" submitLabel="Request an appointment" />
+        </div>
+      </div>
+    </section>
   </main>
 </MockupLayout>
 
 <style is:global>
-  [data-template="beauty"] .hero { background: linear-gradient(135deg, var(--hero-bg), color-mix(in srgb, var(--hero-bg) 75%, var(--accent))); }
-  [data-template="beauty"] .team-note { margin: 1.5rem 0 0; font-size: 0.95rem; }
-  [data-template="beauty"] .card { border-top: 4px solid var(--primary); }
+  [data-template="beauty"] body { font-size: 1.0625rem; }
+  [data-template="beauty"] h2 { font-size: clamp(1.9rem, 3.4vw, 2.6rem); letter-spacing: var(--display-tracking); }
+  [data-template="beauty"] .container { width: min(100% - 2rem, 76rem); }
+  [data-template="beauty"] .btn { border-radius: 999px; }
+  [data-template="beauty"] .bt-pill { padding-inline: 1.5rem; min-height: 44px; }
+  [data-template="beauty"] .btn-lg.bt-pill { padding: 0.95rem 1.9rem; }
+  [data-template="beauty"] .btn-outline { border-width: 1px; }
+
+  /* Header */
+  [data-template="beauty"] .bt-header { background: var(--bg); border-bottom: 1px solid var(--border); }
+  [data-template="beauty"] .bt-header__row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 2rem; flex-wrap: wrap; padding: 1.1rem 0; }
+  [data-template="beauty"] .bt-nav { margin-left: auto; }
+  [data-template="beauty"] .bt-nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; }
+  [data-template="beauty"] .bt-nav a { color: var(--text); text-decoration: none; font-size: 0.92rem; padding: 0.6rem 0; display: inline-block; }
+  [data-template="beauty"] .bt-nav a:hover { color: var(--primary); text-decoration: underline; }
+  [data-template="beauty"] .wordmark--sm { font-size: 1.6rem; letter-spacing: 0.02em; }
+
+  /* Hero: asymmetric magazine grid */
+  [data-template="beauty"] .bt-hero { padding: clamp(3rem, 7vw, 6rem) 0 clamp(3rem, 6vw, 5rem); overflow: hidden; }
+  [data-template="beauty"] .bt-hero__grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: auto auto; column-gap: 1.5rem; align-items: start; }
+  [data-template="beauty"] .bt-hero__text { grid-column: 1 / 11; grid-row: 1; position: relative; z-index: 2; padding-top: clamp(1rem, 5vw, 5rem); }
+  [data-template="beauty"] .bt-hero__media { grid-column: 7 / 13; grid-row: 1 / 3; position: relative; z-index: 1; max-width: 26rem; justify-self: end; width: 100%; }
+  [data-template="beauty"] .bt-hero__media .img-frame { border-radius: 0; }
+  [data-template="beauty"] .bt-hero__aside { grid-column: 1 / 7; grid-row: 2; max-width: 30rem; margin-top: clamp(1.5rem, 4vw, 3rem); padding-top: 1.5rem; border-top: 1px solid var(--border); }
+  [data-template="beauty"] .bt-kicker { margin: 0 0 1.25rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.16em; font-size: 0.78rem; color: var(--muted); }
+  [data-template="beauty"] .bt-hero h1 { font-size: clamp(2.75rem, 7.6vw, 6.4rem); line-height: 0.98; margin: 0; }
+  [data-template="beauty"] .bt-hero__lead { font-size: 1.15rem; color: var(--muted); margin: 0 0 1.5rem; }
+  [data-template="beauty"] .bt-hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  [data-template="beauty"] .bt-hero__facts { display: flex; flex-wrap: wrap; gap: 0.4rem 1.5rem; margin-top: 1.75rem; font-size: 0.9rem; color: var(--muted); }
+  [data-template="beauty"] .bt-hero__facts li::before { content: '—'; margin-right: 0.5rem; color: var(--accent); }
+
+  /* Sections and columns */
+  [data-template="beauty"] .bt-section { padding: clamp(3.5rem, 8vw, 6.5rem) 0; }
+  [data-template="beauty"] .bt-section--rule { border-top: 1px solid var(--border); }
+  [data-template="beauty"] .bt-eyebrow { display: block; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.16em; font-size: 0.76rem; font-weight: 600; color: var(--accent); margin-bottom: 0.9rem; }
+  [data-template="beauty"] .bt-head { max-width: 40rem; margin-bottom: 2.5rem; }
+  [data-template="beauty"] .bt-head--split { max-width: none; display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem 2rem; flex-wrap: wrap; }
+  [data-template="beauty"] .bt-head--split h2 { margin-bottom: 0; }
+  [data-template="beauty"] .bt-head__aside { margin: 0; color: var(--muted); font-size: 0.95rem; max-width: 24rem; }
+  [data-template="beauty"] .bt-cols { display: grid; gap: 2rem 4rem; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); align-items: start; }
+  [data-template="beauty"] .bt-cols__head { position: sticky; top: 4.5rem; }
+  [data-template="beauty"] .bt-cols__note { color: var(--muted); font-size: 0.95rem; max-width: 22rem; }
+
+  /* Steps */
+  [data-template="beauty"] .bt-steps { display: grid; gap: 2rem; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; list-style: none; }
+  [data-template="beauty"] .bt-steps li { border-top: 1px solid var(--text); padding-top: 1.25rem; }
+  [data-template="beauty"] .bt-steps__n { display: block; font-family: var(--font-label); font-size: 0.8rem; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 1.25rem; }
+  [data-template="beauty"] .bt-steps h3 { font-size: 1.35rem; margin-bottom: 0.4rem; }
+  [data-template="beauty"] .bt-steps p { margin: 0; color: var(--muted); }
+
+  /* Portrait gallery, middle one offset */
+  [data-template="beauty"] .bt-portraits { display: grid; gap: 1.5rem; grid-template-columns: repeat(3, 1fr); align-items: start; }
+  [data-template="beauty"] .bt-portraits li:nth-child(2) { margin-top: 3rem; }
+  [data-template="beauty"] .bt-portraits .img-frame { border-radius: 0; }
+
+  /* About */
+  [data-template="beauty"] .bt-about { display: grid; gap: 3rem 5rem; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; }
+  [data-template="beauty"] .bt-about__body { font-size: 1.1rem; max-width: 36rem; }
+  [data-template="beauty"] .bt-about__summary { font-family: var(--font-display); font-size: 1.4rem; line-height: 1.35; max-width: 30rem; margin: 2rem 0 0; padding-left: 1.25rem; border-left: 1px solid var(--accent); }
+  [data-template="beauty"] .bt-about__media { max-width: 28rem; justify-self: end; width: 100%; }
+  [data-template="beauty"] .bt-about__media .img-frame { border-radius: 999px 999px 0 0; }
+
+  /* Reviews */
+  [data-template="beauty"] .bt-rating { margin-top: 0.5rem; }
+  [data-template="beauty"] .bt-rating__meta { flex-basis: 100%; color: var(--muted); font-size: 0.92rem; }
+  [data-template="beauty"] .bt-quotes { display: grid; }
+  [data-template="beauty"] .bt-quote { background: transparent; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 1.75rem 0; }
+  [data-template="beauty"] .bt-quotes li:last-child .bt-quote { border-bottom: 1px solid var(--border); }
+  [data-template="beauty"] .bt-quote p { font-family: var(--font-display); font-size: clamp(1.25rem, 2vw, 1.6rem); line-height: 1.35; }
+  [data-template="beauty"] .bt-quote footer { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.12em; font-size: 0.74rem; color: var(--muted); opacity: 1; }
+
+  /* Booking panel beside hours */
+  [data-template="beauty"] .bt-visit { display: grid; gap: 2rem; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); grid-template-rows: auto auto; }
+  [data-template="beauty"] .bt-panel { grid-row: 1 / 3; background: var(--surface); border: 1px solid var(--border); padding: clamp(1.75rem, 4vw, 3rem); display: flex; flex-direction: column; justify-content: center; }
+  [data-template="beauty"] .bt-panel p { color: var(--muted); max-width: 30rem; }
+  [data-template="beauty"] .bt-panel__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.5rem 0 1.75rem; }
+  [data-template="beauty"] .bt-panel__addr { margin: 0; color: var(--text); font-size: 0.95rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+  [data-template="beauty"] .bt-hours h3 { font-size: 0.78rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.16em; color: var(--accent); margin-bottom: 0.75rem; font-weight: 600; }
+  [data-template="beauty"] .bt-hours .hours-table th { font-weight: 500; }
+  [data-template="beauty"] .bt-map { min-height: 14rem; border-radius: 0; }
+  [data-template="beauty"] .bt-map iframe { min-height: 14rem; }
+  [data-template="beauty"] .bt-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Form */
+  [data-template="beauty"] .form input, [data-template="beauty"] .form textarea { border: 0; border-bottom: 1px solid var(--muted); border-radius: 0; background: transparent; padding-inline: 0; }
+  [data-template="beauty"] .form input:focus-visible, [data-template="beauty"] .form textarea:focus-visible { outline-offset: 4px; }
+  [data-template="beauty"] .form .btn { border-radius: 999px; padding-inline: 2rem; }
+  [data-template="beauty"] .form__note { border-radius: 0; background: var(--surface); }
+
+  @media (max-width: 60rem) {
+    [data-template="beauty"] .bt-hero__text { grid-column: 1 / 13; }
+    [data-template="beauty"] .bt-hero__media { grid-column: 5 / 13; grid-row: 2; max-width: 20rem; margin-top: -2rem; }
+    [data-template="beauty"] .bt-hero__aside { grid-column: 1 / 13; grid-row: 3; }
+    [data-template="beauty"] .bt-cols { grid-template-columns: 1fr; gap: 1.5rem; }
+    [data-template="beauty"] .bt-cols__head { position: static; }
+    [data-template="beauty"] .bt-steps { grid-template-columns: 1fr; gap: 1.5rem; }
+    [data-template="beauty"] .bt-about { grid-template-columns: 1fr; }
+    [data-template="beauty"] .bt-about__media { justify-self: start; max-width: 22rem; }
+    [data-template="beauty"] .bt-visit { grid-template-columns: 1fr; grid-template-rows: none; }
+    [data-template="beauty"] .bt-panel { grid-row: auto; }
+  }
+  @media (max-width: 40rem) {
+    [data-template="beauty"] .bt-hero__media { grid-column: 3 / 13; margin-top: 1rem; }
+    [data-template="beauty"] .bt-hero__aside { margin-top: 1.5rem; }
+    [data-template="beauty"] .bt-portraits { grid-template-columns: 1fr 1fr; gap: 1rem; }
+    [data-template="beauty"] .bt-portraits li:nth-child(2) { margin-top: 2rem; }
+    [data-template="beauty"] .bt-header__row { gap: 0.5rem 1rem; }
+    [data-template="beauty"] .bt-nav { order: 3; flex-basis: 100%; margin-left: 0; }
+    [data-template="beauty"] .bt-nav ul { gap: 0 1.1rem; }
+    [data-template="beauty"] .bt-header .bt-pill { padding: 0.55rem 1rem; font-size: 0.92rem; }
+  }
 </style>

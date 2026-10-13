@@ -1,0 +1,54 @@
+---
+/** Appointment card for the clinic hero: phone, opening hours summary, address and the Book button. Facts from the brief only. */
+import type { BuildInput } from '../../lib/input';
+import { telHref } from '../../lib/input';
+import Copy from '../../components/Copy.astro';
+interface Props { input: BuildInput; bookHref: string }
+const { input, bookHref } = Astro.props;
+const { brief, copy } = input;
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phoneLabel = brief.phone ?? brief.internationalPhone;
+const first = brief.openingHours[0];
+const last = brief.openingHours[brief.openingHours.length - 1];
+---
+<aside class="appt" aria-labelledby="appt-heading">
+  <h2 id="appt-heading" class="appt__title">Appointments</h2>
+  <dl class="appt__rows">
+    <div>
+      <dt>Phone</dt>
+      <dd>{tel ? <a class="appt__phone" href={tel}>{phoneLabel}</a> : <span class="ph">Phone number to be supplied by the business</span>}</dd>
+    </div>
+    <div>
+      <dt>Opening hours</dt>
+      <dd>
+        {first ? (
+          <>
+            <span>{first.day} {first.hours}</span>
+            {last && last !== first && <span class="appt__sub">{last.day} {last.hours}</span>}
+            <a class="appt__more" href="#visit">All opening hours</a>
+          </>
+        ) : <span class="ph">Opening hours to be supplied by the business</span>}
+      </dd>
+    </div>
+    <div>
+      <dt>Address</dt>
+      <dd>{brief.address ? brief.address : <span class="ph">Address to be supplied by the business</span>}</dd>
+    </div>
+  </dl>
+  <a class="btn btn-primary btn-lg appt__book" href={bookHref}><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+  <p class="appt__note">Request a time online and the practice will confirm it.</p>
+</aside>
+<style>
+  .appt { background: var(--surface); border: 1px solid var(--border); border-top: 4px solid var(--primary); padding: 1.75rem; display: grid; gap: 1.25rem; align-content: start; }
+  .appt__title { font-size: 0.8rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.14em; color: var(--muted); margin: 0; font-weight: 600; }
+  .appt__rows { margin: 0; display: grid; gap: 0.9rem; }
+  .appt__rows > div { display: grid; gap: 0.2rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--border); }
+  .appt__rows dt { font-size: 0.85rem; color: var(--muted); }
+  .appt__rows dd { margin: 0; display: grid; gap: 0.15rem; font-weight: 600; }
+  .appt__phone { font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.6rem; letter-spacing: var(--display-tracking); color: var(--primary); text-decoration: none; line-height: 1.2; }
+  .appt__phone:hover { text-decoration: underline; }
+  .appt__sub { font-weight: 400; color: var(--muted); font-size: 0.95rem; }
+  .appt__more { font-weight: 400; font-size: 0.9rem; margin-top: 0.2rem; display: inline-block; padding: 0.25rem 0; }
+  .appt__book { width: 100%; border-radius: 0; }
+  .appt__note { margin: 0; font-size: 0.88rem; color: var(--muted); }
+</style>

@@ -1,69 +1,319 @@
 ---
-/** trades: Hero with phone CTA, services grid, service area map, "why us", quote form, reviews. */
+/**
+ * trades: phone-first. Accent call bar, heavy-bordered header, dark hero with
+ * the quote form inside it, skewed trust strip of verified facts, chevron
+ * service tiles, service area with map and hours, "how we work" dark band,
+ * reviews, full quote form. Tight corners, heavy rules, diagonal dividers.
+ */
 import type { BuildInput } from '../../lib/input';
-import { pickImages } from '../../lib/input';
+import { pickImages, starString, telHref } from '../../lib/input';
 import MockupLayout from '../../layouts/MockupLayout.astro';
-import SiteHeader from '../../components/SiteHeader.astro';
-import Hero from '../../components/Hero.astro';
-import Section from '../../components/Section.astro';
-import Services from '../../components/Services.astro';
-import About from '../../components/About.astro';
-import WhyUs from '../../components/WhyUs.astro';
-import HoursMap from '../../components/HoursMap.astro';
-import CtaBand from '../../components/CtaBand.astro';
+import Wordmark from '../../components/Wordmark.astro';
+import Copy from '../../components/Copy.astro';
+import Img from '../../components/Img.astro';
 import Reviews from '../../components/Reviews.astro';
-import ContactForm from '../../components/ContactForm.astro';
+import QuoteForm from './QuoteForm.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
-const { brief } = input;
+const { brief, copy, mockup } = input;
 const { gallery } = pickImages(input);
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phone = brief.phone ?? brief.internationalPhone;
+const first = brief.openingHours[0];
+const hasCoords = brief.lat !== null && brief.lng !== null;
+const tagline = [brief.classification.subVertical, brief.city ? `Serving ${brief.city}` : null].filter(Boolean).join(' · ');
+const heroEyebrow = [brief.city ? `Serving ${brief.city}` : brief.classification.subVertical, brief.classification.differentiators[0] ?? null].filter(Boolean).join(' · ');
 const nav = [
-  { href: '#services', label: 'Services' }, { href: '#area', label: 'Service area' }, { href: '#why', label: 'Why us' },
-  { href: '#reviews', label: 'Reviews' }, { href: '#quote', label: 'Get a quote' },
+  { href: '#services', label: 'Services' }, { href: '#area', label: 'Area' }, { href: '#why', label: 'Why us' },
+  { href: '#reviews', label: 'Reviews' },
 ];
 ---
 <MockupLayout input={input}>
-  <SiteHeader input={input} nav={nav} ctaHref="#quote" ctaLabel="Get a quote" />
+  <div class="callbar" role="region" aria-label="Call us">
+    <div class="container callbar__row">
+      <span class="callbar__tag">{brief.classification.subVertical}</span>
+      {first && <span class="callbar__hours">{first.day} {first.hours}</span>}
+      {tel ? <a class="callbar__phone" href={tel}><span class="callbar__label">Call now</span> {phone}</a> : <span class="callbar__phone ph">Phone number to be supplied by the business</span>}
+    </div>
+  </div>
+  <header class="hdr" id="top">
+    <div class="container hdr__row">
+      <Wordmark name={brief.businessName} />
+      <nav class="hdr__nav" aria-label="Sections">
+        <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
+      </nav>
+      <a class="btn btn-primary hdr__cta" href="#quote"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+    </div>
+  </header>
+
   <main id="main">
-    <Hero input={input} ctaHref="#quote" showPhone eyebrow={[brief.classification.subVertical, brief.city ? `Serving ${brief.city}` : null].filter(Boolean).join(' · ')} imageLabel="Indicative work-in-progress photo">
-      <div class="hero__meta" slot="meta">
-        {brief.rating !== null && <span>★ {brief.rating.toFixed(1)}{brief.reviewCount !== null ? ` · ${brief.reviewCount} reviews` : ''}</span>}
-        {brief.openingHours[0] && <span>{brief.openingHours[0].day}: {brief.openingHours[0].hours}</span>}
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="container hero__grid">
+        <div class="hero__copy">
+          <span class="eyebrow">{heroEyebrow}</span>
+          <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+          <p class="hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+          <div class="hero__actions">
+            {tel && <a class="btn btn-on-hero btn-lg" href={tel}>Call {phone}</a>}
+            <a class="btn btn-ghost-hero btn-lg" href="#services">See what we do</a>
+          </div>
+          <ul class="hero__proof">
+            {brief.rating !== null && (
+              <li><strong>{brief.rating.toFixed(1)}</strong> <span class="hero__stars" aria-hidden="true">{starString(brief.rating)}</span> {brief.reviewCount !== null ? `${brief.reviewCount} Google reviews` : 'Google rating'}</li>
+            )}
+            {brief.openingHours.length > 0 && brief.openingHours[6] && <li><strong>{brief.openingHours[6].day}</strong> {brief.openingHours[6].hours}</li>}
+          </ul>
+        </div>
+        <div class="hero__form" id="quote">
+          <QuoteForm input={input} id="quote-hero" heading="Request a quote" compact submitLabel={copy.cta.buttonLabel} />
+        </div>
       </div>
-    </Hero>
+    </section>
 
-    <Section id="services" eyebrow="Services" heading="What we do">
-      <Services copy={input.copy} layout="grid" />
-    </Section>
+    <div class="trust" aria-label="Verified facts">
+      <ul class="container trust__list">
+        {brief.verifiedFacts.map((f) => <li class="trust__item"><span>{f}</span></li>)}
+        {brief.classification.differentiators.filter((d) => !brief.verifiedFacts.some((f) => f.toLowerCase().includes(d.toLowerCase()))).map((d) => <li class="trust__item"><span>{d}</span></li>)}
+        <li class="trust__item trust__item--ph"><span class="ph">Accreditations and guarantees to be supplied by the business</span></li>
+      </ul>
+    </div>
 
-    <Section id="area" tone="surface" eyebrow="Service area" heading={brief.city ? `Covering ${brief.city}` : 'Where we work'}>
-      <HoursMap input={input} serviceArea />
-    </Section>
-
-    <Section id="why" eyebrow="Why us" heading="Why choose us">
-      <div class="split">
-        <WhyUs copy={input.copy} variant="list" />
-        <About input={input} image={gallery[0]} imageLabel="Indicative van or team photo" factsHeading="The facts" />
+    <section id="services" class="sec" aria-labelledby="services-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">Services</span>
+          <h2 id="services-heading">What we do</h2>
+          <p class="sec__lead">{tel ? `Not sure which one you need? Call ${phone} and describe the problem.` : 'Not sure which one you need? Describe the problem in the quote form.'}</p>
+        </div>
+        <ul class="tiles">
+          {copy.services.map((s, i) => (
+            <li class="tile">
+              <span class="tile__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+              <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+              <a class="tile__link" href="#quote">Get a quote<span class="chev" aria-hidden="true"></span></a>
+            </li>
+          ))}
+        </ul>
       </div>
-    </Section>
+    </section>
 
-    <CtaBand input={input} id="cta" href="#quote" eyebrow="Quotes" />
+    <section id="area" class="sec sec--surface" aria-labelledby="area-heading">
+      <div class="container area">
+        <div class="area__text">
+          <span class="eyebrow">Service area</span>
+          <h2 id="area-heading">{brief.city ? `Covering ${brief.city}` : 'Where we work'}</h2>
+          {brief.city && <p class="sec__lead">Serving {brief.city} and the surrounding area.</p>}
+          <dl class="area__facts">
+            <div><dt>Based at</dt><dd>{brief.address ?? <span class="ph">Address to be confirmed by the business</span>}</dd></div>
+            {tel && <div><dt>Phone</dt><dd><a href={tel}>{phone}</a></dd></div>}
+          </dl>
+          <h3 class="area__h3">Hours</h3>
+          {brief.openingHours.length ? (
+            <table class="hours-table">
+              <caption class="vh">Opening hours for {brief.businessName}</caption>
+              <tbody>{brief.openingHours.map((h) => <tr><th scope="row">{h.day}</th><td>{h.hours}</td></tr>)}</tbody>
+            </table>
+          ) : (
+            <p class="ph">Opening hours to be confirmed by the business</p>
+          )}
+        </div>
+        <div class="area__map">
+          <div class="map" class:list={[!mockup.mapEmbedUrl && 'map--placeholder']}>
+            {mockup.mapEmbedUrl ? (
+              <iframe src={mockup.mapEmbedUrl} title={`Map showing the location of ${brief.businessName}`} loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen width="600" height="400"></iframe>
+            ) : (
+              <div>
+                <p><strong>Map placeholder</strong></p>
+                {brief.address && <p>{brief.address}</p>}
+                {hasCoords && <p class="muted">{brief.lat!.toFixed(5)}, {brief.lng!.toFixed(5)}</p>}
+                <p class="muted">An interactive map of the service area will be embedded on the live site.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <Section id="quote" tone="surface" eyebrow="Quote" heading="Request a quote" lead={brief.phone ? `Call ${brief.phone} for urgent jobs, or describe the work below.` : 'Describe the work below and we will come back to you.'}>
-      <ContactForm input={input} variant="quote" />
-    </Section>
+    <section id="why" class="sec sec--dark" aria-labelledby="why-heading">
+      <div class="container why">
+        <div class="why__about">
+          <span class="eyebrow">Why us</span>
+          <h2 id="why-heading"><Copy copy={copy} path="about.heading" value={copy.about.heading} /></h2>
+          <p class="why__body"><Copy copy={copy} path="about.body" value={copy.about.body} /></p>
+          <Img image={gallery[0]} label="Indicative van or team photo" width={900} height={600} ratio="3 / 2" class="why__img" />
+        </div>
+        <ol class="why__list">
+          {copy.whyUs.map((w, i) => (
+            <li>
+              <span class="why__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+                <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
 
-    <Section id="reviews" eyebrow="Reviews" heading="What customers say">
-      <Reviews input={input} />
-    </Section>
+    <section id="reviews" class="sec" aria-labelledby="reviews-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">Reviews</span>
+          <h2 id="reviews-heading">What customers say</h2>
+        </div>
+        <div class="reviews"><Reviews input={input} /></div>
+      </div>
+    </section>
+
+    <section id="quote-form" class="sec sec--surface quote" aria-labelledby="quote-heading">
+      <div class="container quote__grid">
+        <div class="quote__text">
+          <span class="eyebrow">Quotes</span>
+          <h2 id="quote-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+          <p class="sec__lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+          {tel && <a class="btn btn-accent btn-lg" href={tel}>Call {phone}</a>}
+          {first && <p class="quote__hours"><strong>{first.day}</strong> {first.hours}{brief.openingHours[5] ? <> · <strong>{brief.openingHours[5].day}</strong> {brief.openingHours[5].hours}</> : null}</p>}
+        </div>
+        <div class="quote__form">
+          <QuoteForm input={input} id="quote-full" heading="Describe the job" level={3} submitLabel={copy.cta.buttonLabel} />
+        </div>
+      </div>
+    </section>
   </main>
+
+  {tel && (
+    <div class="callfab" aria-hidden="true">
+      <a class="btn btn-accent" href={tel} tabindex="-1">Call {phone}</a>
+      <a class="btn btn-primary" href="#quote" tabindex="-1">Get a quote</a>
+    </div>
+  )}
 </MockupLayout>
 
 <style is:global>
-  [data-template="trades"] h1, [data-template="trades"] h2 { text-transform: uppercase; letter-spacing: -0.01em; }
-  [data-template="trades"] .hero { border-bottom: 8px solid var(--accent); }
-  [data-template="trades"] .card { border-left: 5px solid var(--accent); border-radius: 4px; }
-  [data-template="trades"] .btn { border-radius: 3px; }
-  [data-template="trades"] #why .split { align-items: start; }
-  [data-template="trades"] #why .split > :last-child .split { grid-template-columns: 1fr; }
+  [data-template="trades"] body { padding-bottom: 0; }
+  [data-template="trades"] h1, [data-template="trades"] h2 { text-transform: uppercase; letter-spacing: -0.015em; line-height: 1.05; }
+  [data-template="trades"] .btn { border-radius: 2px; text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.95rem; font-weight: 700; }
+  [data-template="trades"] .btn-lg { font-size: 1.02rem; padding: 0.95rem 1.5rem; }
+  [data-template="trades"] .eyebrow { color: var(--primary); }
+  [data-template="trades"] .review { border-radius: 0; border: 2px solid var(--border); border-left: 6px solid var(--primary); }
+  [data-template="trades"] .rating__value { font-size: 3rem; }
+  [data-template="trades"] .map { border-radius: 0; border: 3px solid var(--text); }
+  [data-template="trades"] .img-frame { border-radius: 0; }
+  [data-template="trades"] .site-footer { border-top: 6px solid var(--accent); }
+  [data-template="trades"] .hours-table th { width: auto; padding-right: 1.5rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.06em; font-size: 0.85rem; }
+  [data-template="trades"] .hours-table th, [data-template="trades"] .hours-table td { border-bottom: 2px solid var(--border); padding: 0.5rem 0; }
+  @media (max-width: 47.99rem) {
+    [data-template="trades"] body { padding-bottom: 4.5rem; }
+  }
+</style>
+
+<style>
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .eyebrow { display: block; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.12em; font-size: 0.78rem; font-weight: 700; color: var(--primary); margin-bottom: 0.75rem; }
+
+  /* Call bar */
+  .callbar { background: var(--accent); color: var(--on-accent); font-size: 0.92rem; }
+  .callbar__row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem 1.5rem; flex-wrap: wrap; min-height: 2.75rem; padding: 0.25rem 0; }
+  .callbar__tag { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.78rem; font-weight: 700; }
+  .callbar__hours { opacity: 0.95; margin-left: auto; }
+  .callbar__phone { color: inherit; text-decoration: none; font-weight: 800; font-size: 1.1rem; display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0 0.25rem; }
+  .callbar__phone:hover { text-decoration: underline; }
+  .callbar__label { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; font-size: 0.72rem; font-weight: 700; opacity: 0.9; }
+
+  /* Header */
+  .hdr { background: var(--surface); border-bottom: 4px solid var(--hero-bg); }
+  .hdr__row { display: flex; align-items: center; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; padding: 1rem 0; }
+  .hdr__nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; }
+  .hdr__nav a { color: var(--text); text-decoration: none; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.82rem; font-weight: 700; display: inline-block; padding: 0.6rem 0; border-bottom: 3px solid transparent; }
+  .hdr__nav a:hover { border-bottom-color: var(--accent); }
+  .hdr__cta { margin-left: auto; }
+
+  /* Hero with form inside */
+  .hero { position: relative; background: var(--hero-bg); color: var(--on-hero); padding: clamp(3rem, 7vw, 5.5rem) 0 clamp(5rem, 9vw, 7.5rem); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 3rem), 0 100%); overflow: hidden; }
+  .hero::before { content: ''; position: absolute; inset: 0 0 0 58%; background: color-mix(in srgb, var(--on-hero) 6%, transparent); clip-path: polygon(14% 0, 100% 0, 100% 100%, 0 100%); pointer-events: none; }
+  .hero__grid { position: relative; display: grid; gap: 2.5rem; align-items: start; }
+  .hero__copy .eyebrow { color: var(--on-hero); opacity: 0.8; }
+  .hero h1 { font-size: clamp(2.3rem, 5.6vw, 4.2rem); margin-bottom: 0.4em; max-width: 14ch; }
+  .hero__lead { font-size: clamp(1.1rem, 1.8vw, 1.3rem); max-width: 34rem; opacity: 0.92; margin-bottom: 1.75rem; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .hero__proof { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; margin-top: 2rem; padding-top: 1.25rem; border-top: 2px solid color-mix(in srgb, var(--on-hero) 30%, transparent); font-size: 0.95rem; }
+  .hero__proof strong { font-size: 1.15rem; }
+  .hero__stars { letter-spacing: 0.08em; }
+  .hero__form { background: var(--surface); color: var(--text); padding: 1.6rem; border: 3px solid var(--text); box-shadow: 10px 10px 0 var(--accent); scroll-margin-top: 4rem; }
+  @media (min-width: 60rem) {
+    .hero__grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 24rem); gap: 4rem; }
+    .hero__form { margin-top: 0.5rem; }
+  }
+
+  /* Trust strip, skewed into the hero's diagonal */
+  .trust { background: var(--accent); color: var(--on-accent); margin-top: -3rem; padding: 4rem 0 1.5rem; clip-path: polygon(0 3rem, 100% 0, 100% 100%, 0 100%); }
+  .trust__list { display: flex; flex-wrap: wrap; gap: 0.6rem 0.75rem; align-items: center; }
+  .trust__item { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0.35rem 0.9rem; border: 2px solid color-mix(in srgb, var(--on-accent) 55%, transparent); transform: skew(-10deg); font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.06em; font-size: 0.78rem; font-weight: 700; }
+  .trust__item > span { display: inline-block; transform: skew(10deg); }
+  .trust__item--ph { border-style: dashed; }
+  .trust__item .ph { color: inherit; border-bottom: 0; opacity: 0.9; }
+
+  /* Sections */
+  .sec { padding: clamp(3rem, 7vw, 5.5rem) 0; }
+  .sec--surface { background: var(--surface); border-block: 2px solid var(--border); }
+  .sec--dark { background: var(--hero-bg); color: var(--on-hero); }
+  .sec--dark .eyebrow { color: var(--on-hero); opacity: 0.8; }
+  .sec__head { max-width: 46rem; margin-bottom: 2.25rem; }
+  .sec__lead { font-size: 1.12rem; color: var(--muted); }
+  .sec--dark .sec__lead { color: inherit; opacity: 0.9; }
+  .sec h2 { font-size: clamp(1.8rem, 3.6vw, 2.6rem); }
+
+  /* Service tiles with chevrons */
+  .tiles { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); }
+  .tile { position: relative; background: var(--surface); border: 2px solid var(--border); border-top: 5px solid var(--primary); padding: 1.4rem 1.4rem 1.2rem; display: flex; flex-direction: column; }
+  .tile:hover { border-color: var(--text); border-top-color: var(--accent); }
+  .tile__n { font-family: var(--font-label); font-size: 0.78rem; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; margin-bottom: 0.6rem; }
+  .tile h3 { font-size: 1.2rem; margin-bottom: 0.4rem; }
+  .tile p { margin: 0 0 1rem; color: var(--muted); font-size: 0.98rem; flex: 1; }
+  .tile__link { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.8rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+  .tile__link:hover { text-decoration: underline; }
+  .chev { display: inline-block; width: 0.55em; height: 0.55em; border-top: 3px solid currentColor; border-right: 3px solid currentColor; transform: rotate(45deg); }
+
+  /* Service area */
+  .area { display: grid; gap: 2.5rem; align-items: start; }
+  .area__facts { margin: 0 0 1.5rem; display: grid; gap: 0.75rem; }
+  .area__facts div { display: grid; gap: 0.1rem; border-left: 4px solid var(--accent); padding-left: 0.9rem; }
+  .area__facts dt { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.75rem; font-weight: 700; color: var(--muted); }
+  .area__facts dd { margin: 0; font-weight: 600; }
+  .area__facts a { color: var(--primary); }
+  .area__h3 { font-size: 1rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; margin: 0 0 0.5rem; }
+  .area__map { min-height: 22rem; display: grid; align-self: stretch; }
+  .area__map :global(.map) { min-height: 22rem; height: 100%; }
+  @media (min-width: 56rem) { .area { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 4rem; } }
+
+  /* Why us: dark band */
+  .why { display: grid; gap: 2.5rem; align-items: start; }
+  .why__body { opacity: 0.92; max-width: 40rem; margin-bottom: 1.75rem; }
+  .why__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 1rem; }
+  .why__list li { display: flex; gap: 1.1rem; border: 2px solid color-mix(in srgb, var(--on-hero) 35%, transparent); padding: 1.25rem 1.4rem; }
+  .why__n { font-family: var(--font-display); font-weight: var(--display-weight); font-size: 2rem; line-height: 1; min-width: 2.75rem; opacity: 0.85; }
+  .why__list h3 { font-size: 1.15rem; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  .why__list p { margin: 0; opacity: 0.9; }
+  .why :global(.credit) { color: inherit; opacity: 0.7; }
+  @media (min-width: 60rem) { .why { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 4rem; } }
+
+  /* Quote section */
+  .quote { border-top: 6px solid var(--primary); }
+  .quote__grid { display: grid; gap: 2.5rem; align-items: start; }
+  .quote__hours { margin-top: 1.5rem; font-size: 0.95rem; color: var(--muted); }
+  .quote__form { background: var(--bg); border: 3px solid var(--text); padding: 1.6rem; box-shadow: 10px 10px 0 var(--border); }
+  @media (min-width: 60rem) { .quote__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 4rem; } }
+
+  /* Mobile sticky call bar */
+  .callfab { display: none; }
+  @media (max-width: 47.99rem) {
+    .callfab { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; padding: 0.5rem 0.75rem; background: var(--surface); border-top: 3px solid var(--text); }
+    .callfab :global(.btn) { min-height: 2.75rem; }
+    .callbar__hours { display: none; }
+    .callbar__row { justify-content: center; text-align: center; }
+    .hdr__nav { display: none; }
+    .hdr__cta { margin-left: 0; }
+  }
 </style>

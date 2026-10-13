@@ -1,0 +1,28 @@
+---
+/** copy.services as a two-column dotted-leader menu. Prices are never invented: every line reads "on request". */
+import type { SiteCopy } from '@sitewright/shared-types';
+import Copy from '../../components/Copy.astro';
+interface Props { copy: SiteCopy }
+const { copy } = Astro.props;
+---
+<ul class="menu-list">
+  {copy.services.map((s, i) => (
+    <li class="menu-list__item">
+      <div class="menu-list__row">
+        <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+        <span class="menu-list__leader" aria-hidden="true"></span>
+        <span class="menu-list__price"><em>on request</em></span>
+      </div>
+      <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+    </li>
+  ))}
+</ul>
+<style>
+  .menu-list { display: grid; gap: 0 4rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+  .menu-list__item { padding: 1.35rem 0; border-bottom: 1px solid var(--border); }
+  .menu-list__row { display: flex; align-items: baseline; gap: 0.75rem; }
+  .menu-list__row h3 { margin: 0; font-size: 1.2rem; flex: 0 1 auto; }
+  .menu-list__leader { flex: 1 1 1rem; border-bottom: 2px dotted var(--border); min-width: 1.5rem; transform: translateY(-0.35em); }
+  .menu-list__price { flex: 0 0 auto; color: var(--muted); font-size: 0.92rem; }
+  .menu-list__item p { margin: 0.45rem 0 0; color: var(--muted); font-size: 0.98rem; max-width: 34rem; }
+</style>

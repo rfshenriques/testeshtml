@@ -1,80 +1,369 @@
 ---
-/** retail: Hero, categories, featured products, store info, hours+map (+ reviews, contact form). */
+/**
+ * retail: compact info bar (hours, phone), split hero with a product photo on a tinted panel,
+ * category tiles 4-up with image placeholders, featured products as "ask in store" cards,
+ * a promo band from copy.cta, store info with hours + map, reviews and a contact form. Grid-heavy.
+ */
 import type { BuildInput } from '../../lib/input';
-import { pickImages, priceLevelLabel } from '../../lib/input';
+import { pickImages, telHref, starString } from '../../lib/input';
 import MockupLayout from '../../layouts/MockupLayout.astro';
-import SiteHeader from '../../components/SiteHeader.astro';
-import Hero from '../../components/Hero.astro';
-import Section from '../../components/Section.astro';
+import Wordmark from '../../components/Wordmark.astro';
 import Copy from '../../components/Copy.astro';
-import About from '../../components/About.astro';
-import Gallery from '../../components/Gallery.astro';
-import WhyUs from '../../components/WhyUs.astro';
-import HoursMap from '../../components/HoursMap.astro';
-import CtaBand from '../../components/CtaBand.astro';
-import Reviews from '../../components/Reviews.astro';
+import Img from '../../components/Img.astro';
 import ContactForm from '../../components/ContactForm.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
-const { brief, copy } = input;
-const { gallery } = pickImages(input);
-const price = priceLevelLabel(brief.priceLevel);
+const { brief, copy, mockup } = input;
+const { hero, gallery } = pickImages(input);
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phoneLabel = brief.phone ?? brief.internationalPhone;
+const kicker = [brief.classification.subVertical, brief.city].filter(Boolean).join(' · ');
+const hasCoords = brief.lat !== null && brief.lng !== null;
+const first = brief.openingHours[0];
 const nav = [
-  { href: '#categories', label: 'Shop' }, { href: '#featured', label: 'Featured' }, { href: '#store', label: 'Store info' },
-  { href: '#visit', label: 'Hours & map' }, { href: '#contact', label: 'Contact' },
+  { href: '#categories', label: 'Shop' }, { href: '#featured', label: 'Featured' }, { href: '#about', label: 'About' },
+  { href: '#store', label: 'Store info' }, { href: '#reviews', label: 'Reviews' }, { href: '#contact', label: 'Contact' },
 ];
+const categories = copy.services.slice(0, 4);
+const products = Array.from({ length: 4 }, (_, i) => gallery[categories.length + i]);
+const aboutImage = gallery[categories.length + 4];
 ---
 <MockupLayout input={input}>
-  <SiteHeader input={input} nav={nav} ctaHref="#visit" ctaLabel="Visit the store" />
+  <div class="rt-infobar" role="note" aria-label="Store information">
+    <div class="container rt-infobar__row">
+      <span>{first ? <>Hours: <strong>{first.day} {first.hours}</strong> · <a href="#store">All hours</a></> : <span class="ph">Opening hours to be supplied by the business</span>}</span>
+      {brief.address && <span class="rt-infobar__addr">{brief.address}</span>}
+      {tel && <a class="rt-infobar__phone" href={tel}>Call {phoneLabel}</a>}
+    </div>
+  </div>
+
+  <header class="rt-header" id="top">
+    <div class="container rt-header__row">
+      <Wordmark name={brief.businessName} />
+      <nav class="rt-nav" aria-label="Sections">
+        <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
+      </nav>
+      <a class="btn btn-primary" href="#store">Visit the shop</a>
+    </div>
+  </header>
+
   <main id="main">
-    <Hero input={input} ctaHref="#categories" layout="stacked" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative storefront photo" secondaryHref="#visit" secondaryLabel="Opening hours" />
+    <section class="rt-hero" aria-labelledby="hero-heading">
+      <div class="container rt-hero__grid">
+        <div class="rt-hero__text">
+          {kicker && <p class="rt-kicker">{kicker}</p>}
+          <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+          <p class="rt-hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+          <div class="rt-hero__actions">
+            <a class="btn btn-primary btn-lg" href="#categories"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            <a class="btn btn-outline btn-lg" href="#store">Opening hours</a>
+          </div>
+          {brief.verifiedFacts.length > 0 && (
+            <ul class="rt-hero__facts" aria-label="Good to know">
+              {brief.verifiedFacts.map((f) => <li>{f}</li>)}
+            </ul>
+          )}
+        </div>
+        <div class="rt-hero__media">
+          <Img image={hero} label="Indicative product photo" width={1000} height={1000} ratio="1 / 1" eager />
+        </div>
+      </div>
+    </section>
 
-    <Section id="categories" eyebrow="Categories" heading="What you'll find in store">
-      <ul class="grid categories">
-        {copy.services.map((s, i) => (
-          <li class="card category">
-            <span class="category__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
-            <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
-            <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
-          </li>
-        ))}
-      </ul>
-    </Section>
+    <section id="categories" class="rt-section" aria-labelledby="categories-heading">
+      <div class="container">
+        <div class="rt-head">
+          <div>
+            <span class="rt-eyebrow">Shop by category</span>
+            <h2 id="categories-heading">What we stock</h2>
+          </div>
+          <p class="rt-head__aside">Category photos to be replaced with the shop's own photography.</p>
+        </div>
+        <ul class="rt-cats">
+          {categories.map((s, i) => (
+            <li class="rt-cat">
+              <Img image={gallery[i]} label={`Indicative ${s.name.toLowerCase()} photo`} width={800} height={600} showCredit={false} />
+              <div class="rt-cat__body">
+                <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+                <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+                <a class="rt-cat__link" href="#contact">Ask about {s.name.toLowerCase()}</a>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-    <Section id="featured" tone="surface" eyebrow="Featured" heading="Featured products" lead="Product photography and descriptions will be supplied by the store; these tiles are indicative.">
-      <Gallery images={gallery} slots={6} label="Indicative product photo" width={700} height={700} captions />
-    </Section>
+    <section id="featured" class="rt-section rt-section--surface" aria-labelledby="featured-heading">
+      <div class="container">
+        <div class="rt-head">
+          <div>
+            <span class="rt-eyebrow">Featured</span>
+            <h2 id="featured-heading">In the shop this season</h2>
+          </div>
+          <p class="rt-head__aside">Featured products, photos and prices to be supplied by {brief.businessName}; none are invented here.</p>
+        </div>
+        <ul class="rt-products">
+          {products.map((img, i) => (
+            <li class="rt-product">
+              <Img image={img} label={`Product photo ${i + 1} to be supplied`} width={800} height={800} ratio="1 / 1" showCredit={false} />
+              <div class="rt-product__body">
+                <h3 class="ph">Product to be supplied by the business</h3>
+                <p class="rt-product__meta"><span class="rt-tag">Ask in store</span></p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-    <Section id="store" eyebrow="Store info" heading="About the store">
-      <About input={input} image={gallery[gallery.length - 1]} imageLabel="Indicative shop interior photo" factsHeading="Store details" />
-      {price && <p class="muted price-note">Indicative price level: <span class="badge">{price}</span></p>}
-    </Section>
+    <section id="promo" class="rt-promo" aria-labelledby="promo-heading">
+      <div class="container rt-promo__inner">
+        <div>
+          <span class="rt-eyebrow rt-eyebrow--onhero">From the shop</span>
+          <h2 id="promo-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+          <p class="rt-promo__lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+        </div>
+        <div class="rt-promo__actions">
+          <a class="btn btn-on-hero btn-lg" href="#contact"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+          {tel && <a class="btn btn-ghost-hero btn-lg" href={tel}>Call {phoneLabel}</a>}
+        </div>
+      </div>
+    </section>
 
-    <Section id="why" tone="surface" eyebrow="Why shop here" heading="Why customers come back">
-      <WhyUs copy={input.copy} />
-    </Section>
+    <section id="about" class="rt-section" aria-labelledby="about-heading">
+      <div class="container rt-about">
+        <div class="rt-about__text">
+          <span class="rt-eyebrow">About the shop</span>
+          <h2 id="about-heading"><Copy copy={copy} path="about.heading" value={copy.about.heading} /></h2>
+          <p class="rt-about__body"><Copy copy={copy} path="about.body" value={copy.about.body} /></p>
+          <ul class="rt-why">
+            {copy.whyUs.map((w, i) => (
+              <li>
+                <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+                <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div class="rt-about__media">
+          <Img image={aboutImage} label="Indicative shop interior photo" width={900} height={1000} ratio="9 / 10" />
+        </div>
+      </div>
+    </section>
 
-    <Section id="visit" eyebrow="Visit" heading="Hours and location">
-      <HoursMap input={input} />
-    </Section>
+    <section id="store" class="rt-section rt-section--surface" aria-labelledby="store-heading">
+      <div class="container">
+        <div class="rt-head">
+          <div>
+            <span class="rt-eyebrow">Store info</span>
+            <h2 id="store-heading">Visit us</h2>
+          </div>
+        </div>
+        <div class="rt-store">
+          <div class="rt-store__hours">
+            <h3>Opening hours</h3>
+            {brief.openingHours.length ? (
+              <table class="hours-table">
+                <caption class="rt-vh">Opening hours for {brief.businessName}</caption>
+                <tbody>
+                  {brief.openingHours.map((h) => (
+                    <tr><th scope="row">{h.day}</th><td>{h.hours}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p class="ph">Opening hours to be confirmed by the business</p>
+            )}
+          </div>
+          <div class="rt-store__find">
+            <h3>Find us</h3>
+            {brief.address ? <p class="rt-store__addr">{brief.address}</p> : <p class="ph">Address to be confirmed by the business</p>}
+            {tel && <p><a class="btn btn-outline" href={tel}>Call {phoneLabel}</a></p>}
+            {brief.editorialSummary && <p class="rt-store__summary">{brief.editorialSummary}</p>}
+          </div>
+          <div class="map rt-map" class:list={[!mockup.mapEmbedUrl && 'map--placeholder']}>
+            {mockup.mapEmbedUrl ? (
+              <iframe src={mockup.mapEmbedUrl} title={`Map showing the location of ${brief.businessName}`} loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen width="600" height="400"></iframe>
+            ) : (
+              <div>
+                <p><strong>Map placeholder</strong></p>
+                {brief.address && <p>{brief.address}</p>}
+                {hasCoords && <p class="muted">{brief.lat!.toFixed(5)}, {brief.lng!.toFixed(5)}</p>}
+                <p class="muted">An interactive map will be embedded on the live site.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <Section id="reviews" tone="surface" eyebrow="Reviews" heading="What shoppers say">
-      <Reviews input={input} />
-    </Section>
+    <section id="reviews" class="rt-section" aria-labelledby="reviews-heading">
+      <div class="container">
+        <div class="rt-head">
+          <div>
+            <span class="rt-eyebrow">Reviews</span>
+            <h2 id="reviews-heading">What customers say</h2>
+          </div>
+          {brief.rating !== null ? (
+            <div class="rating rt-rating" role="group" aria-label="Rating summary">
+              <span class="rating__value">{brief.rating.toFixed(1)}</span>
+              <span class="rating__stars" aria-hidden="true">{starString(brief.rating)}</span>
+              <span class="rt-rating__meta">out of 5{brief.reviewCount !== null ? ` from ${brief.reviewCount} ${brief.reviewCount === 1 ? 'review' : 'reviews'}` : ''} on Google</span>
+            </div>
+          ) : (
+            <p class="ph">Customer rating to be added by the business</p>
+          )}
+        </div>
+        {brief.reviewExcerpts.length > 0 && (
+          <ul class="rt-quotes">
+            {brief.reviewExcerpts.map((text) => (
+              <li><blockquote class="review rt-quote"><p>{text}</p><footer>Google review</footer></blockquote></li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
 
-    <CtaBand input={input} id="cta" href="#contact" eyebrow="Get in touch" />
-
-    <Section id="contact" eyebrow="Contact" heading="Ask about stock or orders">
-      <ContactForm input={input} variant="contact" />
-    </Section>
+    <section id="contact" class="rt-section rt-section--surface" aria-labelledby="contact-heading">
+      <div class="container rt-contact">
+        <div class="rt-contact__intro">
+          <span class="rt-eyebrow">Get in touch</span>
+          <h2 id="contact-heading">Ask the shop</h2>
+          <p class="rt-contact__lead">Looking for a particular item, a gift idea or an order? Send a message{tel ? ' or call' : ''} and the shop will get back to you.</p>
+          {tel && <p><a class="btn btn-outline" href={tel}>Call {phoneLabel}</a></p>}
+        </div>
+        <div class="rt-contact__form">
+          <ContactForm input={input} variant="contact" submitLabel="Send message" />
+        </div>
+      </div>
+    </section>
   </main>
 </MockupLayout>
 
 <style is:global>
-  [data-template="retail"] .hero { background: linear-gradient(180deg, var(--hero-bg), color-mix(in srgb, var(--hero-bg) 85%, var(--primary))); }
-  [data-template="retail"] .category { position: relative; padding-top: 2.5rem; }
-  [data-template="retail"] .category__n { position: absolute; top: 1rem; right: 1.25rem; font-family: var(--font-label); font-size: 0.8rem; color: var(--accent); letter-spacing: 0.1em; }
-  [data-template="retail"] .price-note { margin: 1.5rem 0 0; }
-  [data-template="retail"] .card { border-radius: 16px; }
-  [data-template="retail"] .btn { border-radius: 999px; }
+  [data-template="retail"] {
+    --rt-tint: color-mix(in srgb, var(--primary) 9%, var(--bg));
+    --rt-radius: 4px;
+  }
+  [data-template="retail"] h2 { font-size: clamp(1.7rem, 3.2vw, 2.4rem); }
+  [data-template="retail"] .btn { border-radius: var(--rt-radius); }
+  [data-template="retail"] .img-frame { border-radius: var(--rt-radius); }
+
+  /* Info bar */
+  [data-template="retail"] .rt-infobar { background: var(--hero-bg); color: var(--on-hero); font-size: 0.86rem; }
+  [data-template="retail"] .rt-infobar__row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1.5rem; padding: 0.45rem 0; align-items: center; }
+  [data-template="retail"] .rt-infobar a { color: var(--on-hero); }
+  [data-template="retail"] .rt-infobar__phone { font-weight: 600; text-decoration: none; padding: 0.4rem 0; }
+  [data-template="retail"] .rt-infobar__phone:hover { text-decoration: underline; }
+  [data-template="retail"] .rt-infobar .ph { color: var(--on-hero); border-color: var(--on-hero); }
+
+  /* Header */
+  [data-template="retail"] .rt-header { background: var(--surface); border-bottom: 1px solid var(--border); }
+  [data-template="retail"] .rt-header__row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem 2rem; flex-wrap: wrap; padding: 0.9rem 0; }
+  [data-template="retail"] .rt-nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; }
+  [data-template="retail"] .rt-nav a { color: var(--text); text-decoration: none; font-size: 0.95rem; font-weight: 500; padding: 0.6rem 0; display: inline-block; }
+  [data-template="retail"] .rt-nav a:hover { color: var(--primary); text-decoration: underline; }
+
+  /* Split hero on a tinted panel */
+  [data-template="retail"] .rt-hero { background: var(--rt-tint); padding: clamp(2.5rem, 6vw, 5rem) 0; }
+  [data-template="retail"] .rt-hero__grid { display: grid; gap: 2.5rem 4rem; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; }
+  [data-template="retail"] .rt-kicker { margin: 0 0 1rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.12em; font-size: 0.78rem; font-weight: 600; color: var(--accent); }
+  [data-template="retail"] .rt-hero h1 { font-size: clamp(2.2rem, 4.6vw, 3.4rem); max-width: 18ch; }
+  [data-template="retail"] .rt-hero__lead { font-size: clamp(1.1rem, 1.8vw, 1.25rem); color: var(--muted); max-width: 32rem; margin-bottom: 1.75rem; }
+  [data-template="retail"] .rt-hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  [data-template="retail"] .rt-hero__facts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.75rem; }
+  [data-template="retail"] .rt-hero__facts li { font-size: 0.82rem; font-weight: 600; background: var(--surface); border: 1px solid var(--border); padding: 0.35rem 0.7rem; border-radius: var(--rt-radius); }
+  [data-template="retail"] .rt-hero__media { position: relative; max-width: 28rem; width: 100%; justify-self: end; }
+  [data-template="retail"] .rt-hero__media::before { content: ''; position: absolute; inset: 1.25rem -1.25rem -1.25rem 1.25rem; border: 2px solid var(--accent); border-radius: var(--rt-radius); z-index: 0; }
+  [data-template="retail"] .rt-hero__media .img-frame { position: relative; z-index: 1; }
+
+  /* Sections */
+  [data-template="retail"] .rt-section { padding: clamp(3rem, 7vw, 5rem) 0; }
+  [data-template="retail"] .rt-section--surface { background: var(--surface); border-block: 1px solid var(--border); }
+  [data-template="retail"] .rt-eyebrow { display: block; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.12em; font-size: 0.78rem; font-weight: 600; color: var(--accent); margin-bottom: 0.6rem; }
+  [data-template="retail"] .rt-eyebrow--onhero { color: var(--on-hero); opacity: 0.85; }
+  [data-template="retail"] .rt-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem 2rem; flex-wrap: wrap; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--text); }
+  [data-template="retail"] .rt-head h2 { margin-bottom: 0; }
+  [data-template="retail"] .rt-head__aside { margin: 0; color: var(--muted); font-size: 0.92rem; max-width: 26rem; }
+
+  /* Category tiles */
+  [data-template="retail"] .rt-cats { display: grid; gap: 1.25rem; grid-template-columns: repeat(4, 1fr); }
+  [data-template="retail"] .rt-cat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rt-radius); overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+  [data-template="retail"] .rt-cat .img-frame { border-radius: 0; }
+  [data-template="retail"] .rt-cat__body { padding: 1.1rem 1.25rem 1.25rem; display: grid; gap: 0.35rem; align-content: start; }
+  [data-template="retail"] .rt-cat h3 { margin: 0; font-size: 1.15rem; }
+  [data-template="retail"] .rt-cat p { margin: 0; color: var(--muted); font-size: 0.93rem; }
+  [data-template="retail"] .rt-cat__link { margin-top: 0.5rem; font-weight: 600; font-size: 0.9rem; width: fit-content; padding: 0.35rem 0; }
+
+  /* Featured products */
+  [data-template="retail"] .rt-products { display: grid; gap: 1.25rem; grid-template-columns: repeat(4, 1fr); }
+  [data-template="retail"] .rt-product { display: grid; gap: 0.75rem; }
+  [data-template="retail"] .rt-product__body { display: grid; gap: 0.35rem; }
+  [data-template="retail"] .rt-product h3 { margin: 0; font-size: 1rem; font-family: var(--font-body); font-weight: 500; text-transform: none; letter-spacing: 0; }
+  [data-template="retail"] .rt-product__meta { margin: 0; }
+  [data-template="retail"] .rt-tag { display: inline-block; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.72rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: var(--rt-radius); background: var(--accent); color: var(--on-accent); }
+
+  /* Promo band */
+  [data-template="retail"] .rt-promo { background: var(--primary); color: var(--on-primary); padding: clamp(3rem, 6vw, 4.5rem) 0; }
+  [data-template="retail"] .rt-promo__inner { display: grid; gap: 1.5rem 3rem; grid-template-columns: minmax(0, 1.5fr) auto; align-items: center; }
+  [data-template="retail"] .rt-promo .rt-eyebrow--onhero { color: var(--on-primary); }
+  [data-template="retail"] .rt-promo h2 { margin-bottom: 0.4rem; }
+  [data-template="retail"] .rt-promo__lead { margin: 0; opacity: 0.9; max-width: 36rem; font-size: 1.1rem; }
+  [data-template="retail"] .rt-promo__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  [data-template="retail"] .rt-promo .btn-on-hero { background: var(--on-primary); color: var(--primary); border-color: var(--on-primary); }
+  [data-template="retail"] .rt-promo .btn-ghost-hero { color: var(--on-primary); border-color: var(--on-primary); }
+  [data-template="retail"] .rt-promo .ph { color: var(--on-primary); border-color: var(--on-primary); }
+
+  /* About */
+  [data-template="retail"] .rt-about { display: grid; gap: 3rem 4rem; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: start; }
+  [data-template="retail"] .rt-about__body { font-size: 1.08rem; max-width: 36rem; }
+  [data-template="retail"] .rt-why { display: grid; gap: 1.25rem; grid-template-columns: repeat(3, 1fr); margin-top: 2rem; }
+  [data-template="retail"] .rt-why li { border-top: 2px solid var(--accent); padding-top: 0.9rem; }
+  [data-template="retail"] .rt-why h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+  [data-template="retail"] .rt-why p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  /* Store info */
+  [data-template="retail"] .rt-store { display: grid; gap: 2rem; grid-template-columns: minmax(0, 4fr) minmax(0, 3fr) minmax(0, 5fr); }
+  [data-template="retail"] .rt-store h3 { font-size: 1rem; margin-bottom: 0.6rem; }
+  [data-template="retail"] .rt-store__addr { font-weight: 600; margin-bottom: 1rem; }
+  [data-template="retail"] .rt-store__summary { color: var(--muted); font-size: 0.95rem; }
+  [data-template="retail"] .rt-map { min-height: 18rem; border-radius: var(--rt-radius); }
+
+  /* Reviews */
+  [data-template="retail"] .rt-rating__meta { flex-basis: 100%; color: var(--muted); font-size: 0.9rem; }
+  [data-template="retail"] .rt-quotes { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+  [data-template="retail"] .rt-quote { border-radius: var(--rt-radius); }
+
+  /* Contact */
+  [data-template="retail"] .rt-contact { display: grid; gap: 2.5rem 4rem; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); align-items: start; }
+  [data-template="retail"] .rt-contact__lead { color: var(--muted); }
+  [data-template="retail"] .rt-contact__form { background: var(--bg); border: 1px solid var(--border); border-radius: var(--rt-radius); padding: clamp(1.5rem, 3vw, 2.5rem); }
+  [data-template="retail"] .form input, [data-template="retail"] .form textarea { border-radius: var(--rt-radius); }
+  [data-template="retail"] .rt-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  @media (max-width: 64rem) {
+    [data-template="retail"] .rt-cats, [data-template="retail"] .rt-products { grid-template-columns: repeat(2, 1fr); }
+    [data-template="retail"] .rt-store { grid-template-columns: 1fr 1fr; }
+    [data-template="retail"] .rt-map { grid-column: 1 / -1; }
+  }
+  @media (max-width: 52rem) {
+    [data-template="retail"] .rt-hero__grid { grid-template-columns: 1fr; }
+    [data-template="retail"] .rt-hero__media { justify-self: start; max-width: 22rem; }
+    [data-template="retail"] .rt-promo__inner, [data-template="retail"] .rt-about, [data-template="retail"] .rt-contact { grid-template-columns: 1fr; }
+    [data-template="retail"] .rt-about__media { max-width: 24rem; }
+    [data-template="retail"] .rt-why { grid-template-columns: 1fr; gap: 1rem; }
+    [data-template="retail"] .rt-infobar__addr { display: none; }
+    [data-template="retail"] .rt-header__row { gap: 0.5rem 1rem; }
+    [data-template="retail"] .rt-nav { order: 3; flex-basis: 100%; }
+    [data-template="retail"] .rt-nav ul { gap: 0 1rem; }
+    [data-template="retail"] .rt-nav a { font-size: 0.9rem; }
+    [data-template="retail"] .rt-header .btn { padding: 0.55rem 0.9rem; font-size: 0.92rem; }
+  }
+  @media (max-width: 36rem) {
+    [data-template="retail"] .rt-cats { grid-template-columns: 1fr; }
+    [data-template="retail"] .rt-products { gap: 1rem; }
+    [data-template="retail"] .rt-store { grid-template-columns: 1fr; }
+    [data-template="retail"] .rt-hero__media { max-width: none; margin-right: 1.25rem; }
+  }
 </style>

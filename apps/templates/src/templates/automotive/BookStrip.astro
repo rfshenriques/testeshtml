@@ -1,0 +1,46 @@
+---
+/**
+ * Book-a-service strip: three inputs and a button posting to mockup.formEndpoint
+ * (spec §9.2). Plain HTML, no JavaScript; records a demonstration request only.
+ */
+import type { BuildInput } from '../../lib/input';
+import { copyText } from '../../lib/input';
+interface Props { input: BuildInput; id?: string }
+const { input, id = 'book-strip' } = Astro.props;
+const { mockup, brief, copy } = input;
+const options = copy.services.map((s, i) => copyText(copy, `services[${i}].name`, s.name).text);
+---
+<form class="strip" method="post" action={mockup.formEndpoint} id={id} aria-labelledby={`${id}-heading`} aria-describedby={`${id}-note`}>
+  <input type="hidden" name="previewSlug" value={mockup.previewSlug} />
+  <input type="hidden" name="business" value={brief.businessName} />
+  <input type="hidden" name="formVariant" value="booking-strip" />
+  <div class="strip__head">
+    <h2 class="strip__heading" id={`${id}-heading`}>Book a service</h2>
+    <p class="strip__sub">Three details and the workshop will come back to you.</p>
+  </div>
+  <div class="strip__fields">
+    <label>Registration<input type="text" name="registration" autocomplete="off" required /></label>
+    <label>Service needed
+      <select name="service" required>
+        <option value="">Choose…</option>
+        {options.map((o) => <option value={o}>{o}</option>)}
+        <option value="other">Something else</option>
+      </select>
+    </label>
+    <label>Preferred date<input type="date" name="preferredDate" /></label>
+    <button class="btn btn-primary btn-lg" type="submit">Book now</button>
+  </div>
+  <p class="strip__note" id={`${id}-note`}>Mockup: this request is recorded for demonstration and is not sent to {brief.businessName}. Your contact details are asked for on the booking form below.</p>
+</form>
+<style>
+  .strip { display: grid; gap: 1rem; background: var(--surface); color: var(--text); border: 3px solid var(--text); padding: 1.4rem 1.5rem 1.2rem; position: relative; }
+  .strip::before { content: ''; position: absolute; left: -3px; right: -3px; top: -3px; height: 8px; background: repeating-linear-gradient(135deg, var(--primary) 0 12px, var(--text) 12px 24px); }
+  .strip__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1.25rem; }
+  .strip__heading { font-size: 1.35rem; margin: 0; text-transform: uppercase; letter-spacing: 0.02em; }
+  .strip__sub { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  .strip__fields { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); align-items: end; }
+  .strip label { display: grid; gap: 0.3rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.72rem; font-weight: 700; }
+  .strip input, .strip select { font: inherit; font-family: var(--font-body); font-size: 1rem; padding: 0.75rem 0.85rem; border: 2px solid var(--text); border-radius: 0; background: var(--surface); color: var(--text); width: 100%; min-height: 3rem; }
+  .strip :global(.btn) { border-radius: 0; min-height: 3rem; }
+  .strip__note { margin: 0; font-size: 0.85rem; color: var(--muted); }
+</style>

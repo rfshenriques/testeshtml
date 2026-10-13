@@ -1,82 +1,322 @@
 ---
-/** fitness: Hero, classes/timetable, membership tiers, trial CTA, gallery (+ hours+map, reviews, trial form). */
+/**
+ * fitness: dark/bright. Dark header, oversized uppercase hero over the image
+ * with a diagonal cut, a verified-facts ticker, classes as a numbered
+ * horizontal list, a weekly opening-times table (never invented class times),
+ * membership as three columns on request, a trial band, mosaic gallery,
+ * about, reviews and the trial form on a dark band.
+ */
 import type { BuildInput } from '../../lib/input';
-import { pickImages } from '../../lib/input';
+import { pickImages, telHref } from '../../lib/input';
 import MockupLayout from '../../layouts/MockupLayout.astro';
-import SiteHeader from '../../components/SiteHeader.astro';
-import Hero from '../../components/Hero.astro';
-import Section from '../../components/Section.astro';
-import Services from '../../components/Services.astro';
-import About from '../../components/About.astro';
-import WhyUs from '../../components/WhyUs.astro';
+import Wordmark from '../../components/Wordmark.astro';
 import Copy from '../../components/Copy.astro';
-import Gallery from '../../components/Gallery.astro';
+import Img from '../../components/Img.astro';
 import HoursMap from '../../components/HoursMap.astro';
-import CtaBand from '../../components/CtaBand.astro';
 import Reviews from '../../components/Reviews.astro';
 import ContactForm from '../../components/ContactForm.astro';
+import Timetable from './Timetable.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
 const { brief, copy } = input;
-const { gallery } = pickImages(input);
+const { hero, gallery } = pickImages(input);
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phone = brief.phone ?? brief.internationalPhone;
+const offered = brief.classification.servicesOffered.slice(0, 3);
+const plans = [...offered, ...Array.from({ length: Math.max(0, 3 - offered.length) }, () => null)];
+const ticker = brief.verifiedFacts.length ? brief.verifiedFacts : brief.classification.differentiators;
+const slots = Array.from({ length: 6 }, (_, i) => gallery[i]);
 const nav = [
-  { href: '#classes', label: 'Classes' }, { href: '#timetable', label: 'Timetable' }, { href: '#membership', label: 'Membership' },
-  { href: '#gallery', label: 'Gallery' }, { href: '#trial', label: 'Free trial' },
+  { href: '#classes', label: 'Classes' }, { href: '#timetable', label: 'Times' }, { href: '#membership', label: 'Membership' },
+  { href: '#gym', label: 'The gym' }, { href: '#reviews', label: 'Reviews' },
 ];
 ---
 <MockupLayout input={input}>
-  <SiteHeader input={input} nav={nav} ctaHref="#trial" ctaLabel="Book a trial" />
+  <header class="hdr" id="top">
+    <div class="container hdr__row">
+      <Wordmark name={brief.businessName} />
+      <nav class="hdr__nav" aria-label="Sections">
+        <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
+      </nav>
+      <a class="btn btn-on-hero hdr__cta" href="#trial"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+    </div>
+  </header>
+
   <main id="main">
-    <Hero input={input} ctaHref="#trial" layout="stacked" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative training floor photo" secondaryHref="#classes" secondaryLabel="See classes" />
-
-    <Section id="classes" eyebrow="Classes" heading="Classes and training">
-      <Services copy={input.copy} layout="grid" />
-    </Section>
-
-    <Section id="timetable" tone="surface" eyebrow="Timetable" heading="Opening times" lead={`Class times will be published by ${brief.businessName}; opening hours below are from the business listing.`}>
-      <HoursMap input={input} />
-    </Section>
-
-    <Section id="membership" eyebrow="Membership" heading="Membership">
-      <div class="split">
-        <div class="card membership">
-          <span class="eyebrow">Plans</span>
-          <h3><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h3>
-          <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
-          <p class="ph">Membership options and pricing to be supplied by {brief.businessName}</p>
-          <a class="btn btn-primary" href="#trial"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
-        </div>
-        <WhyUs copy={input.copy} variant="list" />
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero__bg" aria-hidden="true">
+        <Img image={hero} label="Indicative training floor photo" width={1600} height={1000} eager showCredit={false} class="hero__img" />
       </div>
-    </Section>
+      <div class="container hero__content">
+        <span class="eyebrow">{[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')}</span>
+        <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+        <p class="hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+        <div class="hero__actions">
+          <a class="btn btn-on-hero btn-lg" href="#trial"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+          <a class="btn btn-ghost-hero btn-lg" href="#classes">See the classes</a>
+        </div>
+        {hero?.credit && <p class="hero__credit">Photo: {hero.credit}</p>}
+      </div>
+    </section>
 
-    <CtaBand input={input} id="cta" href="#trial" eyebrow="Trial" />
+    {ticker.length > 0 && (
+      <div class="ticker" aria-label="Verified facts">
+        <ul class="container ticker__list">{ticker.map((f) => <li>{f}</li>)}</ul>
+      </div>
+    )}
 
-    <Section id="gallery" eyebrow="Gallery" heading="Inside the gym">
-      <Gallery images={gallery} slots={6} label="Indicative gym photo" />
-    </Section>
+    <section id="classes" class="sec" aria-labelledby="classes-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">Classes and training</span>
+          <h2 id="classes-heading">Pick your session</h2>
+        </div>
+        <ol class="classes">
+          {copy.services.map((s, i) => (
+            <li class="cls">
+              <span class="cls__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <h3 class="cls__name"><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+              <p class="cls__desc"><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+              <a class="cls__go" href="#trial">Try it<span class="arrow" aria-hidden="true">→</span></a>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
 
-    <Section id="about" tone="surface">
-      <About input={input} image={gallery[0]} imageLabel="Indicative coaching photo" factsHeading="The facts" reverse />
-    </Section>
+    <section id="timetable" class="sec sec--surface" aria-labelledby="timetable-heading">
+      <div class="container">
+        <div class="sec__head sec__head--row">
+          <div>
+            <span class="eyebrow">Weekly</span>
+            <h2 id="timetable-heading">Opening times</h2>
+          </div>
+          <p class="sec__lead">Opening hours from the business listing. The class timetable will be published by {brief.businessName}; none is shown in this mockup.</p>
+        </div>
+        <Timetable input={input} />
+      </div>
+    </section>
 
-    <Section id="reviews" eyebrow="Reviews" heading="What members say">
-      <Reviews input={input} />
-    </Section>
+    <section id="membership" class="sec" aria-labelledby="membership-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">Membership</span>
+          <h2 id="membership-heading">Ways to train</h2>
+          <p class="sec__lead">Membership options and pricing will be supplied by {brief.businessName}; the columns below show where they go.</p>
+        </div>
+        <ul class="plans">
+          {plans.map((p, i) => (
+            <li class="plan">
+              <span class="plan__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <h3 class="plan__name">{p ?? <span class="ph">Membership option to be supplied by the business</span>}</h3>
+              <p class="plan__price">Pricing on request</p>
+              <p class="plan__inc"><span class="ph">Inclusions to be supplied by the business</span></p>
+              <a class="btn btn-primary" href="#trial"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-    <Section id="trial" tone="dark" eyebrow="Free trial" heading="Request a trial session">
-      <ContactForm input={input} variant="trial" />
-    </Section>
+    <section id="trial-band" class="band" aria-labelledby="band-heading">
+      <div class="container band__grid">
+        <div>
+          <span class="eyebrow">Free trial</span>
+          <h2 id="band-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+          <p class="band__lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+        </div>
+        <div class="band__actions">
+          <a class="btn btn-on-hero btn-lg" href="#trial"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+          {tel && <a class="btn btn-ghost-hero btn-lg" href={tel}>Call {phone}</a>}
+        </div>
+      </div>
+    </section>
+
+    <section id="gym" class="sec" aria-labelledby="gym-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">The gym</span>
+          <h2 id="gym-heading"><Copy copy={copy} path="about.heading" value={copy.about.heading} /></h2>
+        </div>
+        <div class="about">
+          <div class="about__text">
+            <p class="about__body"><Copy copy={copy} path="about.body" value={copy.about.body} /></p>
+            <ul class="why">
+              {copy.whyUs.map((w, i) => (
+                <li>
+                  <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+                  <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <ul class="mosaic">
+            {slots.map((img, i) => (
+              <li><Img image={img} label={`Indicative gym photo ${i + 1}`} width={i === 0 ? 1200 : 800} height={i === 0 ? 1200 : 800} ratio="1 / 1" showCredit={false} /></li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="reviews" class="sec sec--surface" aria-labelledby="reviews-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">Reviews</span>
+          <h2 id="reviews-heading">What members say</h2>
+        </div>
+        <Reviews input={input} />
+      </div>
+    </section>
+
+    <section id="visit" class="sec" aria-labelledby="visit-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">Visit</span>
+          <h2 id="visit-heading">Find the gym</h2>
+        </div>
+        <HoursMap input={input} />
+      </div>
+    </section>
+
+    <section id="trial" class="sec sec--dark trial" aria-labelledby="trial-heading">
+      <div class="container trial__grid">
+        <div>
+          <span class="eyebrow">Free trial</span>
+          <h2 id="trial-heading">Request a trial session</h2>
+          <p class="trial__lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+          {tel && <p class="trial__phone">Prefer to talk? <a href={tel}>Call {phone}</a></p>}
+        </div>
+        <div class="trial__form">
+          <ContactForm input={input} variant="trial" submitLabel={copy.cta.buttonLabel} />
+        </div>
+      </div>
+    </section>
   </main>
 </MockupLayout>
 
 <style is:global>
   [data-template="fitness"] h1, [data-template="fitness"] h2, [data-template="fitness"] .wordmark { text-transform: uppercase; letter-spacing: -0.02em; }
-  [data-template="fitness"] .hero { background: linear-gradient(120deg, var(--hero-bg) 60%, color-mix(in srgb, var(--hero-bg) 70%, var(--primary))); }
-  [data-template="fitness"] .btn { border-radius: 0; text-transform: uppercase; letter-spacing: 0.06em; }
-  [data-template="fitness"] .card { border-radius: 0; border-top: 6px solid var(--accent); }
-  [data-template="fitness"] .membership .ph { display: block; margin: 1rem 0 1.25rem; }
-  [data-template="fitness"] #trial .form input, [data-template="fitness"] #trial .form textarea { border-color: var(--border); }
-  [data-template="fitness"] #trial .form__note { color: var(--on-hero); background: rgba(255,255,255,0.08); border-color: var(--on-hero); }
+  [data-template="fitness"] .btn { border-radius: 0; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 800; font-size: 0.9rem; }
+  [data-template="fitness"] .btn-lg { font-size: 1rem; padding: 1rem 1.75rem; }
+  [data-template="fitness"] .img-frame { border-radius: 0; }
+  [data-template="fitness"] .review { border-radius: 0; border: 0; border-top: 4px solid var(--primary); padding: 1.5rem 1.5rem 1.5rem; }
+  [data-template="fitness"] .review p { font-size: 1.1rem; font-weight: 500; }
+  [data-template="fitness"] .rating__value { font-size: 3.5rem; }
+  [data-template="fitness"] .map { border-radius: 0; }
+  [data-template="fitness"] .hours-map .btn { border-radius: 0; }
+  [data-template="fitness"] #trial .form input, [data-template="fitness"] #trial .form textarea { border: 2px solid var(--on-hero); border-radius: 0; background: var(--hero-bg); color: var(--on-hero); }
+  [data-template="fitness"] #trial .form input::placeholder { color: var(--on-hero); }
+  [data-template="fitness"] #trial .form__note { color: var(--on-hero); background: color-mix(in srgb, var(--on-hero) 8%, transparent); border-color: var(--on-hero); border-radius: 0; }
   [data-template="fitness"] #trial .btn-primary { background: var(--on-hero); color: var(--hero-bg); border-color: var(--on-hero); }
+  [data-template="fitness"] .site-footer { border-top: 1px solid color-mix(in srgb, var(--on-hero) 25%, transparent); }
+</style>
+
+<style>
+  .eyebrow { display: block; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.16em; font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-bottom: 0.75rem; }
+
+  /* Dark header */
+  .hdr { background: var(--hero-bg); color: var(--on-hero); }
+  .hdr__row { display: flex; align-items: center; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; padding: 1rem 0; }
+  .hdr :global(.wordmark) { color: var(--on-hero); font-size: 1.3rem; }
+  .hdr__nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; }
+  .hdr__nav a { color: var(--on-hero); text-decoration: none; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; font-size: 0.78rem; font-weight: 700; display: inline-block; padding: 0.65rem 0; opacity: 0.9; }
+  .hdr__nav a:hover { opacity: 1; text-decoration: underline; text-underline-offset: 0.35em; }
+  .hdr__cta { margin-left: auto; }
+
+  /* Oversized hero with image behind and a diagonal cut */
+  .hero { position: relative; background: var(--hero-bg); color: var(--on-hero); min-height: min(88vh, 52rem); display: grid; align-items: end; padding: clamp(5rem, 12vw, 9rem) 0 clamp(5rem, 10vw, 8rem); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4rem), 0 100%); overflow: hidden; isolation: isolate; }
+  .hero__bg { position: absolute; inset: 0; z-index: -1; }
+  .hero__bg :global(.img-frame) { height: 100%; }
+  .hero__bg :global(img) { width: 100%; height: 100%; object-fit: cover; aspect-ratio: auto; }
+  .hero__bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.84) 100%); }
+  .hero__content { position: relative; }
+  .hero .eyebrow { color: var(--on-hero); opacity: 0.85; }
+  .hero h1 { font-size: clamp(3rem, 9.5vw, 7.25rem); line-height: 0.92; margin: 0 0 0.3em; max-width: 12ch; color: #ffffff; }
+  .hero__lead { font-size: clamp(1.1rem, 2vw, 1.4rem); max-width: 36rem; margin-bottom: 1.75rem; color: #ffffff; opacity: 0.95; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .hero :global(.btn-on-hero) { background: #ffffff; color: #111111; border-color: #ffffff; }
+  .hero :global(.btn-ghost-hero) { color: #ffffff; border-color: #ffffff; }
+  .hero__credit { margin: 1.5rem 0 0; font-size: 0.8rem; color: #ffffff; opacity: 0.75; }
+
+  /* Facts ticker */
+  .ticker { background: var(--accent); color: var(--on-accent); padding: 0.9rem 0; }
+  .ticker__list { display: flex; flex-wrap: wrap; gap: 0.5rem 0; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.14em; font-size: 0.78rem; font-weight: 700; }
+  .ticker__list li { display: inline-flex; align-items: center; min-height: 1.75rem; }
+  .ticker__list li::after { content: ''; display: inline-block; width: 0.5rem; height: 0.5rem; margin: 0 1.25rem; background: currentColor; transform: rotate(45deg); }
+  .ticker__list li:last-child::after { display: none; }
+
+  /* Sections */
+  .sec { padding: clamp(3.5rem, 8vw, 6.5rem) 0; }
+  .sec--surface { background: var(--surface); border-block: 1px solid var(--border); }
+  .sec--dark { background: var(--hero-bg); color: var(--on-hero); }
+  .sec--dark .eyebrow { color: var(--on-hero); opacity: 0.8; }
+  .sec__head { max-width: 50rem; margin-bottom: 2.5rem; }
+  .sec__head--row { max-width: none; display: grid; gap: 1rem 3rem; align-items: end; }
+  .sec h2 { font-size: clamp(2rem, 4.5vw, 3.25rem); line-height: 0.98; margin-bottom: 0.2em; }
+  .sec__lead { font-size: 1.1rem; color: var(--muted); margin: 0.5rem 0 0; max-width: 40rem; }
+  @media (min-width: 60rem) { .sec__head--row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .sec__head--row .sec__lead { margin: 0 0 0.5rem; } }
+
+  /* Classes as a horizontal list */
+  .classes { margin: 0; padding: 0; list-style: none; border-top: 3px solid var(--text); }
+  .cls { display: grid; gap: 0.35rem 1.5rem; grid-template-columns: 3rem minmax(0, 1fr); align-items: baseline; padding: 1.4rem 0; border-bottom: 2px solid var(--border); }
+  .cls__n { font-family: var(--font-label); font-size: 0.8rem; letter-spacing: 0.1em; font-weight: 700; color: var(--primary); grid-row: span 2; align-self: start; padding-top: 0.5rem; }
+  .cls__name { font-size: clamp(1.4rem, 2.6vw, 2rem); margin: 0; text-transform: uppercase; letter-spacing: -0.01em; }
+  .cls__desc { margin: 0; color: var(--muted); grid-column: 2; max-width: 46rem; }
+  .cls__go { grid-column: 2; justify-self: start; display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.12em; font-size: 0.78rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+  .cls__go:hover { text-decoration: underline; }
+  .cls:hover .cls__name { color: var(--primary); }
+  @media (min-width: 60rem) {
+    .cls { grid-template-columns: 3rem minmax(0, 1.1fr) minmax(0, 1.4fr) auto; align-items: center; gap: 2rem; }
+    .cls__n { grid-row: auto; padding-top: 0; }
+    .cls__desc { grid-column: auto; }
+    .cls__go { grid-column: auto; justify-self: end; }
+  }
+
+  /* Membership columns */
+  .plans { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
+  .plan { border: 3px solid var(--text); padding: 1.6rem 1.5rem 1.75rem; display: flex; flex-direction: column; gap: 0.5rem; background: var(--surface); }
+  .plan__n { font-family: var(--font-label); font-size: 0.78rem; letter-spacing: 0.12em; font-weight: 700; color: var(--primary); }
+  .plan__name { font-size: 1.35rem; margin: 0; text-transform: uppercase; }
+  .plan__name .ph { font-size: 1rem; text-transform: none; font-weight: 500; }
+  .plan__price { font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.6rem; line-height: 1.1; margin: 0.5rem 0 0; }
+  .plan__inc { margin: 0 0 1.25rem; font-size: 0.95rem; flex: 1; }
+  .plan :global(.btn) { align-self: flex-start; }
+
+  /* Trial band with both edges cut */
+  .band { background: var(--primary); color: var(--on-primary); padding: clamp(4.5rem, 9vw, 7rem) 0; clip-path: polygon(0 2.5rem, 100% 0, 100% calc(100% - 2.5rem), 0 100%); }
+  .band .eyebrow { color: var(--on-primary); opacity: 0.85; }
+  .band h2 { font-size: clamp(2.2rem, 5vw, 3.75rem); line-height: 0.95; margin-bottom: 0.3em; }
+  .band__grid { display: grid; gap: 2rem; align-items: center; }
+  .band__lead { font-size: 1.15rem; opacity: 0.92; max-width: 36rem; margin: 0; }
+  .band__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .band :global(.btn-on-hero) { background: var(--on-primary); color: var(--primary); border-color: var(--on-primary); }
+  .band :global(.btn-ghost-hero) { color: var(--on-primary); border-color: var(--on-primary); }
+  @media (min-width: 60rem) { .band__grid { grid-template-columns: minmax(0, 1.4fr) auto; gap: 4rem; } .band__actions { justify-content: flex-end; } }
+
+  /* About + mosaic */
+  .about { display: grid; gap: 2.5rem; align-items: start; }
+  .about__body { font-size: 1.1rem; margin-bottom: 1.75rem; }
+  .why { display: grid; gap: 1rem; }
+  .why li { border-left: 4px solid var(--primary); padding-left: 1.1rem; }
+  .why h3 { font-size: 1.05rem; margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  .why p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  .mosaic { display: grid; gap: 0.6rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mosaic li:first-child { grid-column: span 2; grid-row: span 2; }
+  @media (min-width: 60rem) { .about { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 4rem; } }
+
+  /* Trial form */
+  .trial__grid { display: grid; gap: 2.5rem; align-items: start; }
+  .trial__lead { font-size: 1.15rem; opacity: 0.92; max-width: 30rem; }
+  .trial__phone { opacity: 0.9; }
+  .trial__phone a { color: var(--on-hero); font-weight: 700; }
+  .trial__form { border: 2px solid color-mix(in srgb, var(--on-hero) 35%, transparent); padding: 1.6rem; }
+  @media (min-width: 60rem) { .trial__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 4rem; } }
+
+  @media (max-width: 47.99rem) {
+    .hdr__nav { display: none; }
+    .hdr__cta { margin-left: 0; }
+    .mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mosaic li:first-child { grid-column: span 2; grid-row: auto; }
+  }
 </style>

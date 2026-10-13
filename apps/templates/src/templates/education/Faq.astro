@@ -1,0 +1,60 @@
+---
+/** education: a <details> FAQ built only from brief facts (address, hours, phone, verified facts) and the enquiry copy. */
+import type { BuildInput } from '../../lib/input';
+import { telHref } from '../../lib/input';
+import Copy from '../../components/Copy.astro';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { brief, copy } = input;
+const tel = telHref(brief.phone, brief.internationalPhone);
+const open = brief.openingHours.filter((h) => !/closed/i.test(h.hours));
+---
+<div class="faq">
+  <details class="faq__item" open>
+    <summary>How do we get started?</summary>
+    <div class="faq__body">
+      <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+      <p>Use the <a href="#enquire">enquiry form</a>{tel ? <> or call <a href={tel}>{brief.phone ?? brief.internationalPhone}</a></> : null}.</p>
+    </div>
+  </details>
+  <details class="faq__item">
+    <summary>Where are you based?</summary>
+    <div class="faq__body">
+      {brief.address ? <p>{brief.address}</p> : <p class="ph">Address to be confirmed by the business</p>}
+      <p><a href="#visit">See the map and opening times</a>.</p>
+    </div>
+  </details>
+  <details class="faq__item">
+    <summary>When are you open?</summary>
+    <div class="faq__body">
+      {open.length ? (
+        <ul class="faq__hours">{open.map((h) => <li><span>{h.day}</span><span>{h.hours}</span></li>)}</ul>
+      ) : (
+        <p class="ph">Opening times to be confirmed by the business</p>
+      )}
+    </div>
+  </details>
+  <details class="faq__item">
+    <summary>What should we know before the first visit?</summary>
+    <div class="faq__body">
+      {brief.verifiedFacts.length ? <ul class="faq__facts">{brief.verifiedFacts.map((f) => <li>{f}</li>)}</ul> : null}
+      <p>Fees, term dates and age groups: <span class="ph">To be supplied by the business</span>.</p>
+    </div>
+  </details>
+</div>
+<style>
+  .faq { display: grid; gap: 0.75rem; max-width: 46rem; }
+  .faq__item { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; }
+  .faq__item summary { cursor: pointer; list-style: none; padding: 1.1rem 3.25rem 1.1rem 1.5rem; font-weight: 700; font-size: 1.05rem; position: relative; min-height: 2.75rem; }
+  .faq__item summary::-webkit-details-marker { display: none; }
+  .faq__item summary::after { content: '+'; position: absolute; right: 1.1rem; top: 50%; transform: translateY(-50%); width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--primary); color: var(--on-primary); display: grid; place-items: center; font-weight: 700; line-height: 1; }
+  .faq__item[open] summary::after { content: '–'; }
+  .faq__body { padding: 0 1.5rem 1.25rem; color: var(--muted); }
+  .faq__body p { margin: 0 0 0.6rem; }
+  .faq__body a { color: var(--primary); font-weight: 600; }
+  .faq__hours { display: grid; gap: 0.35rem; max-width: 22rem; }
+  .faq__hours li { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px dashed var(--border); padding-bottom: 0.3rem; }
+  .faq__facts { display: grid; gap: 0.4rem; margin-bottom: 0.75rem; }
+  .faq__facts li { padding-left: 1.5rem; position: relative; }
+  .faq__facts li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+</style>

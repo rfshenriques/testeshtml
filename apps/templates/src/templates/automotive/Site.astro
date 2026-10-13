@@ -1,69 +1,296 @@
 ---
-/** trades: Hero with phone CTA, services grid, service area map, "why us", quote form, reviews. */
+/**
+ * automotive: industrial workshop. Light header under a hazard stripe, dark
+ * hero with a wide 16:9 image and the book-a-service strip overlapping its
+ * bottom edge, services as horizontal numbered cards, how it works in three
+ * steps, wide gallery, about + why us, reviews on a dark band, hours + map,
+ * booking form. Uppercase labels, stripe accent rules, squared corners.
+ */
 import type { BuildInput } from '../../lib/input';
-import { pickImages } from '../../lib/input';
+import { pickImages, telHref } from '../../lib/input';
 import MockupLayout from '../../layouts/MockupLayout.astro';
-import SiteHeader from '../../components/SiteHeader.astro';
-import Hero from '../../components/Hero.astro';
-import Section from '../../components/Section.astro';
-import Services from '../../components/Services.astro';
-import About from '../../components/About.astro';
-import WhyUs from '../../components/WhyUs.astro';
+import Wordmark from '../../components/Wordmark.astro';
+import Copy from '../../components/Copy.astro';
+import Img from '../../components/Img.astro';
+import Gallery from '../../components/Gallery.astro';
 import HoursMap from '../../components/HoursMap.astro';
-import CtaBand from '../../components/CtaBand.astro';
 import Reviews from '../../components/Reviews.astro';
 import ContactForm from '../../components/ContactForm.astro';
+import BookStrip from './BookStrip.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
-const { brief } = input;
-const { gallery } = pickImages(input);
+const { brief, copy } = input;
+const { hero, gallery } = pickImages(input);
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phone = brief.phone ?? brief.internationalPhone;
+const weekday = brief.openingHours[0];
+const saturday = brief.openingHours[5];
 const nav = [
-  { href: '#services', label: 'Services' }, { href: '#area', label: 'Service area' }, { href: '#why', label: 'Why us' },
-  { href: '#reviews', label: 'Reviews' }, { href: '#quote', label: 'Get a quote' },
+  { href: '#services', label: 'Services' }, { href: '#how', label: 'How it works' }, { href: '#workshop', label: 'Workshop' },
+  { href: '#reviews', label: 'Reviews' }, { href: '#find', label: 'Find us' },
 ];
 ---
 <MockupLayout input={input}>
-  <SiteHeader input={input} nav={nav} ctaHref="#quote" ctaLabel="Get a quote" />
+  <header class="hdr" id="top">
+    <div class="hdr__stripe" aria-hidden="true"></div>
+    <div class="container hdr__row">
+      <Wordmark name={brief.businessName} />
+      <nav class="hdr__nav" aria-label="Sections">
+        <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
+      </nav>
+      <div class="hdr__cta">
+        {tel && <a class="hdr__phone" href={tel}><span class="hdr__phone-label">Workshop</span>{phone}</a>}
+        <a class="btn btn-primary" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+      </div>
+    </div>
+  </header>
+
   <main id="main">
-    <Hero input={input} ctaHref="#quote" showPhone eyebrow={[brief.classification.subVertical, brief.city ? `Serving ${brief.city}` : null].filter(Boolean).join(' · ')} imageLabel="Indicative work-in-progress photo">
-      <div class="hero__meta" slot="meta">
-        {brief.rating !== null && <span>★ {brief.rating.toFixed(1)}{brief.reviewCount !== null ? ` · ${brief.reviewCount} reviews` : ''}</span>}
-        {brief.openingHours[0] && <span>{brief.openingHours[0].day}: {brief.openingHours[0].hours}</span>}
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="container hero__grid">
+        <div class="hero__copy">
+          <span class="eyebrow">{[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')}</span>
+          <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+          <p class="hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+          <div class="hero__actions">
+            <a class="btn btn-primary btn-lg" href="#book"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            {tel && <a class="btn btn-ghost-hero btn-lg" href={tel}>Call {phone}</a>}
+          </div>
+          <ul class="hero__facts">
+            {brief.verifiedFacts.map((f) => <li>{f}</li>)}
+          </ul>
+        </div>
+        <div class="hero__media">
+          <Img image={hero} label="Indicative workshop photo" width={1600} height={900} ratio="16 / 9" eager />
+        </div>
       </div>
-    </Hero>
-
-    <Section id="services" eyebrow="Services" heading="What we do">
-      <Services copy={input.copy} layout="grid" />
-    </Section>
-
-    <Section id="area" tone="surface" eyebrow="Service area" heading={brief.city ? `Covering ${brief.city}` : 'Where we work'}>
-      <HoursMap input={input} serviceArea />
-    </Section>
-
-    <Section id="why" eyebrow="Why us" heading="Why choose us">
-      <div class="split">
-        <WhyUs copy={input.copy} variant="list" />
-        <About input={input} image={gallery[0]} imageLabel="Indicative van or team photo" factsHeading="The facts" />
+      <div class="container hero__strip" id="book-strip-anchor">
+        <BookStrip input={input} />
       </div>
-    </Section>
+    </section>
 
-    <CtaBand input={input} id="cta" href="#quote" eyebrow="Quotes" />
+    <section id="services" class="sec sec--pad-top" aria-labelledby="services-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">Services</span>
+          <h2 id="services-heading">What the workshop does</h2>
+          <span class="rule" aria-hidden="true"></span>
+        </div>
+        <ul class="svc">
+          {copy.services.map((s, i) => (
+            <li class="svc__card">
+              <span class="svc__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <div class="svc__body">
+                <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+                <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+              </div>
+              <a class="svc__go" href="#book" aria-label={`Book: ${s.name}`}><span class="chev" aria-hidden="true"></span></a>
+            </li>
+          ))}
+        </ul>
+        <p class="sec__note">Pricing is quoted per job by {brief.businessName}; no prices are shown in this mockup.</p>
+      </div>
+    </section>
 
-    <Section id="quote" tone="surface" eyebrow="Quote" heading="Request a quote" lead={brief.phone ? `Call ${brief.phone} for urgent jobs, or describe the work below.` : 'Describe the work below and we will come back to you.'}>
-      <ContactForm input={input} variant="quote" />
-    </Section>
+    <section id="how" class="sec sec--surface" aria-labelledby="how-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">How it works</span>
+          <h2 id="how-heading">Booking your car in</h2>
+          <span class="rule" aria-hidden="true"></span>
+        </div>
+        <ol class="steps">
+          <li class="step">
+            <span class="step__n" aria-hidden="true">1</span>
+            <h3>Book</h3>
+            <p>{tel ? <>Use the booking strip above, the form at the bottom of the page, or call <a href={tel}>{phone}</a>.</> : 'Use the booking strip above or the form at the bottom of the page.'}</p>
+          </li>
+          <li class="step">
+            <span class="step__n" aria-hidden="true">2</span>
+            <h3>Drop off</h3>
+            <p>{brief.address ?? <span class="ph">Workshop address to be confirmed by the business</span>}{weekday ? <><br />{`${weekday.day} ${weekday.hours}${saturday ? ` · ${saturday.day} ${saturday.hours}` : ''}`}</> : null}</p>
+          </li>
+          <li class="step">
+            <span class="step__n" aria-hidden="true">3</span>
+            <h3>Collect</h3>
+            <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+            <p class="ph">Collection, payment and courtesy-car details to be supplied by the business</p>
+          </li>
+        </ol>
+      </div>
+    </section>
 
-    <Section id="reviews" eyebrow="Reviews" heading="What customers say">
-      <Reviews input={input} />
-    </Section>
+    <section id="workshop" class="sec" aria-labelledby="workshop-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">The workshop</span>
+          <h2 id="workshop-heading"><Copy copy={copy} path="about.heading" value={copy.about.heading} /></h2>
+          <span class="rule" aria-hidden="true"></span>
+        </div>
+        <div class="gal"><Gallery images={gallery} slots={3} label="Indicative workshop photo" width={1600} height={900} /></div>
+        <div class="about">
+          <div class="about__text">
+            <p><Copy copy={copy} path="about.body" value={copy.about.body} /></p>
+            {brief.verifiedFacts.length > 0 && (
+              <ul class="checks">{brief.verifiedFacts.map((f) => <li>{f}</li>)}</ul>
+            )}
+          </div>
+          <ul class="why">
+            {copy.whyUs.map((w, i) => (
+              <li>
+                <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+                <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="reviews" class="sec sec--dark" aria-labelledby="reviews-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">Reviews</span>
+          <h2 id="reviews-heading">What drivers say</h2>
+          <span class="rule rule--light" aria-hidden="true"></span>
+        </div>
+        <Reviews input={input} />
+      </div>
+    </section>
+
+    <section id="find" class="sec sec--surface" aria-labelledby="find-heading">
+      <div class="container">
+        <div class="sec__head">
+          <span class="eyebrow">Find us</span>
+          <h2 id="find-heading">Opening hours and location</h2>
+          <span class="rule" aria-hidden="true"></span>
+        </div>
+        <HoursMap input={input} />
+      </div>
+    </section>
+
+    <section id="book" class="sec book" aria-labelledby="book-heading">
+      <div class="container book__grid">
+        <div class="book__text">
+          <span class="eyebrow">Booking</span>
+          <h2 id="book-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+          <p class="sec__lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+          {tel && <a class="btn btn-outline btn-lg" href={tel}>Call {phone}</a>}
+        </div>
+        <div class="book__form">
+          <ContactForm input={input} variant="booking" submitLabel={copy.cta.buttonLabel} />
+        </div>
+      </div>
+    </section>
   </main>
 </MockupLayout>
 
 <style is:global>
-  [data-template="automotive"] h1, [data-template="automotive"] h2 { text-transform: uppercase; letter-spacing: -0.01em; }
-  [data-template="automotive"] .hero { border-bottom: 8px solid var(--accent); }
-  [data-template="automotive"] .card { border-left: 5px solid var(--accent); border-radius: 4px; }
-  [data-template="automotive"] .btn { border-radius: 3px; }
-  [data-template="automotive"] #why .split { align-items: start; }
-  [data-template="automotive"] #why .split > :last-child .split { grid-template-columns: 1fr; }
+  [data-template="automotive"] h1, [data-template="automotive"] h2, [data-template="automotive"] h3 { text-transform: uppercase; letter-spacing: 0; }
+  [data-template="automotive"] .btn { border-radius: 0; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; font-size: 0.92rem; }
+  [data-template="automotive"] .btn-lg { font-size: 1rem; padding: 0.95rem 1.6rem; }
+  [data-template="automotive"] .img-frame { border-radius: 0; }
+  [data-template="automotive"] .gallery { gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); }
+  [data-template="automotive"] .gallery .img-frame img { aspect-ratio: 16 / 9; }
+  [data-template="automotive"] .review { border-radius: 0; border: 0; border-top: 4px solid var(--primary); background: color-mix(in srgb, var(--on-hero) 7%, transparent); }
+  [data-template="automotive"] .rating__value { font-size: 3.2rem; }
+  [data-template="automotive"] .section--dark .rating__stars, [data-template="automotive"] .rating__stars { color: var(--on-hero); }
+  [data-template="automotive"] .map { border-radius: 0; border: 3px solid var(--text); }
+  [data-template="automotive"] .hours-table th { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.8rem; }
+  [data-template="automotive"] .hours-table th, [data-template="automotive"] .hours-table td { border-bottom: 2px solid var(--border); }
+  [data-template="automotive"] .hours-map .btn { border-radius: 0; }
+  [data-template="automotive"] .form input, [data-template="automotive"] .form textarea { border: 2px solid var(--text); border-radius: 0; }
+  [data-template="automotive"] .form__note { border-radius: 0; }
+  [data-template="automotive"] .site-footer { border-top: 8px solid var(--primary); }
+</style>
+
+<style>
+  .eyebrow { display: block; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.14em; font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-bottom: 0.6rem; }
+  .rule { display: block; width: 7rem; height: 6px; margin-top: 1rem; background: repeating-linear-gradient(135deg, var(--primary) 0 10px, transparent 10px 18px); }
+  .rule--light { background: repeating-linear-gradient(135deg, var(--on-hero) 0 10px, transparent 10px 18px); }
+
+  /* Header */
+  .hdr { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .hdr__stripe { height: 6px; background: repeating-linear-gradient(135deg, var(--primary) 0 14px, var(--hero-bg) 14px 28px); }
+  .hdr__row { display: flex; align-items: center; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; padding: 0.9rem 0; }
+  .hdr__nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.4rem; }
+  .hdr__nav a { color: var(--text); text-decoration: none; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.78rem; font-weight: 700; display: inline-block; padding: 0.65rem 0; }
+  .hdr__nav a:hover { color: var(--primary); }
+  .hdr__cta { display: flex; align-items: center; gap: 1.25rem; margin-left: auto; }
+  .hdr__phone { display: inline-flex; flex-direction: column; line-height: 1.15; color: var(--text); text-decoration: none; font-weight: 700; min-height: 2.75rem; justify-content: center; }
+  .hdr__phone-label { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; font-size: 0.65rem; color: var(--muted); }
+  .hdr__phone:hover { color: var(--primary); }
+
+  /* Hero */
+  .hero { background: var(--hero-bg); color: var(--on-hero); padding: clamp(3rem, 7vw, 5.5rem) 0 0; }
+  .hero__grid { display: grid; gap: 2.5rem; align-items: center; }
+  .hero .eyebrow { color: var(--on-hero); opacity: 0.75; }
+  .hero h1 { font-size: clamp(2.5rem, 6.2vw, 4.75rem); line-height: 0.98; margin-bottom: 0.4em; }
+  .hero__lead { font-size: clamp(1.05rem, 1.7vw, 1.25rem); max-width: 32rem; opacity: 0.9; margin-bottom: 1.75rem; }
+  .hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .hero__facts { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: 2rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.72rem; font-weight: 700; opacity: 0.85; }
+  .hero__facts li { position: relative; padding-left: 1rem; }
+  .hero__facts li::before { content: ''; position: absolute; left: 0; top: 0.3em; width: 0.5em; height: 0.5em; background: var(--primary); }
+  .hero__media { position: relative; }
+  .hero__media::after { content: ''; position: absolute; left: 0; right: 30%; bottom: -14px; height: 8px; background: repeating-linear-gradient(135deg, var(--primary) 0 14px, transparent 14px 28px); }
+  .hero__media :global(.credit) { color: inherit; opacity: 0.7; }
+  .hero__strip { margin-top: clamp(2rem, 4vw, 3rem); transform: translateY(50%); }
+  @media (min-width: 60rem) { .hero__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 3.5rem; } }
+
+  /* Sections */
+  .sec { padding: clamp(3rem, 7vw, 5.5rem) 0; }
+  .sec--pad-top { padding-top: clamp(9rem, 16vw, 12rem); }
+  .sec--surface { background: var(--surface); border-block: 1px solid var(--border); }
+  .sec--dark { background: var(--hero-bg); color: var(--on-hero); }
+  .sec--dark .eyebrow { color: var(--on-hero); opacity: 0.75; }
+  .sec__head { max-width: 46rem; margin-bottom: 2.25rem; }
+  .sec h2 { font-size: clamp(1.9rem, 3.8vw, 2.75rem); margin-bottom: 0; }
+  .sec__lead { font-size: 1.12rem; color: var(--muted); }
+  .sec__note { margin: 1.5rem 0 0; font-size: 0.9rem; color: var(--muted); }
+
+  /* Services: horizontal cards */
+  .svc { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); }
+  .svc__card { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr) 3rem; align-items: stretch; background: var(--surface); border: 2px solid var(--border); }
+  .svc__card:hover { border-color: var(--text); }
+  .svc__n { display: grid; place-items: center; background: var(--hero-bg); color: var(--on-hero); font-family: var(--font-label); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.05em; }
+  .svc__body { padding: 1.1rem 1.2rem; }
+  .svc__body h3 { font-size: 1.1rem; margin-bottom: 0.25rem; }
+  .svc__body p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  .svc__go { display: grid; place-items: center; color: var(--primary); border-left: 2px solid var(--border); text-decoration: none; min-width: 3rem; }
+  .svc__go:hover { background: var(--primary); color: var(--on-primary); }
+  .chev { display: inline-block; width: 0.6rem; height: 0.6rem; border-top: 3px solid currentColor; border-right: 3px solid currentColor; transform: rotate(45deg); }
+
+  /* How it works */
+  .steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); counter-reset: step; }
+  .step { position: relative; padding: 1.5rem 0 0; border-top: 3px solid var(--text); }
+  .step__n { position: absolute; top: -3px; left: 0; width: 2.75rem; height: 2.75rem; display: grid; place-items: center; background: var(--primary); color: var(--on-primary); font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.3rem; }
+  .step h3 { margin: 0 0 0.4rem 3.5rem; font-size: 1.15rem; line-height: 2.75rem; }
+  .step p { margin: 0.5rem 0 0; color: var(--muted); }
+  .step p a { color: var(--primary); font-weight: 600; }
+  .step .ph { display: inline-block; margin-top: 0.5rem; font-size: 0.92rem; }
+
+  /* Workshop: gallery + about + why */
+  .gal { margin-bottom: 2.5rem; }
+  .about { display: grid; gap: 2.5rem; align-items: start; }
+  .about__text p:first-child { font-size: 1.08rem; }
+  .checks { display: grid; gap: 0.5rem; margin-top: 1rem; }
+  .checks li { padding-left: 1.5rem; position: relative; font-weight: 600; }
+  .checks li::before { content: ''; position: absolute; left: 0; top: 0.45em; width: 0.5rem; height: 0.9rem; border-right: 3px solid var(--primary); border-bottom: 3px solid var(--primary); transform: rotate(45deg) translate(-2px, -2px); }
+  .why { display: grid; gap: 1rem; }
+  .why li { border-top: 4px solid var(--primary); background: var(--surface); padding: 1.2rem 1.3rem; border-inline: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .why h3 { font-size: 1.05rem; margin-bottom: 0.3rem; }
+  .why p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  @media (min-width: 60rem) { .about { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 4rem; } }
+
+  /* Booking */
+  .book { border-top: 3px solid var(--text); }
+  .book__grid { display: grid; gap: 2.5rem; align-items: start; }
+  .book__form { background: var(--surface); border: 3px solid var(--text); padding: 1.6rem; }
+  @media (min-width: 60rem) { .book__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 4rem; } }
+
+  @media (max-width: 47.99rem) {
+    .hdr__nav { display: none; }
+    .hdr__phone { display: none; }
+    .hdr__cta { margin-left: 0; }
+  }
 </style>

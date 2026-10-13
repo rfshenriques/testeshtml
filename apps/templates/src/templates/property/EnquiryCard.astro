@@ -1,0 +1,38 @@
+---
+/** property: the hero's enquiry card. Buy / rent / valuation radios, an area field and a button posting to the mockup endpoint. */
+import type { BuildInput } from '../../lib/input';
+interface Props { input: BuildInput }
+const { input } = Astro.props;
+const { mockup, brief } = input;
+---
+<form class="enquiry" method="post" action={mockup.formEndpoint} aria-labelledby="enquiry-heading" aria-describedby="enquiry-note">
+  <input type="hidden" name="previewSlug" value={mockup.previewSlug} />
+  <input type="hidden" name="business" value={brief.businessName} />
+  <input type="hidden" name="formVariant" value="enquiry" />
+  <h2 id="enquiry-heading" class="enquiry__heading">How can we help?</h2>
+  <fieldset class="enquiry__choices">
+    <legend class="enquiry__legend">I am looking to</legend>
+    <label><input type="radio" name="intent" value="buy" checked /><span>Buy</span></label>
+    <label><input type="radio" name="intent" value="rent" /><span>Rent</span></label>
+    <label><input type="radio" name="intent" value="valuation" /><span>Sell or let</span></label>
+  </fieldset>
+  <label class="enquiry__field">Area or postcode<input type="text" name="area" placeholder={brief.city ?? undefined} autocomplete="postal-code" /></label>
+  <label class="enquiry__field">Email<input type="email" name="email" autocomplete="email" required /></label>
+  <button class="btn btn-primary btn-lg enquiry__submit" type="submit">Send enquiry</button>
+  <p class="enquiry__note" id="enquiry-note">Mockup: enquiries are recorded for demonstration and not sent to {brief.businessName}.</p>
+</form>
+<style>
+  .enquiry { background: var(--surface); color: var(--text); padding: clamp(1.5rem, 3vw, 2.25rem); display: grid; gap: 1rem; box-shadow: 0 30px 60px rgba(0,0,0,0.25); }
+  .enquiry__heading { font-size: 1.5rem; margin: 0; }
+  .enquiry__choices { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+  .enquiry__legend { font-size: 0.8rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.6rem; padding: 0; }
+  .enquiry__choices label { position: relative; display: block; }
+  .enquiry__choices input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .enquiry__choices span { display: flex; align-items: center; justify-content: center; min-height: 2.75rem; border: 1px solid var(--border); font-weight: 600; font-size: 0.95rem; }
+  .enquiry__choices input:checked + span { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+  .enquiry__choices input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .enquiry__field { display: grid; gap: 0.35rem; font-weight: 600; font-size: 0.9rem; }
+  .enquiry__field input { font: inherit; padding: 0.75rem 0.85rem; border: 1px solid var(--muted); background: var(--bg); color: var(--text); width: 100%; min-height: 2.75rem; }
+  .enquiry__submit { width: 100%; }
+  .enquiry__note { margin: 0; font-size: 0.8rem; color: var(--muted); }
+</style>

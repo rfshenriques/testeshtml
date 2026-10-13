@@ -1,68 +1,308 @@
 ---
-/** hospitality: Hero, menu highlights, gallery, hours+map, reservations CTA, reviews (+ about, contact form). */
+/**
+ * hospitality: full-bleed photo hero with an oversized centred wordmark, a "today" strip,
+ * a two-column dotted-leader menu, a photo mosaic, a warm reservations band,
+ * horizontal scroll-snap reviews, visit block and a reservation form.
+ */
 import type { BuildInput } from '../../lib/input';
-import { pickImages, priceLevelLabel } from '../../lib/input';
+import { pickImages, priceLevelLabel, telHref } from '../../lib/input';
 import MockupLayout from '../../layouts/MockupLayout.astro';
-import SiteHeader from '../../components/SiteHeader.astro';
-import Hero from '../../components/Hero.astro';
-import Section from '../../components/Section.astro';
-import Services from '../../components/Services.astro';
-import About from '../../components/About.astro';
-import Gallery from '../../components/Gallery.astro';
-import HoursMap from '../../components/HoursMap.astro';
-import CtaBand from '../../components/CtaBand.astro';
+import Wordmark from '../../components/Wordmark.astro';
+import Copy from '../../components/Copy.astro';
+import Img from '../../components/Img.astro';
 import Reviews from '../../components/Reviews.astro';
 import ContactForm from '../../components/ContactForm.astro';
+import MenuList from './MenuList.astro';
+import VisitBlock from './VisitBlock.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
-const { brief } = input;
-const { gallery } = pickImages(input);
+const { brief, copy } = input;
+const { hero, gallery } = pickImages(input);
 const price = priceLevelLabel(brief.priceLevel);
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phoneLabel = brief.phone ?? brief.internationalPhone;
+const firstHours = brief.openingHours[0];
+const kicker = [brief.classification.subVertical, brief.city].filter(Boolean).join(' · ');
 const nav = [
-  { href: '#menu', label: 'Menu' }, { href: '#gallery', label: 'Gallery' }, { href: '#visit', label: 'Hours & map' },
-  { href: '#reviews', label: 'Reviews' }, { href: '#reserve', label: 'Reserve' },
+  { href: '#menu', label: 'Menu' }, { href: '#about', label: 'About' }, { href: '#gallery', label: 'Gallery' },
+  { href: '#visit', label: 'Visit' }, { href: '#reviews', label: 'Reviews' },
 ];
+const mosaic = Array.from({ length: 5 }, (_, i) => gallery[i + 1]);
 ---
 <MockupLayout input={input}>
-  <SiteHeader input={input} nav={nav} ctaHref="#reserve" ctaLabel="Reserve a table" />
+  <header class="hs-header" id="top">
+    <div class="container hs-header__row">
+      <Wordmark name={brief.businessName} />
+      <nav class="hs-nav" aria-label="Sections">
+        <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
+      </nav>
+      <a class="btn btn-primary hs-header__cta" href="#reserve"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+    </div>
+  </header>
+
   <main id="main">
-    <Hero input={input} ctaHref="#reserve" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative dining room photo">
-      <div class="hero__meta" slot="meta">
-        {brief.rating !== null && <span>★ {brief.rating.toFixed(1)}{brief.reviewCount !== null ? ` (${brief.reviewCount} reviews)` : ''}</span>}
-        {price && <span>{price}</span>}
-        {brief.openingHours[0] && <span>{brief.openingHours[0].day}: {brief.openingHours[0].hours}</span>}
+    <section class="hs-hero" aria-labelledby="hero-heading">
+      <div class="hs-hero__photo"><Img image={hero} label="Indicative dining room photo" width={1600} height={1000} eager /></div>
+      <div class="container hs-hero__inner">
+        {kicker && <p class="hs-hero__kicker">{kicker}</p>}
+        <p class="hs-hero__mark" aria-hidden="true">{brief.businessName}</p>
+        <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+        <p class="hs-hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+        <div class="hs-hero__actions">
+          <a class="btn btn-on-hero btn-lg" href="#reserve"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+          <a class="btn btn-ghost-hero btn-lg" href="#menu"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+        </div>
       </div>
-    </Hero>
+    </section>
 
-    <Section id="menu" eyebrow="Menu highlights" heading="What we serve" lead={brief.editorialSummary ?? undefined}>
-      <Services copy={input.copy} layout="menu" priceLabel={price} priceNote="Prices on request" />
-    </Section>
+    <section class="hs-today" aria-label="At a glance">
+      <div class="container">
+        <ul class="hs-today__list">
+          <li>
+            <span class="hs-today__label">Hours</span>
+            {firstHours ? <span class="hs-today__value">{firstHours.day} {firstHours.hours}</span> : <span class="hs-today__value ph">Opening hours to be supplied by the business</span>}
+            <a class="hs-today__more" href="#visit">All opening times</a>
+          </li>
+          <li>
+            <span class="hs-today__label">Rating</span>
+            {brief.rating !== null ? (
+              <span class="hs-today__value"><span class="hs-today__star" aria-hidden="true">★</span> {brief.rating.toFixed(1)}{brief.reviewCount !== null ? ` · ${brief.reviewCount} reviews` : ''}</span>
+            ) : <span class="hs-today__value ph">Rating to be supplied by the business</span>}
+            <a class="hs-today__more" href="#reviews">Read reviews</a>
+          </li>
+          <li>
+            <span class="hs-today__label">Price</span>
+            {price ? <span class="hs-today__value">{price}</span> : <span class="hs-today__value ph">Price level to be supplied</span>}
+            <a class="hs-today__more" href="#menu">See the menu</a>
+          </li>
+          <li>
+            <span class="hs-today__label">Find us</span>
+            {brief.address ? <span class="hs-today__value">{brief.address}</span> : <span class="hs-today__value ph">Address to be supplied by the business</span>}
+            {tel ? <a class="hs-today__more" href={tel}>Call {phoneLabel}</a> : <a class="hs-today__more" href="#visit">Directions</a>}
+          </li>
+        </ul>
+      </div>
+    </section>
 
-    <Section id="about" tone="surface">
-      <About input={input} image={gallery[0]} imageLabel="Indicative kitchen photo" />
-    </Section>
+    <section id="menu" class="hs-section" aria-labelledby="menu-heading">
+      <div class="container">
+        <div class="hs-head">
+          <span class="hs-eyebrow">Menu highlights</span>
+          <h2 id="menu-heading">What we serve</h2>
+          {brief.editorialSummary && <p class="hs-head__lead">{brief.editorialSummary}</p>}
+        </div>
+        <MenuList copy={copy} />
+        <p class="hs-note"><span class="ph">Full menu, prices and daily specials to be supplied by the business</span></p>
+      </div>
+    </section>
 
-    <Section id="gallery" eyebrow="Gallery" heading="A look inside">
-      <Gallery images={gallery.slice(1)} slots={6} label="Indicative food photo" />
-    </Section>
+    <section id="about" class="hs-section hs-section--surface" aria-labelledby="about-heading">
+      <div class="container hs-about">
+        <div class="hs-about__photo"><Img image={gallery[0]} label="Indicative kitchen photo" width={900} height={1100} ratio="4 / 5" /></div>
+        <div class="hs-about__text">
+          <span class="hs-eyebrow">Our story</span>
+          <h2 id="about-heading"><Copy copy={copy} path="about.heading" value={copy.about.heading} /></h2>
+          <p class="hs-about__body"><Copy copy={copy} path="about.body" value={copy.about.body} /></p>
+          {copy.whyUs.length > 0 && (
+            <ul class="hs-why">
+              {copy.whyUs.map((w, i) => (
+                <li>
+                  <strong><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></strong>
+                  <span><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {brief.verifiedFacts.length > 0 && (
+            <ul class="hs-facts" aria-label="Good to know">
+              {brief.verifiedFacts.map((f) => <li>{f}</li>)}
+            </ul>
+          )}
+        </div>
+      </div>
+    </section>
 
-    <Section id="visit" tone="surface" eyebrow="Visit" heading="Hours and location">
-      <HoursMap input={input} />
-    </Section>
+    <section id="gallery" class="hs-section" aria-labelledby="gallery-heading">
+      <div class="container">
+        <div class="hs-head hs-head--row">
+          <div>
+            <span class="hs-eyebrow">Gallery</span>
+            <h2 id="gallery-heading">A look inside</h2>
+          </div>
+          <p class="hs-head__aside">Indicative photos, to be replaced with the venue's own photography.</p>
+        </div>
+        <ul class="hs-mosaic">
+          {mosaic.map((img, i) => (
+            <li><Img image={img} label={`Indicative food photo ${i + 1}`} width={900} height={900} ratio="1 / 1" showCredit={false} /></li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-    <CtaBand input={input} id="cta" href="#reserve" eyebrow="Reservations" />
+    <section id="cta" class="hs-band" aria-labelledby="cta-heading">
+      <div class="container hs-band__inner">
+        <div>
+          <span class="hs-eyebrow hs-eyebrow--light">Reservations</span>
+          <h2 id="cta-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+          <p class="hs-band__lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+        </div>
+        <div class="hs-band__actions">
+          <a class="btn btn-on-hero btn-lg" href="#reserve"><Copy copy={copy} path="cta.buttonLabel" value={copy.cta.buttonLabel} /></a>
+          {tel && <a class="btn btn-ghost-hero btn-lg" href={tel}>Call {phoneLabel}</a>}
+        </div>
+      </div>
+    </section>
 
-    <Section id="reviews" eyebrow="Reviews" heading="What guests say">
-      <Reviews input={input} />
-    </Section>
+    <section id="reviews" class="hs-section hs-reviews" aria-labelledby="reviews-heading">
+      <div class="container">
+        <div class="hs-head">
+          <span class="hs-eyebrow">Reviews</span>
+          <h2 id="reviews-heading">What guests say</h2>
+        </div>
+        <Reviews input={input} />
+      </div>
+    </section>
 
-    <Section id="reserve" tone="surface" eyebrow="Reservations" heading="Reserve a table" lead={brief.phone ? `Call ${brief.phone} or send a reservation enquiry below.` : 'Send a reservation enquiry below.'}>
-      <ContactForm input={input} variant="booking" submitLabel="Send reservation enquiry" />
-    </Section>
+    <section id="visit" class="hs-section hs-section--surface" aria-labelledby="visit-heading">
+      <div class="container">
+        <div class="hs-head">
+          <span class="hs-eyebrow">Visit</span>
+          <h2 id="visit-heading">Hours and location</h2>
+        </div>
+        <VisitBlock input={input} />
+      </div>
+    </section>
+
+    <section id="reserve" class="hs-section" aria-labelledby="reserve-heading">
+      <div class="container hs-reserve">
+        <div class="hs-reserve__intro">
+          <span class="hs-eyebrow">Reservations</span>
+          <h2 id="reserve-heading">Reserve a table</h2>
+          <p class="hs-reserve__lead">{tel ? 'Call us or send a reservation enquiry; we will confirm your table.' : 'Send a reservation enquiry and we will confirm your table.'}</p>
+          {tel && <a class="btn btn-outline" href={tel}>Call {phoneLabel}</a>}
+        </div>
+        <div class="hs-reserve__form">
+          <ContactForm input={input} variant="booking" submitLabel="Send reservation enquiry" />
+        </div>
+      </div>
+    </section>
   </main>
 </MockupLayout>
 
 <style is:global>
-  [data-template="hospitality"] .hero { background: linear-gradient(160deg, var(--hero-bg), color-mix(in srgb, var(--hero-bg) 80%, var(--primary))); }
-  [data-template="hospitality"] .wordmark--sm { font-size: 1.6rem; }
+  [data-template="hospitality"] {
+    --hs-overlay: rgba(0, 0, 0, 0.55);
+    --hs-tint: color-mix(in srgb, var(--primary) 7%, var(--bg));
+  }
+  [data-template="hospitality"] body { font-size: 1.0625rem; }
+  [data-template="hospitality"] h2 { font-size: clamp(1.9rem, 3.6vw, 2.75rem); }
+
+  /* Header: slim, wordmark left, centred nav, single CTA */
+  [data-template="hospitality"] .hs-header { background: var(--bg); border-bottom: 1px solid var(--border); }
+  [data-template="hospitality"] .hs-header__row { display: flex; align-items: center; justify-content: space-between; gap: 1rem 1.5rem; flex-wrap: wrap; padding: 0.85rem 0; }
+  [data-template="hospitality"] .hs-nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.4rem; }
+  [data-template="hospitality"] .hs-nav a { color: var(--text); text-decoration: none; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; font-size: 0.82rem; font-weight: 600; padding: 0.6rem 0; display: inline-block; }
+  [data-template="hospitality"] .hs-nav a:hover { color: var(--primary); text-decoration: underline; }
+  [data-template="hospitality"] .hs-header__cta { border-radius: 2px; min-height: 44px; }
+  [data-template="hospitality"] .btn { border-radius: 2px; }
+  [data-template="hospitality"] .btn-lg { padding: 1rem 2rem; }
+
+  /* Hero: full-bleed photo, dark veil, oversized centred mark */
+  [data-template="hospitality"] .hs-hero { position: relative; isolation: isolate; color: #ffffff; background: var(--hero-bg); min-height: min(88vh, 46rem); display: grid; align-items: end; text-align: center; padding: clamp(12rem, 28vw, 20rem) 0 clamp(3.5rem, 7vw, 5.5rem); overflow: hidden; }
+  [data-template="hospitality"] .hs-hero__photo { position: absolute; inset: 0; z-index: -2; }
+  [data-template="hospitality"] .hs-hero__photo .img-frame { position: absolute; inset: 0; border-radius: 0; background: var(--hero-bg); }
+  [data-template="hospitality"] .hs-hero__photo .img-frame img { width: 100%; height: 100%; aspect-ratio: auto; object-fit: cover; }
+  [data-template="hospitality"] .hs-hero__photo .credit { position: absolute; right: 1rem; bottom: 0.75rem; color: #ffffff; opacity: 0.8; margin: 0; z-index: 2; }
+  [data-template="hospitality"] .hs-hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(0,0,0,0.25), var(--hs-overlay) 45%, rgba(0,0,0,0.78)); }
+  [data-template="hospitality"] .hs-hero__inner { max-width: 60rem; }
+  [data-template="hospitality"] .hs-hero__kicker { margin: 0 0 1.25rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.2em; font-size: 0.8rem; font-weight: 600; opacity: 0.9; }
+  [data-template="hospitality"] .hs-hero__mark { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-tracking); text-transform: var(--display-transform); font-size: clamp(2.8rem, 9vw, 7rem); line-height: 1; margin: 0 0 1.25rem; text-wrap: balance; }
+  [data-template="hospitality"] .hs-hero h1 { font-family: var(--font-body); font-weight: 400; text-transform: none; letter-spacing: 0; font-size: clamp(1.2rem, 2.4vw, 1.6rem); line-height: 1.4; margin: 0 auto 0.5rem; max-width: 34rem; opacity: 0.95; }
+  [data-template="hospitality"] .hs-hero__lead { max-width: 34rem; margin: 0 auto; opacity: 0.85; font-size: 1rem; }
+  [data-template="hospitality"] .hs-hero__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-top: 2rem; }
+  [data-template="hospitality"] .hs-hero .btn-on-hero { background: #ffffff; color: var(--hero-bg); border-color: #ffffff; }
+  [data-template="hospitality"] .hs-hero .btn-ghost-hero { color: #ffffff; border-color: #ffffff; }
+  [data-template="hospitality"] .hs-hero .ph { color: #ffffff; border-color: #ffffff; }
+
+  /* Today strip */
+  [data-template="hospitality"] .hs-today { background: var(--surface); border-bottom: 1px solid var(--border); }
+  [data-template="hospitality"] .hs-today__list { display: grid; grid-template-columns: repeat(4, 1fr); }
+  [data-template="hospitality"] .hs-today__list li { display: grid; gap: 0.2rem; padding: 1.25rem 1.5rem; border-left: 1px solid var(--border); min-width: 0; }
+  [data-template="hospitality"] .hs-today__list li:first-child { border-left: 0; padding-left: 0; }
+  [data-template="hospitality"] .hs-today__label { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.14em; font-size: 0.72rem; font-weight: 700; color: var(--accent); }
+  [data-template="hospitality"] .hs-today__value { font-weight: 600; font-size: 0.98rem; line-height: 1.35; }
+  [data-template="hospitality"] .hs-today__star { color: var(--accent); }
+  [data-template="hospitality"] .hs-today__more { font-size: 0.88rem; color: var(--primary); display: inline-block; padding: 0.3rem 0; width: fit-content; }
+
+  /* Sections */
+  [data-template="hospitality"] .hs-section { padding: clamp(3.5rem, 8vw, 6.5rem) 0; }
+  [data-template="hospitality"] .hs-section--surface { background: var(--hs-tint); }
+  [data-template="hospitality"] .hs-head { max-width: 40rem; margin: 0 auto 2.5rem; text-align: center; }
+  [data-template="hospitality"] .hs-head--row { max-width: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; text-align: left; flex-wrap: wrap; }
+  [data-template="hospitality"] .hs-head--row h2 { margin-bottom: 0; }
+  [data-template="hospitality"] .hs-head__aside { margin: 0; color: var(--muted); font-size: 0.95rem; max-width: 24rem; }
+  [data-template="hospitality"] .hs-head__lead { color: var(--muted); font-size: 1.1rem; margin: 0; }
+  [data-template="hospitality"] .hs-eyebrow { display: block; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.18em; font-size: 0.74rem; font-weight: 700; color: var(--accent); margin-bottom: 0.9rem; }
+  [data-template="hospitality"] .hs-eyebrow::before, [data-template="hospitality"] .hs-head .hs-eyebrow::after { content: ''; display: inline-block; width: 1.5rem; height: 1px; background: currentColor; vertical-align: middle; margin: 0 0.6rem; }
+  [data-template="hospitality"] .hs-head--row .hs-eyebrow::after, [data-template="hospitality"] .hs-about .hs-eyebrow::before, [data-template="hospitality"] .hs-reserve .hs-eyebrow::before, [data-template="hospitality"] .hs-band .hs-eyebrow::before { display: none; }
+  [data-template="hospitality"] .hs-head--row .hs-eyebrow::before { display: none; }
+  [data-template="hospitality"] .hs-eyebrow--light { color: #ffffff; opacity: 0.85; }
+  [data-template="hospitality"] .hs-note { text-align: center; margin: 2rem 0 0; font-size: 0.95rem; }
+
+  /* About */
+  [data-template="hospitality"] .hs-about { display: grid; gap: 3rem; align-items: center; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+  [data-template="hospitality"] .hs-about__photo .img-frame { border-radius: 200px 200px 4px 4px; }
+  [data-template="hospitality"] .hs-about__body { font-size: 1.1rem; }
+  [data-template="hospitality"] .hs-why { display: grid; gap: 0.9rem; margin-top: 1.75rem; border-top: 1px solid var(--border); padding-top: 1.5rem; }
+  [data-template="hospitality"] .hs-why li { display: grid; grid-template-columns: minmax(8rem, 11rem) 1fr; gap: 0.5rem 1.25rem; align-items: baseline; }
+  [data-template="hospitality"] .hs-why strong { font-family: var(--font-display); font-weight: var(--display-weight); font-size: 1.05rem; }
+  [data-template="hospitality"] .hs-why span { color: var(--muted); }
+  [data-template="hospitality"] .hs-facts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem; }
+  [data-template="hospitality"] .hs-facts li { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.74rem; font-weight: 600; padding: 0.45rem 0.8rem; border: 1px solid var(--accent); color: var(--accent); border-radius: 2px; }
+
+  /* Mosaic */
+  [data-template="hospitality"] .hs-mosaic { display: grid; gap: 0.75rem; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; }
+  [data-template="hospitality"] .hs-mosaic li:first-child { grid-column: span 2; grid-row: span 2; }
+  [data-template="hospitality"] .hs-mosaic .img-frame { border-radius: 4px; height: 100%; }
+  [data-template="hospitality"] .hs-mosaic .img-frame img { height: 100%; }
+
+  /* Reservations band: warm gradient */
+  [data-template="hospitality"] .hs-band { background: linear-gradient(120deg, var(--hero-bg), color-mix(in srgb, var(--hero-bg) 45%, var(--primary))); color: #ffffff; padding: clamp(3.5rem, 7vw, 5.5rem) 0; }
+  [data-template="hospitality"] .hs-band__inner { display: grid; gap: 2rem; align-items: center; grid-template-columns: minmax(0, 1.4fr) auto; }
+  [data-template="hospitality"] .hs-band h2 { margin-bottom: 0.5rem; }
+  [data-template="hospitality"] .hs-band__lead { margin: 0; opacity: 0.88; max-width: 36rem; font-size: 1.1rem; }
+  [data-template="hospitality"] .hs-band__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  [data-template="hospitality"] .hs-band .btn-on-hero { background: #ffffff; color: var(--hero-bg); border-color: #ffffff; }
+  [data-template="hospitality"] .hs-band .btn-ghost-hero { color: #ffffff; border-color: #ffffff; }
+  [data-template="hospitality"] .hs-band .ph { color: #ffffff; border-color: #ffffff; }
+
+  /* Reviews: horizontal scroll-snap */
+  [data-template="hospitality"] .hs-reviews .rating { justify-content: center; margin-bottom: 0.5rem; }
+  [data-template="hospitality"] .hs-reviews .reviews { display: flex; gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; padding: 0.5rem 0 1.25rem; margin-top: 1.5rem; scrollbar-width: thin; }
+  [data-template="hospitality"] .hs-reviews .reviews li { flex: 0 0 min(22rem, 85%); scroll-snap-align: start; }
+  [data-template="hospitality"] .hs-reviews .review { height: 100%; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); padding: 1.75rem; }
+  [data-template="hospitality"] .hs-reviews .review p { font-family: var(--font-display); font-size: 1.15rem; line-height: 1.45; }
+
+  /* Reserve */
+  [data-template="hospitality"] .hs-reserve { display: grid; gap: 3rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); align-items: start; }
+  [data-template="hospitality"] .hs-reserve__lead { color: var(--muted); font-size: 1.05rem; }
+  [data-template="hospitality"] .hs-reserve__form { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: clamp(1.5rem, 3vw, 2.5rem); }
+  [data-template="hospitality"] .form input, [data-template="hospitality"] .form textarea { border-radius: 2px; }
+
+  @media (max-width: 56rem) {
+    [data-template="hospitality"] .hs-today__list { grid-template-columns: 1fr 1fr; }
+    [data-template="hospitality"] .hs-today__list li { border-left: 0; border-top: 1px solid var(--border); padding-inline: 0; }
+    [data-template="hospitality"] .hs-today__list li:nth-child(-n+2) { border-top: 0; }
+    [data-template="hospitality"] .hs-today__list li:nth-child(even) { padding-left: 1.25rem; border-left: 1px solid var(--border); }
+    [data-template="hospitality"] .hs-about, [data-template="hospitality"] .hs-reserve, [data-template="hospitality"] .hs-band__inner { grid-template-columns: 1fr; }
+    [data-template="hospitality"] .hs-about__photo { max-width: 24rem; }
+    [data-template="hospitality"] .hs-mosaic { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 36rem) {
+    [data-template="hospitality"] .hs-header__row { gap: 0.5rem 1rem; }
+    [data-template="hospitality"] .hs-nav { order: 3; flex-basis: 100%; }
+    [data-template="hospitality"] .hs-nav ul { gap: 0 1.1rem; }
+    [data-template="hospitality"] .hs-header__cta { padding: 0.6rem 0.9rem; font-size: 0.92rem; }
+    [data-template="hospitality"] .hs-why li { grid-template-columns: 1fr; gap: 0.15rem; }
+  }
 </style>

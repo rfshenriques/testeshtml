@@ -1,0 +1,51 @@
+---
+/** professional: one large pull quote, the rating line, then the remaining excerpts as small quotes. No cards. */
+import type { BuildInput } from '../../lib/input';
+import { starString } from '../../lib/input';
+interface Props { input: BuildInput; source?: string }
+const { input, source = 'Google' } = Astro.props;
+const { brief } = input;
+const [lead, ...rest] = brief.reviewExcerpts;
+const hasRating = brief.rating !== null;
+---
+<div class="testimony">
+  {lead ? (
+    <blockquote class="testimony__pull">
+      <p>{lead}</p>
+      <footer>{source} review</footer>
+    </blockquote>
+  ) : (
+    <p class="ph">Client feedback to be supplied by the business</p>
+  )}
+  {hasRating ? (
+    <p class="testimony__rating" role="group" aria-label="Rating summary">
+      <span class="testimony__value">{brief.rating!.toFixed(1)}</span>
+      <span class="testimony__stars" aria-hidden="true">{starString(brief.rating!)}</span>
+      <span>out of 5{brief.reviewCount !== null ? ` from ${brief.reviewCount} ${brief.reviewCount === 1 ? 'review' : 'reviews'}` : ''} on {source}</span>
+    </p>
+  ) : (
+    <p class="ph">Client rating to be added by the business</p>
+  )}
+  {rest.length > 0 && (
+    <ul class="testimony__list">
+      {rest.map((text) => (
+        <li><blockquote class="testimony__small"><p>{text}</p><footer>{source} review</footer></blockquote></li>
+      ))}
+    </ul>
+  )}
+</div>
+<style>
+  .testimony { max-width: 54rem; }
+  .testimony__pull { margin: 0; padding: 0 0 0 clamp(1.5rem, 5vw, 3.5rem); position: relative; }
+  .testimony__pull::before { content: '“'; position: absolute; left: 0; top: -0.1em; font-family: var(--font-display); font-size: clamp(3rem, 7vw, 5rem); line-height: 1; color: var(--accent); }
+  .testimony__pull p { font-family: var(--font-display); font-weight: 400; font-size: clamp(1.45rem, 3vw, 2.1rem); line-height: 1.35; margin: 0 0 1rem; text-wrap: balance; }
+  .testimony__pull p::after { content: '”'; }
+  .testimony__pull footer, .testimony__small footer { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; font-size: 0.75rem; color: var(--muted); }
+  .testimony__rating { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; margin: 2rem 0 0; padding: 1.25rem 0; border-block: 1px solid var(--border); font-size: 0.95rem; color: var(--muted); }
+  .testimony__value { font-family: var(--font-display); font-size: 1.6rem; color: var(--text); line-height: 1; }
+  .testimony__stars { color: var(--accent); letter-spacing: 0.08em; }
+  .testimony__list { display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); margin-top: 2rem; }
+  .testimony__small { margin: 0; }
+  .testimony__small p { margin: 0 0 0.5rem; font-size: 1rem; }
+  .testimony__small p::before { content: '“'; } .testimony__small p::after { content: '”'; }
+</style>

@@ -1,0 +1,26 @@
+---
+/** copy.services as a salon price list: name, one line, "on request" in italic. No prices are ever invented. */
+import type { SiteCopy } from '@sitewright/shared-types';
+import Copy from '../../components/Copy.astro';
+interface Props { copy: SiteCopy }
+const { copy } = Astro.props;
+---
+<ul class="price-list">
+  {copy.services.map((s, i) => (
+    <li class="price-list__item">
+      <div class="price-list__text">
+        <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+        <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+      </div>
+      <span class="price-list__price"><em>on request</em></span>
+    </li>
+  ))}
+</ul>
+<style>
+  .price-list { display: grid; }
+  .price-list__item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem 2rem; align-items: baseline; padding: 1.5rem 0; border-top: 1px solid var(--border); }
+  .price-list__item:last-child { border-bottom: 1px solid var(--border); }
+  .price-list__text h3 { margin: 0 0 0.3rem; font-size: 1.35rem; }
+  .price-list__text p { margin: 0; color: var(--muted); max-width: 34rem; }
+  .price-list__price { color: var(--muted); font-size: 0.95rem; white-space: nowrap; }
+</style>

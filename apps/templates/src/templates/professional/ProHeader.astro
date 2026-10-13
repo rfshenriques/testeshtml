@@ -1,0 +1,49 @@
+---
+/** professional: hairline top line (address, phone) over a wordmark / nav / text-link CTA row. */
+import type { BuildInput } from '../../lib/input';
+import { telHref } from '../../lib/input';
+import Wordmark from '../../components/Wordmark.astro';
+interface Props { input: BuildInput; nav: { href: string; label: string }[]; ctaHref: string; ctaLabel: string }
+const { input, nav, ctaHref, ctaLabel } = Astro.props;
+const { brief } = input;
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phone = brief.phone ?? brief.internationalPhone;
+---
+<header class="pro-header" id="top">
+  {(brief.address || tel) && (
+    <div class="pro-topline">
+      <div class="container pro-topline__row">
+        {brief.address && <span>{brief.address}</span>}
+        {tel && <a href={tel}>{phone}</a>}
+      </div>
+    </div>
+  )}
+  <div class="container pro-header__row">
+    <Wordmark name={brief.businessName} />
+    <nav class="pro-nav" aria-label="Sections">
+      <ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul>
+    </nav>
+    <a class="pro-header__cta" href={ctaHref}>{ctaLabel} <span aria-hidden="true">→</span></a>
+  </div>
+</header>
+<style>
+  .pro-header { background: var(--bg); border-bottom: 1px solid var(--text); }
+  .pro-topline { border-bottom: 1px solid var(--border); font-size: 0.85rem; color: var(--muted); font-family: var(--font-label); letter-spacing: 0.02em; }
+  .pro-topline__row { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; min-height: 2.75rem; align-items: center; }
+  .pro-topline a { color: var(--text); text-decoration: none; padding: 0.6rem 0; }
+  .pro-topline a:hover { text-decoration: underline; }
+  .pro-header__row { display: flex; align-items: center; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; padding: 1.1rem 0; }
+  @media (min-width: 64rem) { .pro-header__row { display: grid; grid-template-columns: auto 1fr auto; } .pro-nav ul { justify-content: center; } }
+  .pro-header__row :global(.wordmark) { color: var(--text); font-size: 1.35rem; }
+  .pro-nav ul { display: flex; flex-wrap: wrap; gap: 0 1.35rem; }
+  .pro-nav a { display: inline-block; padding: 0.7rem 0; color: var(--text); text-decoration: none; font-size: 0.88rem; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.06em; border-bottom: 1px solid transparent; }
+  .pro-nav a:hover { border-bottom-color: var(--text); }
+  .pro-header__cta { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; color: var(--primary); font-weight: 600; text-decoration: none; border-bottom: 1px solid currentColor; padding: 0.2rem 0; }
+  .pro-header__cta:hover { gap: 0.8rem; }
+  @media (max-width: 47.99rem) {
+    .pro-header__row { padding: 0.9rem 0; }
+    .pro-nav { order: 3; width: 100%; }
+    .pro-nav ul { gap: 0 1.1rem; }
+    .pro-nav a { font-size: 0.85rem; }
+  }
+</style>

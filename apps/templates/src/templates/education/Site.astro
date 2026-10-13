@@ -1,66 +1,295 @@
 ---
-/** professional: Hero, practice areas, credentials, case-style proof, contact form (+ hours+map). */
+/**
+ * education: friendly and rounded. Hero with soft shapes, two CTAs and a blob-cropped photo;
+ * programmes as cards with a level chip; connected "how it works" steps; "why families choose us"
+ * band; about with fact pills; fact-based FAQ accordion; hours + map; reviews; enquiry panel.
+ */
 import type { BuildInput } from '../../lib/input';
-import { pickImages } from '../../lib/input';
+import { pickImages, telHref, starString } from '../../lib/input';
 import MockupLayout from '../../layouts/MockupLayout.astro';
-import SiteHeader from '../../components/SiteHeader.astro';
-import Hero from '../../components/Hero.astro';
-import Section from '../../components/Section.astro';
-import Services from '../../components/Services.astro';
-import About from '../../components/About.astro';
-import WhyUs from '../../components/WhyUs.astro';
+import Wordmark from '../../components/Wordmark.astro';
+import Copy from '../../components/Copy.astro';
+import Img from '../../components/Img.astro';
 import HoursMap from '../../components/HoursMap.astro';
-import CtaBand from '../../components/CtaBand.astro';
 import Reviews from '../../components/Reviews.astro';
 import ContactForm from '../../components/ContactForm.astro';
+import Faq from './Faq.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
-const { brief } = input;
-const { gallery } = pickImages(input);
+const { brief, copy } = input;
+const { hero, gallery } = pickImages(input);
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phone = brief.phone ?? brief.internationalPhone;
+const openDays = brief.openingHours.filter((h) => !/closed/i.test(h.hours)).map((h) => h.day);
+const daysLabel = openDays.length === 7 ? 'Open every day' : openDays.length ? `Open ${openDays.length} days a week` : null;
 const nav = [
-  { href: '#practice', label: 'Practice areas' }, { href: '#credentials', label: 'Credentials' }, { href: '#proof', label: 'Client feedback' },
-  { href: '#visit', label: 'Office' }, { href: '#contact', label: 'Contact' },
+  { href: '#programmes', label: 'Programmes' }, { href: '#how', label: 'How it works' }, { href: '#why', label: 'Why us' },
+  { href: '#faq', label: 'FAQ' }, { href: '#visit', label: 'Visit' },
 ];
 ---
 <MockupLayout input={input}>
-  <SiteHeader input={input} nav={nav} ctaHref="#contact" ctaLabel="Arrange a consultation" />
+  <header class="edu-header" id="top">
+    <div class="container edu-header__row">
+      <Wordmark name={brief.businessName} />
+      <nav class="edu-nav" aria-label="Sections"><ul>{nav.map((n) => <li><a href={n.href}>{n.label}</a></li>)}</ul></nav>
+      <div class="edu-header__cta">
+        {tel && <a class="btn btn-outline" href={tel}>Call us</a>}
+        <a class="btn btn-primary" href="#enquire"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+      </div>
+    </div>
+  </header>
   <main id="main">
-    <Hero input={input} ctaHref="#contact" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative office photo" />
+    <section class="edu-hero" aria-labelledby="hero-heading">
+      <span class="edu-blob edu-blob--a" aria-hidden="true"></span>
+      <span class="edu-blob edu-blob--b" aria-hidden="true"></span>
+      <div class="container edu-hero__grid">
+        <div class="edu-hero__text">
+          <p class="edu-kicker">{[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')}</p>
+          <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+          <p class="edu-hero__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+          <div class="edu-hero__actions">
+            <a class="btn btn-primary btn-lg" href="#enquire"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            <a class="btn btn-outline btn-lg" href="#visit">Visit us</a>
+          </div>
+          {brief.rating !== null && (
+            <p class="edu-hero__rating"><span class="edu-hero__stars" aria-hidden="true">{starString(brief.rating)}</span> {brief.rating.toFixed(1)} out of 5{brief.reviewCount !== null ? ` from ${brief.reviewCount} families on Google` : ' on Google'}</p>
+          )}
+        </div>
+        <div class="edu-hero__media">
+          <Img image={hero} label="Indicative photo" width={900} height={900} eager />
+          {daysLabel && <span class="edu-hero__pill">{daysLabel}</span>}
+        </div>
+      </div>
+    </section>
 
-    <Section id="practice" eyebrow="Practice areas" heading="How we can help">
-      <Services copy={input.copy} layout="numbered" />
-    </Section>
+    <section id="programmes" class="edu-section" aria-labelledby="programmes-heading">
+      <div class="container">
+        <div class="edu-section__head">
+          <span class="eyebrow">Programmes</span>
+          <h2 id="programmes-heading">What we teach</h2>
+          <p class="lead">Ages and levels for each programme will be confirmed by {brief.businessName}.</p>
+        </div>
+        <ul class="edu-cards">
+          {copy.services.map((s, i) => (
+            <li class="edu-card">
+              <div class="edu-card__top">
+                <span class="edu-card__n" aria-hidden="true">{i + 1}</span>
+                <span class="edu-chip edu-chip--ph">Level to be confirmed</span>
+              </div>
+              <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+              <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+              <a class="edu-card__link" href="#enquire">Ask about this <span aria-hidden="true">→</span></a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-    <Section id="credentials" tone="surface" eyebrow="Credentials" heading="About the practice">
-      <About input={input} image={gallery[0]} imageLabel="Indicative meeting room photo" factsHeading="Verified details" />
-      <p class="muted credentials-note">Qualifications, memberships and accreditations will be listed here once confirmed by {brief.businessName}; this mockup shows none that have not been verified.</p>
-    </Section>
+    <section id="how" class="edu-section edu-section--surface" aria-labelledby="how-heading">
+      <div class="container">
+        <div class="edu-section__head edu-section__head--center">
+          <span class="eyebrow">How it works</span>
+          <h2 id="how-heading">Three simple steps</h2>
+        </div>
+        <ol class="edu-steps">
+          <li>
+            <span class="edu-steps__n" aria-hidden="true">1</span>
+            <h3>Say hello</h3>
+            <p><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+          </li>
+          <li>
+            <span class="edu-steps__n" aria-hidden="true">2</span>
+            <h3>Come and see us</h3>
+            <p>{brief.address ? `Find us at ${brief.address}` : <span class="ph">Address to be confirmed by the business</span>}{daysLabel ? `, ${daysLabel.toLowerCase()}` : ''}. <a href="#visit">Opening times</a>.</p>
+          </li>
+          <li>
+            <span class="edu-steps__n" aria-hidden="true">3</span>
+            <h3>Get started</h3>
+            <p>{brief.businessName} confirms the next steps after your enquiry. <span class="ph">Details to be supplied by the business</span>.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
 
-    <Section id="why" eyebrow="Our approach" heading="Why clients choose us">
-      <WhyUs copy={input.copy} />
-    </Section>
+    <section id="why" class="edu-section edu-section--tint" aria-labelledby="why-heading">
+      <div class="container">
+        <div class="edu-section__head">
+          <span class="eyebrow">Why families choose us</span>
+          <h2 id="why-heading">What makes the difference</h2>
+        </div>
+        <ul class="edu-why">
+          {copy.whyUs.map((w, i) => (
+            <li>
+              <span class="edu-why__dot" aria-hidden="true"></span>
+              <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+              <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
 
-    <Section id="proof" tone="dark" eyebrow="Client feedback" heading="What clients say">
-      <Reviews input={input} />
-    </Section>
+    <section id="about" class="edu-section" aria-labelledby="about-heading">
+      <div class="container edu-about">
+        <div class="edu-about__media"><Img image={gallery[0]} label="Indicative classroom photo" width={900} height={760} /></div>
+        <div>
+          <span class="eyebrow">About us</span>
+          <h2 id="about-heading"><Copy copy={copy} path="about.heading" value={copy.about.heading} /></h2>
+          <p><Copy copy={copy} path="about.body" value={copy.about.body} /></p>
+          {brief.verifiedFacts.length > 0 && (
+            <ul class="edu-pills" aria-label="Good to know">{brief.verifiedFacts.map((f) => <li>{f}</li>)}</ul>
+          )}
+        </div>
+      </div>
+    </section>
 
-    <Section id="visit" tone="surface" eyebrow="Office" heading="Visit the office">
-      <HoursMap input={input} />
-    </Section>
+    <section id="faq" class="edu-section edu-section--surface" aria-labelledby="faq-heading">
+      <div class="container edu-faq">
+        <div class="edu-faq__intro">
+          <span class="eyebrow">Questions</span>
+          <h2 id="faq-heading">Things parents ask</h2>
+          <p class="lead">Can't find the answer? <a href="#enquire">Send us a note</a>{tel ? <> or call <a href={tel}>{phone}</a></> : null}.</p>
+        </div>
+        <Faq input={input} />
+      </div>
+    </section>
 
-    <CtaBand input={input} id="cta" href="#contact" tone="surface" eyebrow="Next step" />
+    <section id="visit" class="edu-section" aria-labelledby="visit-heading">
+      <div class="container">
+        <div class="edu-section__head">
+          <span class="eyebrow">Visit</span>
+          <h2 id="visit-heading">Opening times and where to find us</h2>
+        </div>
+        <HoursMap input={input} />
+      </div>
+    </section>
 
-    <Section id="contact" eyebrow="Contact" heading="Get in touch" lead="Tell us briefly about your situation and we will respond with next steps.">
-      <ContactForm input={input} variant="contact" submitLabel="Send enquiry" />
-    </Section>
+    <section id="reviews" class="edu-section edu-section--tint" aria-labelledby="reviews-heading">
+      <div class="container">
+        <div class="edu-section__head edu-section__head--center">
+          <span class="eyebrow">Reviews</span>
+          <h2 id="reviews-heading">What families say</h2>
+        </div>
+        <Reviews input={input} />
+      </div>
+    </section>
+
+    <section id="enquire" class="edu-section" aria-labelledby="enquire-heading">
+      <div class="container edu-enquire">
+        <div class="edu-enquire__intro">
+          <span class="eyebrow">Enquire</span>
+          <h2 id="enquire-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+          <p class="lead"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+          {tel && <p>Prefer to talk? <a href={tel}>{phone}</a></p>}
+        </div>
+        <div class="edu-enquire__form">
+          <ContactForm input={input} variant="contact" submitLabel={copy.cta.buttonLabel} />
+        </div>
+      </div>
+    </section>
   </main>
 </MockupLayout>
 
 <style is:global>
-  [data-template="education"] .hero { background: var(--hero-bg); }
-  [data-template="education"] .hero .img-frame { border-radius: 2px; }
-  [data-template="education"] .btn { border-radius: 2px; }
-  [data-template="education"] .card { border-radius: 2px; }
-  [data-template="education"] .credentials-note { margin: 1.5rem 0 0; font-size: 0.95rem; }
-  [data-template="education"] .wordmark { letter-spacing: 0.02em; }
+  [data-template="education"] { --edu-radius: 22px; --edu-tint: color-mix(in srgb, var(--primary) 8%, var(--bg)); --edu-tint-accent: color-mix(in srgb, var(--accent) 14%, var(--bg)); }
+  [data-template="education"] .btn { border-radius: 999px; }
+  [data-template="education"] .btn-outline { border-color: var(--border); background: var(--surface); }
+  [data-template="education"] .img-frame { border-radius: var(--edu-radius); }
+  [data-template="education"] .map { border-radius: var(--edu-radius); }
+  [data-template="education"] .eyebrow { margin-bottom: 0.6rem; }
+  [data-template="education"] h1, [data-template="education"] h2, [data-template="education"] h3 { color: var(--text); }
+  [data-template="education"] .lead a { font-weight: 600; }
+
+  /* Header */
+  [data-template="education"] .edu-header { background: var(--bg); }
+  [data-template="education"] .edu-header__row { display: flex; align-items: center; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; padding: 1rem 0; }
+  [data-template="education"] .edu-nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+  [data-template="education"] .edu-nav a { display: inline-block; padding: 0.6rem 0.9rem; border-radius: 999px; color: var(--text); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+  [data-template="education"] .edu-nav a:hover { background: var(--surface); color: var(--primary); }
+  [data-template="education"] .edu-header__cta { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  @media (min-width: 64rem) { [data-template="education"] .edu-header__row { display: grid; grid-template-columns: auto 1fr auto; } [data-template="education"] .edu-nav ul { justify-content: center; } }
+  @media (max-width: 47.99rem) { [data-template="education"] .edu-nav { order: 3; width: 100%; margin: 0 -0.9rem; } [data-template="education"] .edu-header__cta .btn-outline { display: none; } }
+
+  /* Hero: soft shapes */
+  [data-template="education"] .edu-hero { position: relative; overflow: hidden; padding: clamp(2.5rem, 7vw, 5.5rem) 0 clamp(3rem, 7vw, 5.5rem); }
+  [data-template="education"] .edu-blob { position: absolute; border-radius: 50%; pointer-events: none; }
+  [data-template="education"] .edu-blob--a { width: 36rem; height: 36rem; right: -10rem; top: -14rem; background: var(--edu-tint); }
+  [data-template="education"] .edu-blob--b { width: 18rem; height: 18rem; left: -6rem; bottom: -8rem; background: var(--edu-tint-accent); }
+  [data-template="education"] .edu-hero__grid { position: relative; display: grid; gap: 3rem; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; }
+  [data-template="education"] .edu-kicker { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; font-size: 0.8rem; font-weight: 600; color: var(--accent); margin: 0 0 1rem; }
+  [data-template="education"] .edu-hero h1 { font-size: clamp(2.5rem, 5.5vw, 4.25rem); margin-bottom: 1rem; }
+  [data-template="education"] .edu-hero__lead { font-size: clamp(1.1rem, 2vw, 1.3rem); color: var(--muted); max-width: 32rem; margin-bottom: 1.75rem; }
+  [data-template="education"] .edu-hero__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  [data-template="education"] .edu-hero__rating { margin: 1.5rem 0 0; font-size: 0.95rem; color: var(--muted); }
+  [data-template="education"] .edu-hero__stars { color: var(--accent); letter-spacing: 0.08em; }
+  [data-template="education"] .edu-hero__media { position: relative; justify-self: center; width: min(100%, 26rem); }
+  [data-template="education"] .edu-hero__media .img-frame { border-radius: 46% 54% 58% 42% / 44% 40% 60% 56%; }
+  [data-template="education"] .edu-hero__media img { aspect-ratio: 1; }
+  [data-template="education"] .edu-hero__pill { position: absolute; left: -0.5rem; bottom: 2rem; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 0.55rem 1rem; font-weight: 700; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+
+  /* Sections */
+  [data-template="education"] .edu-section { padding: clamp(3.5rem, 7vw, 6rem) 0; }
+  [data-template="education"] .edu-section--surface { background: var(--surface); }
+  [data-template="education"] .edu-section--tint { background: var(--edu-tint); }
+  [data-template="education"] .edu-section__head { max-width: 42rem; margin-bottom: 2.5rem; }
+  [data-template="education"] .edu-section__head--center { margin-inline: auto; text-align: center; }
+  [data-template="education"] .edu-section h2 { margin-bottom: 0.5rem; }
+  [data-template="education"] .edu-section__head .lead { margin: 0.5rem 0 0; font-size: 1.05rem; }
+
+  /* Programme cards */
+  [data-template="education"] .edu-cards { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+  [data-template="education"] .edu-card { background: var(--surface); border-radius: var(--edu-radius); padding: 1.5rem; display: grid; gap: 0.5rem; align-content: start; border: 1px solid var(--border); }
+  [data-template="education"] .edu-card__top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.75rem; }
+  [data-template="education"] .edu-card__n { width: 2.5rem; height: 2.5rem; border-radius: 50%; background: var(--primary); color: var(--on-primary); display: grid; place-items: center; font-weight: 800; font-family: var(--font-display); }
+  [data-template="education"] .edu-chip { display: inline-block; border-radius: 999px; padding: 0.3rem 0.7rem; font-size: 0.75rem; font-weight: 600; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.04em; }
+  [data-template="education"] .edu-chip--ph { color: var(--muted); border: 1px dashed var(--muted); font-style: italic; }
+  [data-template="education"] .edu-card h3 { margin-bottom: 0; font-size: 1.25rem; }
+  [data-template="education"] .edu-card p { margin: 0; color: var(--muted); }
+  [data-template="education"] .edu-card__link { margin-top: 0.5rem; color: var(--primary); font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; min-height: 2.75rem; }
+  [data-template="education"] .edu-card__link:hover { text-decoration: underline; }
+
+  /* Steps joined by a dashed line */
+  [data-template="education"] .edu-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); counter-reset: step; }
+  [data-template="education"] .edu-steps li { position: relative; text-align: center; padding: 0 1rem; }
+  [data-template="education"] .edu-steps__n { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; position: relative; z-index: 1; }
+  [data-template="education"] .edu-steps h3 { font-size: 1.2rem; margin-bottom: 0.4rem; }
+  [data-template="education"] .edu-steps p { margin: 0; color: var(--muted); max-width: 22rem; margin-inline: auto; }
+  [data-template="education"] .edu-steps p a { font-weight: 600; }
+  @media (min-width: 48rem) {
+    [data-template="education"] .edu-steps li + li::before { content: ''; position: absolute; top: 1.75rem; right: 50%; width: calc(100% + 2rem); border-top: 2px dashed var(--border); }
+  }
+
+  /* Why */
+  [data-template="education"] .edu-why { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); }
+  [data-template="education"] .edu-why li { background: var(--surface); border-radius: var(--edu-radius); padding: 1.75rem 1.5rem; }
+  [data-template="education"] .edu-why__dot { display: block; width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--accent); margin-bottom: 1rem; box-shadow: 0 0 0 6px var(--edu-tint-accent); }
+  [data-template="education"] .edu-why h3 { font-size: 1.2rem; margin-bottom: 0.4rem; }
+  [data-template="education"] .edu-why p { margin: 0; color: var(--muted); }
+
+  /* About */
+  [data-template="education"] .edu-about { display: grid; gap: 3rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: center; }
+  [data-template="education"] .edu-about__media .img-frame { border-radius: 40px 40px 40px 8px; }
+  [data-template="education"] .edu-about h2 { font-size: clamp(1.7rem, 3vw, 2.3rem); }
+  [data-template="education"] .edu-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
+  [data-template="education"] .edu-pills li { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 0.45rem 0.9rem; font-size: 0.9rem; font-weight: 600; }
+  [data-template="education"] .edu-pills li::before { content: '✓ '; color: var(--accent); }
+
+  /* FAQ, hours, reviews, enquiry */
+  [data-template="education"] .edu-faq { display: grid; gap: 2.5rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); align-items: start; }
+  [data-template="education"] .edu-faq .faq__item { border-radius: var(--edu-radius); }
+  [data-template="education"] .hours-map h3 { font-size: 1.1rem; }
+  [data-template="education"] .review { border-radius: var(--edu-radius) var(--edu-radius) var(--edu-radius) 4px; border: 0; }
+  [data-template="education"] .edu-enquire { display: grid; gap: 2.5rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); align-items: start; }
+  [data-template="education"] .edu-enquire__intro a { font-weight: 600; }
+  [data-template="education"] .edu-enquire__form { background: var(--surface); border-radius: var(--edu-radius); padding: clamp(1.5rem, 3vw, 2.5rem); border: 1px solid var(--border); }
+  [data-template="education"] .form input, [data-template="education"] .form textarea { border-radius: 14px; border-color: var(--border); background: var(--bg); }
+  [data-template="education"] .form__note { border-radius: 14px; }
+  [data-template="education"] .site-footer { border-radius: 40px 40px 0 0; }
+
+  @media (max-width: 63.99rem) {
+    [data-template="education"] .edu-hero__grid { grid-template-columns: 1fr; }
+    [data-template="education"] .edu-hero__media { width: min(100%, 20rem); justify-self: start; }
+    [data-template="education"] .edu-about, [data-template="education"] .edu-faq, [data-template="education"] .edu-enquire { grid-template-columns: 1fr; }
+    [data-template="education"] .edu-about__media { order: 2; }
+  }
 </style>

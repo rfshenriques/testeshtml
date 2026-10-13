@@ -1,0 +1,49 @@
+---
+/**
+ * Trades quote form posting to mockup.formEndpoint (spec §9.2). No JavaScript.
+ * `compact` is the short version that sits inside the hero; the full version
+ * closes the page. Both record a demonstration message only.
+ */
+import type { BuildInput } from '../../lib/input';
+interface Props { input: BuildInput; id: string; heading: string; compact?: boolean; level?: 2 | 3; submitLabel?: string }
+const { input, id, heading, compact = false, level = 2, submitLabel = 'Request a quote' } = Astro.props;
+const { mockup, brief } = input;
+const Heading = level === 2 ? 'h2' : 'h3';
+---
+<form class="form" method="post" action={mockup.formEndpoint} id={id} aria-labelledby={`${id}-heading`} aria-describedby={`${id}-note`}>
+  <input type="hidden" name="previewSlug" value={mockup.previewSlug} />
+  <input type="hidden" name="business" value={brief.businessName} />
+  <input type="hidden" name="formVariant" value={compact ? 'quote-hero' : 'quote'} />
+  <Heading class="qf__heading" id={`${id}-heading`}>{heading}</Heading>
+  {compact ? (
+    <>
+      <label>Your name<input type="text" name="name" autocomplete="name" required /></label>
+      <label>Phone<input type="tel" name="phone" autocomplete="tel" required /></label>
+      <label>What needs doing?<textarea name="message" rows="3" required></textarea></label>
+    </>
+  ) : (
+    <>
+      <div class="form__row">
+        <label>Your name<input type="text" name="name" autocomplete="name" required /></label>
+        <label>Phone<input type="tel" name="phone" autocomplete="tel" required /></label>
+      </div>
+      <div class="form__row">
+        <label>Email<input type="email" name="email" autocomplete="email" required /></label>
+        <label>Address or postcode (optional)<input type="text" name="address" autocomplete="postal-code" /></label>
+      </div>
+      <label>Describe the job<textarea name="message" required></textarea></label>
+    </>
+  )}
+  <p class="form__note" id={`${id}-note`}>This is a mockup — your message was recorded for demonstration and is not delivered to {brief.businessName}.</p>
+  <div>
+    <button class="btn btn-primary btn-lg" type="submit">{submitLabel}</button>
+  </div>
+</form>
+<style is:global>
+  [data-template="trades"] .qf__heading { font-size: 1.35rem; margin: 0 0 0.25rem; text-transform: uppercase; letter-spacing: 0.01em; }
+  [data-template="trades"] .form { gap: 0.8rem; }
+  [data-template="trades"] .form input, [data-template="trades"] .form textarea { border: 2px solid var(--text); border-radius: 2px; background: var(--surface); }
+  [data-template="trades"] .form textarea { min-height: 5.5rem; }
+  [data-template="trades"] .form .form__note { border-radius: 2px; }
+  [data-template="trades"] .form .btn { width: 100%; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+</style>

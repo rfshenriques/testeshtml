@@ -1,0 +1,35 @@
+---
+/** property: three placeholder property cards. Nothing here is a real listing; every slot says so. */
+import Img from '../../components/Img.astro';
+interface Props { businessName: string; city: string | null }
+const { businessName, city } = Astro.props;
+const slots = [1, 2, 3];
+---
+<ul class="listings">
+  {slots.map((n) => (
+    <li class="listing">
+      <div class="listing__media">
+        <Img label={`Listing photo ${n} — to be supplied`} width={900} height={675} showCredit={false} />
+        <span class="listing__chip">Listing to be supplied</span>
+      </div>
+      <div class="listing__body">
+        <h3 class="listing__title"><span class="ph">Property address to be supplied</span></h3>
+        <p class="listing__meta"><span class="ph">Price</span> · <span class="ph">Bedrooms</span> · <span class="ph">Tenure</span></p>
+        <p class="listing__area">{city ?? 'Area'} <span aria-hidden="true">·</span> For sale or to let</p>
+      </div>
+    </li>
+  ))}
+</ul>
+<p class="listings__note">Live listings will come from {businessName}'s property feed; none are shown in this mockup.</p>
+<style>
+  .listings { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); }
+  .listing { background: var(--surface); border: 1px solid var(--border); display: grid; }
+  .listing__media { position: relative; }
+  .listing__media :global(.img-frame) { border-radius: 0; }
+  .listing__chip { position: absolute; left: 0.75rem; top: 0.75rem; background: #ffffff; color: #111111; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.72rem; font-weight: 600; padding: 0.3rem 0.6rem; }
+  .listing__body { padding: 1.25rem 1.25rem 1.4rem; }
+  .listing__title { font-size: 1.1rem; margin-bottom: 0.4rem; }
+  .listing__meta { margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--muted); }
+  .listing__area { margin: 0; font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.08em; font-size: 0.75rem; color: var(--accent); font-weight: 600; }
+  .listings__note { margin: 1.5rem 0 0; font-size: 0.9rem; color: var(--muted); }
+</style>

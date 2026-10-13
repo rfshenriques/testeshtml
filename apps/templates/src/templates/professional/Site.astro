@@ -1,66 +1,233 @@
 ---
-/** professional: Hero, practice areas, credentials, case-style proof, contact form (+ hours+map). */
+/**
+ * professional: text-led, no hero image. Hairline header, large serif headline on the page
+ * colour with a two-column intro, practice areas as a numbered two-column list, "how we work"
+ * steps, a bordered credentials box, one pull quote, office hours and a split consultation form.
+ */
 import type { BuildInput } from '../../lib/input';
-import { pickImages } from '../../lib/input';
+import { pickImages, telHref } from '../../lib/input';
+import Img from '../../components/Img.astro';
 import MockupLayout from '../../layouts/MockupLayout.astro';
-import SiteHeader from '../../components/SiteHeader.astro';
-import Hero from '../../components/Hero.astro';
-import Section from '../../components/Section.astro';
-import Services from '../../components/Services.astro';
-import About from '../../components/About.astro';
-import WhyUs from '../../components/WhyUs.astro';
-import HoursMap from '../../components/HoursMap.astro';
-import CtaBand from '../../components/CtaBand.astro';
-import Reviews from '../../components/Reviews.astro';
+import Copy from '../../components/Copy.astro';
 import ContactForm from '../../components/ContactForm.astro';
+import ProHeader from './ProHeader.astro';
+import Testimony from './Testimony.astro';
+import Office from './Office.astro';
 interface Props { input: BuildInput }
 const { input } = Astro.props;
-const { brief } = input;
-const { gallery } = pickImages(input);
+const { brief, copy } = input;
+const officeImage = pickImages(input).gallery[0] ?? pickImages(input).hero;
+const tel = telHref(brief.phone, brief.internationalPhone);
+const phone = brief.phone ?? brief.internationalPhone;
+const kicker = [brief.classification.subVertical, brief.city].filter(Boolean).join(' · ');
+const weekday = brief.openingHours[0];
 const nav = [
-  { href: '#practice', label: 'Practice areas' }, { href: '#credentials', label: 'Credentials' }, { href: '#proof', label: 'Client feedback' },
-  { href: '#visit', label: 'Office' }, { href: '#contact', label: 'Contact' },
+  { href: '#practice', label: 'Practice areas' }, { href: '#approach', label: 'How we work' }, { href: '#credentials', label: 'The practice' },
+  { href: '#clients', label: 'Clients' }, { href: '#office', label: 'Office' },
 ];
 ---
 <MockupLayout input={input}>
-  <SiteHeader input={input} nav={nav} ctaHref="#contact" ctaLabel="Arrange a consultation" />
+  <ProHeader input={input} nav={nav} ctaHref="#consult" ctaLabel="Arrange a consultation" />
   <main id="main">
-    <Hero input={input} ctaHref="#contact" eyebrow={[brief.classification.subVertical, brief.city].filter(Boolean).join(' · ')} imageLabel="Indicative office photo" />
+    <section class="pro-hero" aria-labelledby="hero-heading">
+      <div class="container">
+        {kicker && <p class="pro-kicker">{kicker}</p>}
+        <h1 id="hero-heading"><Copy copy={copy} path="hero.headline" value={copy.hero.headline} /></h1>
+        <hr class="pro-rule" />
+        <div class="pro-intro">
+          <p class="pro-intro__lead"><Copy copy={copy} path="hero.subhead" value={copy.hero.subhead} /></p>
+          <div class="pro-intro__aside">
+            <a class="btn btn-primary btn-lg" href="#consult"><Copy copy={copy} path="hero.ctaLabel" value={copy.hero.ctaLabel} /></a>
+            {tel && <p class="pro-intro__call">or call <a href={tel}>{phone}</a></p>}
+          </div>
+        </div>
+        <dl class="pro-facts">
+          {(brief.address || brief.city) && <div><dt>Office</dt><dd>{brief.address ?? brief.city}</dd></div>}
+          {weekday && <div><dt>Hours</dt><dd>{weekday.day}: {weekday.hours}</dd></div>}
+          {tel && <div><dt>Enquiries</dt><dd><a href={tel}>{phone}</a></dd></div>}
+        </dl>
+      </div>
+    </section>
 
-    <Section id="practice" eyebrow="Practice areas" heading="How we can help">
-      <Services copy={input.copy} layout="numbered" />
-    </Section>
+    <section id="practice" class="pro-section" aria-labelledby="practice-heading">
+      <div class="container pro-cols">
+        <div class="pro-cols__head">
+          <span class="eyebrow">Practice areas</span>
+          <h2 id="practice-heading">How we can help</h2>
+        </div>
+        <ol class="pro-list">
+          {copy.services.map((s, i) => (
+            <li>
+              <span class="pro-list__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <h3><Copy copy={copy} path={`services[${i}].name`} value={s.name} /></h3>
+                <p><Copy copy={copy} path={`services[${i}].description`} value={s.description} /></p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
 
-    <Section id="credentials" tone="surface" eyebrow="Credentials" heading="About the practice">
-      <About input={input} image={gallery[0]} imageLabel="Indicative meeting room photo" factsHeading="Verified details" />
-      <p class="muted credentials-note">Qualifications, memberships and accreditations will be listed here once confirmed by {brief.businessName}; this mockup shows none that have not been verified.</p>
-    </Section>
+    <section id="approach" class="pro-section pro-section--tint" aria-labelledby="approach-heading">
+      <div class="container">
+        <div class="pro-section__head">
+          <span class="eyebrow">How we work</span>
+          <h2 id="approach-heading">A straightforward way of working</h2>
+        </div>
+        <ol class="pro-steps">
+          {copy.whyUs.map((w, i) => (
+            <li>
+              <span class="pro-steps__n" aria-hidden="true">{i + 1}</span>
+              <h3><Copy copy={copy} path={`whyUs[${i}].title`} value={w.title} /></h3>
+              <p><Copy copy={copy} path={`whyUs[${i}].body`} value={w.body} /></p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
 
-    <Section id="why" eyebrow="Our approach" heading="Why clients choose us">
-      <WhyUs copy={input.copy} />
-    </Section>
+    <section id="credentials" class="pro-section" aria-labelledby="credentials-heading">
+      <div class="container pro-cols pro-cols--wide">
+        <div>
+          <span class="eyebrow">The practice</span>
+          <h2 id="credentials-heading"><Copy copy={copy} path="about.heading" value={copy.about.heading} /></h2>
+          <p class="pro-prose"><Copy copy={copy} path="about.body" value={copy.about.body} /></p>
+          <Img image={officeImage} label="Indicative office photo" width={1200} height={800} class="pro-office-img" ratio="3 / 2" />
+        </div>
+        <aside class="pro-box" aria-labelledby="credentials-box-heading">
+          <h3 id="credentials-box-heading">Credentials</h3>
+          {brief.verifiedFacts.length ? (
+            <ul class="pro-box__list">{brief.verifiedFacts.map((f) => <li>{f}</li>)}</ul>
+          ) : (
+            <p class="ph">Verified details to be supplied by the business</p>
+          )}
+          <p class="pro-box__ph">Qualifications and professional memberships: <span class="ph">To be supplied by the business</span></p>
+          <p class="pro-box__note">Only details verified with {brief.businessName} are listed; unverified items are omitted from this mockup.</p>
+        </aside>
+      </div>
+    </section>
 
-    <Section id="proof" tone="dark" eyebrow="Client feedback" heading="What clients say">
-      <Reviews input={input} />
-    </Section>
+    <section id="clients" class="pro-section pro-section--tint" aria-labelledby="clients-heading">
+      <div class="container">
+        <div class="pro-section__head">
+          <span class="eyebrow">Clients</span>
+          <h2 id="clients-heading">What clients say</h2>
+        </div>
+        <Testimony input={input} />
+      </div>
+    </section>
 
-    <Section id="visit" tone="surface" eyebrow="Office" heading="Visit the office">
-      <HoursMap input={input} />
-    </Section>
+    <section id="office" class="pro-section" aria-labelledby="office-heading">
+      <div class="container">
+        <div class="pro-section__head">
+          <span class="eyebrow">Office</span>
+          <h2 id="office-heading">Office hours{brief.city ? ` in ${brief.city}` : ''}</h2>
+        </div>
+        <Office input={input} />
+      </div>
+    </section>
 
-    <CtaBand input={input} id="cta" href="#contact" tone="surface" eyebrow="Next step" />
-
-    <Section id="contact" eyebrow="Contact" heading="Get in touch" lead="Tell us briefly about your situation and we will respond with next steps.">
-      <ContactForm input={input} variant="contact" submitLabel="Send enquiry" />
-    </Section>
+    <section id="consult" class="pro-section pro-section--consult" aria-labelledby="consult-heading">
+      <div class="container pro-cols pro-cols--wide">
+        <div class="pro-consult__intro">
+          <span class="eyebrow">Consultation</span>
+          <h2 id="consult-heading"><Copy copy={copy} path="cta.heading" value={copy.cta.heading} /></h2>
+          <p class="pro-prose"><Copy copy={copy} path="cta.body" value={copy.cta.body} /></p>
+          <dl class="pro-contact">
+            {tel && <div><dt>Telephone</dt><dd><a href={tel}>{phone}</a></dd></div>}
+            {brief.address && <div><dt>Office</dt><dd>{brief.address}</dd></div>}
+            {weekday && <div><dt>Hours</dt><dd>{weekday.hours} ({weekday.day})</dd></div>}
+          </dl>
+        </div>
+        <div class="pro-consult__form">
+          <ContactForm input={input} variant="contact" submitLabel={copy.cta.buttonLabel} />
+        </div>
+      </div>
+    </section>
   </main>
 </MockupLayout>
 
 <style is:global>
-  [data-template="professional"] .hero { background: var(--hero-bg); }
-  [data-template="professional"] .hero .img-frame { border-radius: 2px; }
-  [data-template="professional"] .btn { border-radius: 2px; }
-  [data-template="professional"] .card { border-radius: 2px; }
-  [data-template="professional"] .credentials-note { margin: 1.5rem 0 0; font-size: 0.95rem; }
-  [data-template="professional"] .wordmark { letter-spacing: 0.02em; }
+  [data-template="professional"] { --pro-measure: 38rem; }
+  [data-template="professional"] .container { width: min(100% - 2rem, 68rem); }
+  [data-template="professional"] h1, [data-template="professional"] h2, [data-template="professional"] h3 { color: var(--text); }
+  [data-template="professional"] .btn { border-radius: 0; }
+  [data-template="professional"] .eyebrow { color: var(--accent); margin-bottom: 1rem; }
+  [data-template="professional"] .ph { border-bottom-style: dotted; }
+
+  /* Hero: type only */
+  [data-template="professional"] .pro-hero { padding: clamp(3rem, 8vw, 6.5rem) 0 clamp(2rem, 5vw, 3.5rem); }
+  [data-template="professional"] .pro-kicker { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.14em; font-size: 0.8rem; color: var(--muted); margin: 0 0 1.5rem; }
+  [data-template="professional"] .pro-hero h1 { font-size: clamp(2.5rem, 7vw, 5.25rem); line-height: 1.02; max-width: 16ch; margin: 0 0 clamp(1.5rem, 4vw, 2.5rem); }
+  [data-template="professional"] .pro-rule { border: 0; border-top: 1px solid var(--text); margin: 0 0 clamp(1.5rem, 4vw, 2.5rem); }
+  [data-template="professional"] .pro-intro { display: grid; gap: 2rem 4rem; grid-template-columns: minmax(0, 1.4fr) minmax(16rem, 1fr); align-items: start; }
+  [data-template="professional"] .pro-intro__lead { font-size: clamp(1.15rem, 2vw, 1.4rem); line-height: 1.5; max-width: var(--pro-measure); margin: 0; }
+  [data-template="professional"] .pro-intro__aside { display: grid; gap: 0.75rem; justify-items: start; }
+  [data-template="professional"] .pro-intro__call { margin: 0; color: var(--muted); font-size: 0.95rem; }
+  [data-template="professional"] .pro-intro__call a { color: var(--text); font-weight: 600; }
+  [data-template="professional"] .pro-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem 2rem; margin: clamp(2.5rem, 6vw, 4rem) 0 0; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+  [data-template="professional"] .pro-facts div { display: grid; gap: 0.2rem; }
+  [data-template="professional"] .pro-facts dt { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.12em; font-size: 0.72rem; color: var(--muted); }
+  [data-template="professional"] .pro-facts dd { margin: 0; font-size: 0.95rem; }
+  [data-template="professional"] .pro-facts a { color: var(--text); }
+
+  /* Sections */
+  [data-template="professional"] .pro-section { padding: clamp(3rem, 7vw, 5.5rem) 0; border-top: 1px solid var(--border); }
+  [data-template="professional"] .pro-section--tint { background: var(--surface); }
+  [data-template="professional"] .pro-section__head { max-width: var(--pro-measure); margin-bottom: clamp(2rem, 4vw, 3rem); }
+  [data-template="professional"] .pro-section h2 { font-size: clamp(1.75rem, 3.2vw, 2.5rem); margin-bottom: 0.75rem; }
+  [data-template="professional"] .pro-prose { max-width: var(--pro-measure); font-size: 1.05rem; line-height: 1.7; }
+  [data-template="professional"] .pro-office-img { margin-top: 1.75rem; border-radius: 2px; max-width: var(--pro-measure); }
+  [data-template="professional"] .pro-cols { display: grid; gap: 2.5rem 4rem; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); align-items: start; }
+  [data-template="professional"] .pro-cols--wide { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+  [data-template="professional"] .pro-cols__head { position: sticky; top: 4rem; }
+
+  /* Practice areas: numbered two-column list with hairlines */
+  [data-template="professional"] .pro-list { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 0 3rem; border-top: 1px solid var(--text); }
+  [data-template="professional"] .pro-list li { display: grid; grid-template-columns: 2.75rem 1fr; gap: 0.5rem; padding: 1.5rem 0; border-bottom: 1px solid var(--border); }
+  [data-template="professional"] .pro-list__n { font-family: var(--font-display); font-size: 0.95rem; color: var(--accent); letter-spacing: 0.04em; padding-top: 0.35rem; }
+  [data-template="professional"] .pro-list h3 { font-size: 1.25rem; margin-bottom: 0.4rem; }
+  [data-template="professional"] .pro-list p { margin: 0; color: var(--muted); font-size: 0.98rem; }
+
+  /* How we work: three steps on one hairline */
+  [data-template="professional"] .pro-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 2rem 3rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); border-top: 1px solid var(--text); }
+  [data-template="professional"] .pro-steps li { padding-top: 1.5rem; max-width: 24rem; }
+  [data-template="professional"] .pro-steps__n { display: block; font-family: var(--font-display); font-size: 2.5rem; line-height: 1; color: var(--accent); margin-bottom: 1rem; }
+  [data-template="professional"] .pro-steps h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+  [data-template="professional"] .pro-steps p { margin: 0; color: var(--muted); }
+
+  /* Credentials box */
+  [data-template="professional"] .pro-box { border: 1px solid var(--text); padding: clamp(1.5rem, 3vw, 2.25rem); background: var(--surface); }
+  [data-template="professional"] .pro-box h3 { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.12em; font-size: 0.78rem; font-weight: 600; color: var(--muted); margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+  [data-template="professional"] .pro-box__list { display: grid; gap: 0.75rem; margin-bottom: 1.25rem; }
+  [data-template="professional"] .pro-box__list li { padding-left: 1.4rem; position: relative; }
+  [data-template="professional"] .pro-box__list li::before { content: ''; position: absolute; left: 0; top: 0.75em; width: 0.6rem; height: 1px; background: var(--accent); }
+  [data-template="professional"] .pro-box__ph { margin: 0 0 1rem; font-size: 0.95rem; }
+  [data-template="professional"] .pro-box__note { margin: 0; font-size: 0.85rem; color: var(--muted); }
+
+  /* Consultation */
+  [data-template="professional"] .pro-section--consult { border-top: 1px solid var(--text); }
+  [data-template="professional"] .pro-contact { display: grid; gap: 1rem; margin: 2rem 0 0; padding-top: 1.5rem; border-top: 1px solid var(--border); max-width: var(--pro-measure); }
+  [data-template="professional"] .pro-contact div { display: grid; grid-template-columns: 7rem 1fr; gap: 0.5rem; }
+  [data-template="professional"] .pro-contact dt { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.12em; font-size: 0.72rem; color: var(--muted); padding-top: 0.2rem; }
+  [data-template="professional"] .pro-contact dd { margin: 0; }
+  [data-template="professional"] .pro-contact a { color: var(--text); }
+  [data-template="professional"] .pro-consult__form .form input { border-radius: 0; border: 0; border-bottom: 1px solid var(--text); background: transparent; padding-inline: 0; }
+  [data-template="professional"] .pro-consult__form .form textarea { border-radius: 0; border: 1px solid var(--text); background: var(--surface); }
+  [data-template="professional"] .pro-consult__form .form label { font-family: var(--font-label); text-transform: var(--label-transform); letter-spacing: 0.1em; font-size: 0.75rem; color: var(--muted); }
+  [data-template="professional"] .pro-consult__form .form__note { border-radius: 0; background: transparent; border: 0; border-left: 2px solid var(--accent); }
+
+  /* Footer in the same hairline language */
+  [data-template="professional"] .site-footer { background: var(--bg); color: var(--text); border-top: 1px solid var(--text); }
+  [data-template="professional"] .site-footer a, [data-template="professional"] .site-footer .wordmark { color: var(--text); }
+
+  @media (max-width: 63.99rem) {
+    [data-template="professional"] .pro-cols, [data-template="professional"] .pro-cols--wide { grid-template-columns: 1fr; }
+    [data-template="professional"] .pro-cols__head { position: static; }
+  }
+  @media (max-width: 47.99rem) {
+    [data-template="professional"] .pro-intro { grid-template-columns: 1fr; }
+    [data-template="professional"] .pro-list li { padding: 1.25rem 0; }
+  }
 </style>
