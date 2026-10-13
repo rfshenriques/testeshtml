@@ -14,9 +14,9 @@ apps/
   api/        NestJS modular monolith (compliance, territory, discovery, qualification, enrichment,
               profiling, generator, preview, quoting, outreach, crm, conversion, billing, ops) + workers
   admin/      React 19 + Vite + Tailwind operator console (10 screens)
-  templates/  Astro template workspace: 6 families × 3 colour schemes × 2 typographic pairings
+  templates/  Astro template workspace: 10 families (one design per kind of business) × 6 palettes × 5 type pairings
 packages/
-  shared-types/          enums, zod schemas, queue registry
+  shared-types/          enums, zod schemas, queue registry, design tokens (palettes, type pairings)
   places-client/         Google Places API (New) client: field masks, backoff, cache, cost hooks
   enrichment-adapters/   registry / directory / data-provider / pattern-guess adapters + verifiers
   email-adapters/        SES, Smartlead, fake providers; IMAP inbound; reply-text extraction
@@ -55,6 +55,12 @@ Territory → Discovery → Qualification → Enrichment → Legal gate → Prof
 Every stage is a BullMQ job (one processor per queue in `apps/api/src/workers`), idempotent and
 re-runnable from the Leads screen. The legal gate runs after enrichment, before generation, and
 again immediately before every send. `ops.killswitch` pauses every queue and blocks all sends.
+
+Generation picks the template family for the lead's kind of business (ten families, each a different
+site design; see `apps/templates/docs/FAMILIES.md`), the palette (fixed schemes or ones derived from the
+lead's own listing photos) and a type pairing. The console's **design studio** (`/leads/:id/studio`)
+shows the real page for the lead inside a frame with those controls plus a device toggle; "Apply &
+republish" rebuilds it at the same preview URL.
 
 ## Testing
 

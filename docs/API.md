@@ -112,7 +112,7 @@ interface Paginated<T> { items: T[]; total: number; nextCursor: string|null }
 
 ## Generator
 
-- `GET /admin/generator/templates` → `{ id: TemplateFamily; verticals: string[]; sections: string[]; colourSchemes: ['a','b','c']; typography: ['a','b'] }[]`
+- `GET /admin/generator/templates` → `{ id: TemplateFamily; label; concept; verticals: string[]; sections: string[]; colourSchemes: ['a','b','c','brand','brand2','brand3']; typography: ['a','b','c','d','e'] }[]` — ten families: hospitality, beauty, clinic, trades, automotive, professional, property, education, retail, fitness
 - `GET /admin/generator/templates/:id/sample?colourScheme=a&typography=a` → `text/html` sample page built with fixture data (iframe-able)
 - `GET /admin/generator/builds?take=` → recent `GeneratedSite` rows with lead summary
 
@@ -177,8 +177,8 @@ interface Paginated<T> { items: T[]; total: number; nextCursor: string|null }
 - `POST /admin/conversion/quotes/:quoteId/accept` `{ tier? }` — manual acceptance (offline payment)
 - `GET /q/:slug/thanks` — Stripe success page
 - `GET /admin/ops/alerts` without `all=1` returns unacknowledged alerts only; `PUT /admin/compliance/jurisdictions/:cc` upserts.
-- `GET /admin/leads/:id/site/variants` → `{ current, brand, images, templates, colourSchemes: ['a','b','c','brand'], typography: ['a','b'] }` (422 until the lead is profiled)
+- `GET /admin/leads/:id/site/variants` → `{ current, brand, images, templates: { id, label, concept, verticals, sections }[], colourSchemes: ['a','b','c','brand','brand2','brand3'], typography: ['a','b','c','d','e'] }` (422 until the lead is profiled). `brand*` schemes derive the palette from the lead's own listing photos (`brand` light, `brand2` dark hero/footer, `brand3` tinted page); they fall back to scheme `a` when `brand` is null. Typography: a Editorial, b Modern, c Geometric, d Classic, e Technical. The console's design studio (`/leads/:id/studio`) is a frame over these two endpoints.
 - `GET /admin/leads/:id/site/variant?template=&colourScheme=&typography=` → `text/html` of that style for the lead (built on demand, cached)
-- `POST /admin/leads/:id/site/rebuild` `{ templateId?, colourScheme?: 'a'|'b'|'c'|'brand', typography? }` adopts a style
+- `POST /admin/leads/:id/site/rebuild` `{ templateId?, colourScheme?: 'a'|'b'|'c'|'brand'|'brand2'|'brand3', typography?: 'a'..'e' }` adopts a style and republishes at the same preview URL
 - `/p/:slug/photos/*` serves the listing photos as soon as they are stored (before publishing); pages still require publishing
 - Pricing: `tiers.<tier>.nfcTags`, `addOns.nfcTagExtra.perTag`; repeat `'nfcTagExtra'` in `addOns` for quantity
