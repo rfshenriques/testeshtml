@@ -66,7 +66,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
   if (!open) return null;
   const isSheet = side === 'right';
   return createPortal(
-    <div className={cn('fixed inset-0 z-50 flex bg-black/40', isSheet ? 'justify-end' : 'items-center justify-center p-4')} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+    <div className={cn('ap-scrim fixed inset-0 z-50 flex bg-black/40', isSheet ? 'justify-end' : 'items-center justify-center p-4')} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={ref}
         role="dialog"
@@ -74,7 +74,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
-        className={cn('flex flex-col bg-card text-card-fg shadow-xl outline-none', isSheet ? 'h-full w-full max-w-[880px] border-l' : cn('max-h-[90vh] w-full rounded-lg border', SIZES[size]))}
+        className={cn('flex flex-col bg-card text-card-fg shadow-xl outline-none', isSheet ? 'ap-sheet' : 'ap-modal', isSheet ? 'h-full w-full max-w-[880px] border-l' : cn('max-h-[90vh] w-full rounded-lg border', SIZES[size]))}
       >
         <div className={cn('flex flex-col', isSheet ? 'border-b px-6 pt-5' : 'px-6 pt-6')}>
           <div className="flex items-start justify-between gap-4">

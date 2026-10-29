@@ -38,12 +38,20 @@ table{width:100%;border-collapse:collapse;font-size:15px;background:var(--surfac
 .closing{display:grid;gap:24px;grid-template-columns:1.3fr 1fr;align-items:start}.closing .box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:28px}
 .quiet{font-size:14px;color:var(--ink-2)}footer{border-top:1px solid var(--line);padding:28px 0 48px;font-size:13px;color:var(--ink-2)}
 .sticky{display:none}
-@media(max-width:720px){section{padding:40px 0}.hero{padding:40px 0 32px}.closing{grid-template-columns:1fr}.sticky{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;gap:10px;padding:12px 16px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.08)}.sticky .btn{flex:1;height:44px}body{padding-bottom:76px}}
+@media(max-width:720px){section{padding:40px 0}.hero{padding:40px 0 32px}.closing{grid-template-columns:1fr}.sticky{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;gap:10px;padding:12px 16px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(0,0,0,.08)}.sticky .btn{flex:1;height:44px}body{padding-bottom:76px}.sticky{background:color-mix(in srgb,var(--surface) 82%,transparent);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%)}}
 `;
 
 const FONTS = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500&display=swap" rel="stylesheet">`;
 
-const shell = (title: string, body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${esc(title)}</title>${FONTS}<style>${CSS}</style></head><body>${body}</body></html>`;
+const shell = (title: string, body: string) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${esc(title)}</title>${FONTS}<style>${CSS}
+/* Interface layer (Apple fluid-interface principles): press feedback, spring settle, translucent fixed chrome, reduced-motion/transparency. */
+.btn,.btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .4s linear(0,.0411,.134,.2475,.3635,.4721,.5688,.652,.7219,.7795,.8264,.8641,.8942,.9179,.9366,.9512,.9625,.9713,.9781,.9833,.9873,.9904,1),background-color .15s,border-color .15s,color .15s,filter .15s}
+.btn:active,.day:active:not(:disabled),.time:active{transform:scale(.97);transition-duration:90ms;transition-timing-function:ease-out}
+@media(hover:hover){.btn:hover:not(:disabled){transform:translateY(-1px)}.btn:active:not(:disabled){transform:scale(.97)}}
+h1,h2{letter-spacing:-.02em}
+@media(prefers-reduced-motion:reduce){.btn,.btn{transition:background-color .15s,color .15s}.btn:hover,.btn:active,.day:active,.time:active{transform:none!important}}
+@media(prefers-reduced-transparency:reduce){.sticky{background:var(--surface)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}}
+</style></head><body>${body}</body></html>`;
 
 const check = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5l4 4 8-9"/></svg>';
 

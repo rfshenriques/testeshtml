@@ -273,3 +273,41 @@ table, [role="grid"], .tabular, input[type="number"] { font-variant-numeric: tab
 
 details > summary { list-style: none; }
 details > summary::-webkit-details-marker { display: none; }
+
+
+/*
+ * Interface layer after Apple's "Designing Fluid Interfaces": feedback on press, springs that start from the
+ * current value, sheets that arrive from where they live, translucent chrome, size-specific type tracking.
+ * Gentler (never absent) under prefers-reduced-motion; solid under prefers-reduced-transparency.
+ */
+:root {
+  --ap-spring: linear(0, 0.0411, 0.134, 0.2475, 0.3635, 0.4721, 0.5688, 0.652, 0.7219, 0.7795, 0.8264, 0.8641, 0.8942, 0.9179, 0.9366, 0.9512, 0.9625, 0.9713, 0.9781, 0.9833, 0.9873, 0.9904, 1);
+}
+.ap-press {
+  touch-action: manipulation;
+  transition: transform 0.4s var(--ap-spring), color 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out, opacity 0.15s ease-out;
+}
+.ap-press:active:not(:disabled) { transform: scale(0.97); transition-duration: 90ms, 0.15s, 0.15s, 0.15s, 0.15s; transition-timing-function: ease-out; }
+a, button, summary, input, select, textarea, label { touch-action: manipulation; }
+body { -webkit-tap-highlight-color: transparent; }
+
+/* Sheets enter from their own edge, modals grow from the centre, the scrim fades: nothing just appears. */
+.ap-scrim { animation: ap-fade 0.2s ease-out both; }
+.ap-sheet { animation: ap-sheet-in 0.45s var(--ap-spring) both; }
+.ap-modal { animation: ap-modal-in 0.4s var(--ap-spring) both; }
+@keyframes ap-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ap-sheet-in { from { transform: translateX(32px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes ap-modal-in { from { transform: scale(0.96) translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Type: large headings tighten, small text opens up a touch. */
+h1, h2 { letter-spacing: -0.02em; }
+h3 { letter-spacing: -0.01em; }
+.t-label { letter-spacing: 0.06em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-press, .ap-press:active:not(:disabled) { transform: none; transition: color 0.15s, background-color 0.15s, opacity 0.15s; }
+  .ap-sheet, .ap-modal { animation: ap-fade 0.2s ease-out both; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  header.sticky { background: var(--bg) !important; backdrop-filter: none !important; }
+}

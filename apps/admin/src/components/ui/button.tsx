@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
  * link       inline text link
  */
 export const buttonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-ring',
+  'inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-md font-medium ap-press disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-ring',
   {
     variants: {
       variant: {

@@ -64,6 +64,12 @@ select.tz{font-weight:400}
 .actions{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem}
 .skel{height:44px;border-radius:10px;background:linear-gradient(90deg,var(--border),var(--surface),var(--border));background-size:200% 100%;animation:sk 1.2s infinite}@keyframes sk{to{background-position:-200% 0}}
 @media(prefers-reduced-motion:reduce){.skel{animation:none}}
+/* Interface layer (Apple fluid-interface principles): press feedback, spring settle, translucent fixed chrome, reduced-motion/transparency. */
+.btn,.day,.time{touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .4s linear(0,.0411,.134,.2475,.3635,.4721,.5688,.652,.7219,.7795,.8264,.8641,.8942,.9179,.9366,.9512,.9625,.9713,.9781,.9833,.9873,.9904,1),background-color .15s,border-color .15s,color .15s,filter .15s}
+.btn:active,.day:active:not(:disabled),.time:active{transform:scale(.97);transition-duration:90ms;transition-timing-function:ease-out}
+@media(hover:hover){.btn:hover:not(:disabled){transform:translateY(-1px)}.btn:active:not(:disabled){transform:scale(.97)}}
+h1,h2{letter-spacing:-.02em}
+@media(prefers-reduced-motion:reduce){.btn,.day,.time{transition:background-color .15s,color .15s}.btn:hover,.btn:active,.day:active,.time:active{transform:none!important}}
 </style>${extraHead}</head><body>${body}</body></html>`;
 }
 

@@ -4,7 +4,7 @@
  * LocalBusiness JSON-LD, theme tokens, mockup banner and mockup footer.
  */
 import type { BuildInput } from '../lib/input';
-import { jsonForScript, localBusinessJsonLd } from '../lib/input';
+import { jsonForScript, localBusinessJsonLd, telHref } from '../lib/input';
 import { themeCss } from '../theme/tokens';
 import MockupBanner from '../components/MockupBanner.astro';
 import MockupFooter from '../components/MockupFooter.astro';
@@ -15,6 +15,21 @@ const { brief, copy, mockup } = input;
 const lang = (brief.languageCode || brief.classification.languageCode || 'en').split(/[-_]/)[0] || 'en';
 const theme = themeCss(input.template, input.colourScheme, input.typography, input.brand ?? null);
 const jsonLd = jsonForScript(localBusinessJsonLd(input));
+// Mobile action dock: the one thing a visitor on a phone wants to do for this kind of business, plus a call button.
+const DOCK: Record<string, { label: string; href: string }> = {
+  hospitality: { label: 'Reserve a table', href: mockup.bookingUrl },
+  beauty: { label: 'Book a chair', href: mockup.bookingUrl },
+  clinic: { label: 'Book an appointment', href: mockup.bookingUrl },
+  trades: { label: 'Book a call-out', href: mockup.bookingUrl },
+  automotive: { label: 'Book a service', href: mockup.bookingUrl },
+  professional: { label: 'Book a consultation', href: mockup.bookingUrl },
+  property: { label: 'Book a valuation', href: mockup.bookingUrl },
+  education: { label: 'Book a visit', href: mockup.bookingUrl },
+  retail: { label: 'Opening hours', href: '#store' },
+  fitness: { label: 'Book a trial', href: mockup.bookingUrl },
+};
+const dock = DOCK[input.template] ?? { label: 'Book online', href: mockup.bookingUrl };
+const dockTel = telHref(brief.phone, brief.internationalPhone);
 ---
 <!doctype html>
 <html lang={lang} data-template={input.template} data-scheme={input.colourScheme} data-type={input.typography}>
@@ -39,6 +54,10 @@ const jsonLd = jsonForScript(localBusinessJsonLd(input));
     <MockupBanner agencyName={mockup.agencyName} agencyUrl={mockup.agencyUrl} businessName={mockup.businessName} />
     <slot />
     <MockupFooter input={input} />
+    <nav class="ap-dock" aria-label="Quick actions">
+      {dockTel && <a class="ap-dock__call" href={dockTel}>Call</a>}
+      <a class="ap-dock__main" href={dock.href}>{dock.label}</a>
+    </nav>
   </body>
 </html>
 
@@ -187,4 +206,108 @@ const jsonLd = jsonForScript(localBusinessJsonLd(input));
 
   @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
   @media print { .mockup-banner { position: static; } }
+
+  /* ------------------------------------------------------------------------------------------------------------------
+     Apple-style interface layer (WWDC "Designing Fluid Interfaces", translated for static pages: no JavaScript).
+     Response: feedback on press, no tap delay. Springs: critically damped by default, a touch of bounce only where the
+     business is playful. Materials: translucent sticky chrome. Type: size-specific tracking and leading.
+     Each family sets its own character through the --ap-* tokens below. Everything honours reduced motion,
+     reduced transparency and increased contrast.
+     ------------------------------------------------------------------------------------------------------------------ */
+  html {
+    --ap-spring: linear(0, 0.0411, 0.134, 0.2475, 0.3635, 0.4721, 0.5688, 0.652, 0.7219, 0.7795, 0.8264, 0.8641, 0.8942, 0.9179, 0.9366, 0.9512, 0.9625, 0.9713, 0.9781, 0.9833, 0.9873, 0.9904, 1);
+    --ap-spring-bounce: linear(0, 0.0383, 0.1302, 0.2488, 0.3755, 0.4982, 0.6097, 0.7064, 0.7871, 0.8521, 0.9028, 0.9411, 0.969, 0.9884, 1.0013, 1.0091, 1.0134, 1.015, 1.015, 1.0139, 1.0122, 1.0103, 1.0084, 1.0067, 1.0051, 1.0038, 1.0027, 1.0018, 1.0011, 1.0006, 1);
+    --ap-ease: var(--ap-spring);
+    --ap-dur: 0.4s;
+    --ap-press: 0.97;
+    --ap-lift: -2px;
+    --ap-blur: 18px;
+    --ap-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 10px 28px rgb(0 0 0 / 0.07);
+    --ap-zoom: 1.03;
+    --ap-h1-track: -0.025em;
+    --ap-h1-lead: 1.06;
+    --ap-pill: 12px;
+  }
+  /* Character per kind of business. */
+  html[data-template="hospitality"] { --ap-dur: 0.5s; --ap-lift: -3px; --ap-zoom: 1.04; --ap-pill: 12px; --ap-shadow: 0 1px 2px rgb(60 30 10 / 0.06), 0 14px 34px rgb(60 30 10 / 0.1); }
+  html[data-template="beauty"] { --ap-dur: 0.55s; --ap-lift: -2px; --ap-press: 0.98; --ap-zoom: 1.025; --ap-pill: 999px; --ap-h1-track: -0.03em; --ap-shadow: 0 1px 1px rgb(0 0 0 / 0.03), 0 18px 40px rgb(80 30 50 / 0.08); }
+  html[data-template="clinic"] { --ap-dur: 0.4s; --ap-lift: -1px; --ap-press: 0.98; --ap-zoom: 1; --ap-pill: 10px; --ap-h1-track: -0.02em; --ap-shadow: 0 1px 2px rgb(0 40 60 / 0.06), 0 8px 22px rgb(0 40 60 / 0.06); }
+  html[data-template="trades"] { --ap-dur: 0.28s; --ap-lift: -2px; --ap-press: 0.96; --ap-zoom: 1; --ap-pill: 4px; --ap-h1-track: -0.015em; --ap-shadow: 0 2px 0 rgb(0 0 0 / 0.12), 0 10px 22px rgb(0 0 0 / 0.1); }
+  html[data-template="automotive"] { --ap-dur: 0.3s; --ap-lift: -2px; --ap-press: 0.96; --ap-zoom: 1.04; --ap-pill: 3px; --ap-h1-track: -0.02em; --ap-shadow: 0 2px 0 rgb(0 0 0 / 0.14), 0 14px 30px rgb(0 0 0 / 0.14); }
+  html[data-template="professional"] { --ap-dur: 0.3s; --ap-lift: 0px; --ap-press: 0.985; --ap-zoom: 1; --ap-pill: 2px; --ap-h1-track: -0.018em; --ap-h1-lead: 1.1; --ap-shadow: none; }
+  html[data-template="property"] { --ap-dur: 0.5s; --ap-lift: -2px; --ap-press: 0.98; --ap-zoom: 1.05; --ap-pill: 8px; --ap-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 16px 40px rgb(0 0 0 / 0.1); }
+  html[data-template="education"] { --ap-ease: var(--ap-spring-bounce); --ap-dur: 0.5s; --ap-lift: -3px; --ap-press: 0.95; --ap-zoom: 1.03; --ap-pill: 999px; --ap-h1-track: -0.02em; --ap-shadow: 0 2px 4px rgb(40 40 120 / 0.06), 0 12px 28px rgb(40 40 120 / 0.1); }
+  html[data-template="retail"] { --ap-ease: var(--ap-spring-bounce); --ap-dur: 0.4s; --ap-lift: -3px; --ap-press: 0.96; --ap-zoom: 1.05; --ap-pill: 10px; --ap-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 12px 28px rgb(0 0 0 / 0.09); }
+  html[data-template="fitness"] { --ap-ease: var(--ap-spring-bounce); --ap-dur: 0.32s; --ap-lift: -3px; --ap-press: 0.94; --ap-zoom: 1.04; --ap-pill: 2px; --ap-h1-track: -0.012em; --ap-h1-lead: 1; --ap-shadow: 0 3px 0 rgb(0 0 0 / 0.18), 0 14px 28px rgb(0 0 0 / 0.16); }
+
+  /* Response: no tap delay, no grey tap flash; feedback on press, not release. */
+  html { -webkit-tap-highlight-color: transparent; scroll-padding-top: 5.5rem; }
+  a, button, summary, input, select, textarea, label { touch-action: manipulation; }
+  ::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+
+  /* Type: tracking and leading depend on size. Large text tightens, small text opens up. */
+  h1 { letter-spacing: min(var(--display-tracking), var(--ap-h1-track)); line-height: var(--ap-h1-lead); font-optical-sizing: auto; }
+  h2 { letter-spacing: min(var(--display-tracking), -0.02em); line-height: 1.1; font-optical-sizing: auto; }
+  h3, h4 { letter-spacing: max(var(--display-tracking), -0.008em); line-height: 1.25; }
+  p, li { text-wrap: pretty; }
+  .lead { line-height: 1.45; letter-spacing: -0.005em; }
+  small, .credit, .muted.small, figcaption, .hours-table, .site-footer { letter-spacing: 0.006em; }
+  body { font-feature-settings: 'kern', 'liga', 'calt'; text-rendering: optimizeLegibility; }
+  .hours-table td, .hours-table th, .rating__value, time { font-variant-numeric: tabular-nums; }
+
+  /* Springs: everything that can be pressed or hovered animates from its current value with a spring. */
+  :where(.btn, a.btn, button, summary, .card, .review, .badge) { transition: transform var(--ap-dur) var(--ap-ease), box-shadow 0.25s ease-out, background-color 0.2s ease-out, border-color 0.2s ease-out, color 0.2s ease-out, filter 0.2s ease-out; }
+  :where(a:not(.btn)) { transition: color 0.2s ease-out, text-decoration-color 0.2s ease-out, opacity 0.2s ease-out; }
+  .btn:active, button:active, summary:active { transform: scale(var(--ap-press)); transition-duration: 90ms; transition-timing-function: ease-out; }
+  .img-frame img { transition: transform 0.9s var(--ap-spring); }
+  .form input, .form textarea, .form select { transition: border-color 0.2s ease-out, box-shadow 0.25s ease-out, background-color 0.2s ease-out; }
+  .form input:focus, .form textarea:focus, .form select:focus { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); outline: none; border-color: var(--accent); }
+  :focus-visible { outline-offset: 3px; transition: outline-offset 0.2s var(--ap-spring); }
+  details > :not(summary) { animation: ap-in var(--ap-dur) var(--ap-ease) both; }
+  @keyframes ap-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  @media (hover: hover) and (pointer: fine) {
+    .btn:hover { transform: translateY(var(--ap-lift)); }
+    .btn:active { transform: scale(var(--ap-press)); }
+    .card:hover, .review:hover { transform: translateY(var(--ap-lift)); box-shadow: var(--ap-shadow); }
+    .img-frame:hover img { transform: scale(var(--ap-zoom)); }
+  }
+
+  /* Materials: the sticky disclosure banner is a translucent layer, content scrolls under it. */
+  .mockup-banner { background: rgb(17 17 17 / 0.93); -webkit-backdrop-filter: blur(var(--ap-blur)) saturate(180%); backdrop-filter: blur(var(--ap-blur)) saturate(180%); border-bottom: 2px solid #ffd166; }
+
+  /* Mobile action dock: the primary action for this kind of business, one thumb away. Translucent, safe-area aware. */
+  .ap-dock { display: none; }
+  @media (max-width: 47.99rem) {
+    body { padding-bottom: calc(4.75rem + env(safe-area-inset-bottom)); }
+    .ap-dock {
+      display: flex; gap: 0.5rem; position: fixed; left: 0.75rem; right: 0.75rem; bottom: calc(0.75rem + env(safe-area-inset-bottom)); z-index: 40;
+      padding: 0.45rem; border-radius: calc(var(--ap-pill) + 6px); border: 1px solid rgb(255 255 255 / 0.5);
+      background: color-mix(in srgb, var(--surface) 90%, transparent); -webkit-backdrop-filter: blur(calc(var(--ap-blur) + 6px)) saturate(180%); backdrop-filter: blur(calc(var(--ap-blur) + 6px)) saturate(180%);
+      box-shadow: var(--ap-shadow), 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent);
+    }
+    .ap-dock a { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border-radius: var(--ap-pill); font-weight: 650; text-decoration: none; transition: transform var(--ap-dur) var(--ap-ease), filter 0.2s ease-out; }
+    .ap-dock a:active { transform: scale(var(--ap-press)); transition-duration: 90ms; }
+    .ap-dock__call { padding: 0 1.1rem; color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--surface)); }
+    .ap-dock__main { flex: 1; color: var(--on-primary); background: var(--primary); }
+  }
+  @media print { .ap-dock { display: none; } }
+
+  /* Accessibility: gentler, never absent. */
+  @media (prefers-reduced-motion: reduce) {
+    :where(.btn, a.btn, button, summary, .card, .review, .badge, .ap-dock a) { transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease; }
+    .btn:hover, .btn:active, button:active, summary:active, .card:hover, .review:hover, .ap-dock a:active { transform: none; }
+    .img-frame img, .img-frame:hover img { transition: none; transform: none; }
+    details > :not(summary) { animation: ap-fade 0.2s ease both; }
+    :focus-visible { transition: none; }
+  }
+  @keyframes ap-fade { from { opacity: 0; } to { opacity: 1; } }
+  @media (prefers-reduced-transparency: reduce) {
+    .mockup-banner { background: #111111; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .ap-dock { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+  @media (prefers-contrast: more) {
+    .ap-dock { border-color: var(--text); background: var(--surface); }
+    .card, .review { border-color: var(--text); }
+  }
+
 </style>

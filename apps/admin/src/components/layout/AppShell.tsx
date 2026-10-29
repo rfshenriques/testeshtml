@@ -89,7 +89,7 @@ export function AppShell() {
       </aside>
       {navOpen && <div className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={() => setNavOpen(false)} aria-hidden />}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className={cn('sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-bg/95 px-4 backdrop-blur md:px-8', killEngaged && 'border-b-bad-dot')}>
+        <header className={cn('sticky top-0 z-20 flex h-14 items-center gap-3 border-b bg-bg/80 px-4 backdrop-blur-xl backdrop-saturate-150 md:px-8', killEngaged && 'border-b-bad-dot')}>
           <Button variant="ghost" size="iconSm" className="md:hidden" aria-label="Toggle navigation" onClick={() => setNavOpen((o) => !o)}>
             <Menu className="size-5" />
           </Button>
